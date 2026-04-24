@@ -4,7 +4,7 @@ A local, offline-capable practice exam app for SAP-C02 (Solutions Architect Prof
 
 ## What's in this build
 
-- **40 questions per exam**, each with:
+- **90 questions per exam**, each with:
   - Original scenario-based question (not drawn from any specific third-party bank)
   - Four answer choices
   - Explanation of the correct answer AND why the distractors are wrong
