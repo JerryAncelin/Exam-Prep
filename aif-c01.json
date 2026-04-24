@@ -3,8 +3,20 @@
     "exam": "AIF-C01",
     "name": "AWS Certified AI Practitioner",
     "version": "1.0",
-    "domain_weights": { "D1": 20, "D2": 24, "D3": 28, "D4": 14, "D5": 14 },
-    "question_distribution_target_90q": { "D1": 18, "D2": 22, "D3": 25, "D4": 13, "D5": 12 }
+    "domain_weights": {
+      "D1": 20,
+      "D2": 24,
+      "D3": 28,
+      "D4": 14,
+      "D5": 14
+    },
+    "question_distribution_target_90q": {
+      "D1": 18,
+      "D2": 22,
+      "D3": 25,
+      "D4": 13,
+      "D5": 12
+    }
   },
   "questions": [
     {
@@ -22,9 +34,21 @@
       "explanation": "The hierarchy is: Artificial Intelligence (broadest) > Machine Learning (a subset of AI that learns from data) > Deep Learning (a subset of ML using neural networks with multiple layers).\n\nAI includes rule-based systems that aren't ML at all. ML is the specific subset where systems learn patterns from data. Deep Learning is the further subset using neural networks (multi-layer). Think of it as nested circles: DL inside ML inside AI.",
       "pattern": "AI/ML/DL hierarchy (memorize): AI ⊃ ML ⊃ DL. AI = any machine that mimics intelligence (including rule-based). ML = learns patterns from data. DL = ML using multi-layer neural networks. Questions about 'which is broader' or 'which is a subset' → use this hierarchy.",
       "references": [
-        {"type": "doc", "title": "What is Artificial Intelligence?", "url": "https://aws.amazon.com/what-is/artificial-intelligence/"},
-        {"type": "doc", "title": "What is Machine Learning?", "url": "https://aws.amazon.com/what-is/machine-learning/"},
-        {"type": "doc", "title": "What is Deep Learning?", "url": "https://aws.amazon.com/what-is/deep-learning/"}
+        {
+          "type": "doc",
+          "title": "What is Artificial Intelligence?",
+          "url": "https://aws.amazon.com/what-is/artificial-intelligence/"
+        },
+        {
+          "type": "doc",
+          "title": "What is Machine Learning?",
+          "url": "https://aws.amazon.com/what-is/machine-learning/"
+        },
+        {
+          "type": "doc",
+          "title": "What is Deep Learning?",
+          "url": "https://aws.amazon.com/what-is/deep-learning/"
+        }
       ]
     },
     {
@@ -42,9 +66,21 @@
       "explanation": "Amazon Bedrock is AWS's managed service for foundation models (FMs). It provides a unified API to access models from Anthropic (Claude), Meta (Llama), Amazon (Titan, Nova), Cohere, AI21 Labs, Mistral, and Stability AI — without managing infrastructure.\n\nSageMaker (A) is AWS's broader ML platform for training and deploying custom models. Comprehend (C) is a pre-built NLP service (entity recognition, sentiment analysis). Rekognition (D) is for image and video analysis.",
       "pattern": "AWS generative AI services: Bedrock = foundation models via API (Claude, Llama, Titan, etc.). SageMaker JumpStart = fine-tune foundation models yourself. Q (Developer/Business) = generative AI assistant for AWS. Comprehend = pre-built NLP tasks. Rekognition = images/video. For 'use FMs without training' → Bedrock.",
       "references": [
-        {"type": "doc", "title": "Amazon Bedrock", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html"},
-        {"type": "doc", "title": "Foundation Models in Bedrock", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html"},
-        {"type": "doc", "title": "Bedrock vs SageMaker", "url": "https://aws.amazon.com/bedrock/"}
+        {
+          "type": "doc",
+          "title": "Amazon Bedrock",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html"
+        },
+        {
+          "type": "doc",
+          "title": "Foundation Models in Bedrock",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html"
+        },
+        {
+          "type": "doc",
+          "title": "Bedrock vs SageMaker",
+          "url": "https://aws.amazon.com/bedrock/"
+        }
       ]
     },
     {
@@ -62,9 +98,21 @@
       "explanation": "Retrieval-Augmented Generation (RAG) retrieves relevant information from a knowledge base (company documents in a vector store) at inference time and includes it in the prompt sent to the foundation model. No model retraining required. The model generates responses grounded in the retrieved content.\n\nFine-tuning (A) modifies model weights — expensive and requires labeled training data. Prompt engineering alone (C) can't include thousands of pages of documents in every prompt. Pre-training (D) creates a whole new model — massive undertaking.",
       "pattern": "FM customization techniques (most → least effort): Pre-training (build new model) > Fine-tuning (modify existing model weights) > RAG (retrieve and include in prompt, no weight changes) > Prompt engineering (just the prompt). For 'add company knowledge without retraining' → RAG. AWS tools for RAG: Bedrock Knowledge Bases, OpenSearch, Aurora pgvector.",
       "references": [
-        {"type": "doc", "title": "What is RAG?", "url": "https://aws.amazon.com/what-is/retrieval-augmented-generation/"},
-        {"type": "doc", "title": "Amazon Bedrock Knowledge Bases", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html"},
-        {"type": "doc", "title": "RAG with Amazon Bedrock", "url": "https://aws.amazon.com/bedrock/knowledge-bases/"}
+        {
+          "type": "doc",
+          "title": "What is RAG?",
+          "url": "https://aws.amazon.com/what-is/retrieval-augmented-generation/"
+        },
+        {
+          "type": "doc",
+          "title": "Amazon Bedrock Knowledge Bases",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html"
+        },
+        {
+          "type": "doc",
+          "title": "RAG with Amazon Bedrock",
+          "url": "https://aws.amazon.com/bedrock/knowledge-bases/"
+        }
       ]
     },
     {
@@ -82,9 +130,21 @@
       "explanation": "Amazon Bedrock Guardrails provides configurable safety filters for foundation model inputs and outputs, including: content filtering (hate, insults, sexual, violence, misconduct), denied topics (e.g., legal/medical/financial advice), PII detection and redaction, word filters, and contextual grounding checks (to detect hallucinations).\n\nWAF (B) is for web application firewall protection, not AI responses. Macie (C) is for detecting sensitive data in S3. Shield (D) is for DDoS protection.",
       "pattern": "Responsible AI on AWS: Bedrock Guardrails = safety filters for GenAI (content, topics, PII, hallucinations). SageMaker Clarify = bias and explainability for ML models. AWS AI Service Cards = documentation of intended use and limitations. For 'filter harmful GenAI output' → Guardrails.",
       "references": [
-        {"type": "doc", "title": "Amazon Bedrock Guardrails", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html"},
-        {"type": "doc", "title": "Responsible AI in AWS", "url": "https://aws.amazon.com/machine-learning/responsible-ai/"},
-        {"type": "doc", "title": "Guardrails content filters", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-content-filters.html"}
+        {
+          "type": "doc",
+          "title": "Amazon Bedrock Guardrails",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html"
+        },
+        {
+          "type": "doc",
+          "title": "Responsible AI in AWS",
+          "url": "https://aws.amazon.com/machine-learning/responsible-ai/"
+        },
+        {
+          "type": "doc",
+          "title": "Guardrails content filters",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-content-filters.html"
+        }
       ]
     },
     {
@@ -102,9 +162,21 @@
       "explanation": "Temperature controls randomness in model outputs. Low temperature (e.g., 0.0–0.3) produces deterministic, focused responses. High temperature (e.g., 0.8–1.0) produces more creative, varied responses. Temperature=0 (or close) makes responses nearly identical for the same prompt.\n\nTop-K (A) limits sampling to the K most likely next tokens — influences variability but secondarily. Max tokens (B) controls response length, not variability. Stop sequences (D) are strings that terminate generation, not about randomness.",
       "pattern": "FM sampling parameters: Temperature (0–1) = randomness, lower = more deterministic. Top-K = sample from top K tokens. Top-P (nucleus) = sample from tokens summing to P probability. Max tokens = length limit. Stop sequences = terminate generation. For 'consistent outputs' → low temperature. For 'creative outputs' → high temperature.",
       "references": [
-        {"type": "doc", "title": "Inference parameters — Amazon Bedrock", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/inference-parameters.html"},
-        {"type": "doc", "title": "Foundation model inference", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html"},
-        {"type": "doc", "title": "Prompt engineering guidelines", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-engineering-guidelines.html"}
+        {
+          "type": "doc",
+          "title": "Inference parameters — Amazon Bedrock",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/inference-parameters.html"
+        },
+        {
+          "type": "doc",
+          "title": "Foundation model inference",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html"
+        },
+        {
+          "type": "doc",
+          "title": "Prompt engineering guidelines",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-engineering-guidelines.html"
+        }
       ]
     },
     {
@@ -122,9 +194,21 @@
       "explanation": "Amazon Q (in QuickSight for BI scenarios, or Amazon Q Business for enterprise scenarios) is AWS's generative AI assistant that can translate natural-language questions into data queries. It integrates with data sources and can generate SQL, summarize results, and build visualizations.\n\nTextract (B) extracts text from documents and images. Polly (C) is text-to-speech. Translate (D) is language translation. None of these generate SQL from natural language.",
       "pattern": "AWS pre-built AI services by task: Comprehend = NLP (sentiment, entities). Translate = translation. Transcribe = speech-to-text. Polly = text-to-speech. Textract = document text extraction. Rekognition = image/video. Kendra = enterprise search. Q = generative AI assistant (business data, code, AWS help). Natural-language-to-data → Q.",
       "references": [
-        {"type": "doc", "title": "Amazon Q in QuickSight", "url": "https://docs.aws.amazon.com/quicksight/latest/user/quicksight-q-overview.html"},
-        {"type": "doc", "title": "Amazon Q Business", "url": "https://docs.aws.amazon.com/amazonq/latest/business-use-dg/what-is.html"},
-        {"type": "doc", "title": "Amazon Q overview", "url": "https://aws.amazon.com/q/"}
+        {
+          "type": "doc",
+          "title": "Amazon Q in QuickSight",
+          "url": "https://docs.aws.amazon.com/quicksight/latest/user/quicksight-q-overview.html"
+        },
+        {
+          "type": "doc",
+          "title": "Amazon Q Business",
+          "url": "https://docs.aws.amazon.com/amazonq/latest/business-use-dg/what-is.html"
+        },
+        {
+          "type": "doc",
+          "title": "Amazon Q overview",
+          "url": "https://aws.amazon.com/q/"
+        }
       ]
     },
     {
@@ -142,9 +226,21 @@
       "explanation": "Amazon Bedrock provides enterprise-grade data protection: data is encrypted in transit (TLS) and at rest. Customer data sent to foundation models via Bedrock is NOT used to train or improve the underlying models. Customer data stays within the customer's AWS account and region.\n\nThis contrasts with using public AI services directly, where data may be used to improve the vendor's models. Bedrock's architecture gives enterprises the safety guarantees needed for sensitive workloads.",
       "pattern": "Bedrock data protection guarantees: (1) Encrypted in transit and at rest, (2) Customer data NOT used to train base models, (3) Data stays in customer's region and account, (4) Supports VPC endpoints (PrivateLink) for no-internet access, (5) Integrates with KMS for customer-managed keys. Enterprise GenAI → Bedrock for these guarantees.",
       "references": [
-        {"type": "doc", "title": "Amazon Bedrock data privacy", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/data-protection.html"},
-        {"type": "doc", "title": "Bedrock security", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/security.html"},
-        {"type": "doc", "title": "Bedrock FAQs", "url": "https://aws.amazon.com/bedrock/faqs/"}
+        {
+          "type": "doc",
+          "title": "Amazon Bedrock data privacy",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/data-protection.html"
+        },
+        {
+          "type": "doc",
+          "title": "Bedrock security",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/security.html"
+        },
+        {
+          "type": "doc",
+          "title": "Bedrock FAQs",
+          "url": "https://aws.amazon.com/bedrock/faqs/"
+        }
       ]
     },
     {
@@ -162,9 +258,21 @@
       "explanation": "Supervised learning uses labeled training data (inputs with known correct outputs) to train models. Fraud detection with labeled 'fraud/not fraud' examples is a classic supervised classification problem.\n\nUnsupervised learning (A) finds patterns in unlabeled data (e.g., clustering). Reinforcement learning (C) learns from trial-and-error with rewards (e.g., game-playing). Transfer learning (D) is a technique for reusing a pre-trained model on a new task, not a category of ML.",
       "pattern": "ML learning types: Supervised (labeled data, predict target) — classification or regression. Unsupervised (no labels, find structure) — clustering, dimensionality reduction. Semi-supervised (some labels). Reinforcement (reward-based, trial and error). 'Labeled examples' → Supervised. 'Find groups in data' → Unsupervised. 'Game/agent' → Reinforcement.",
       "references": [
-        {"type": "doc", "title": "Types of machine learning", "url": "https://aws.amazon.com/what-is/machine-learning/"},
-        {"type": "doc", "title": "Supervised learning in SageMaker", "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html"},
-        {"type": "doc", "title": "ML concepts overview", "url": "https://docs.aws.amazon.com/machine-learning/latest/dg/types-of-ml-models.html"}
+        {
+          "type": "doc",
+          "title": "Types of machine learning",
+          "url": "https://aws.amazon.com/what-is/machine-learning/"
+        },
+        {
+          "type": "doc",
+          "title": "Supervised learning in SageMaker",
+          "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html"
+        },
+        {
+          "type": "doc",
+          "title": "ML concepts overview",
+          "url": "https://docs.aws.amazon.com/machine-learning/latest/dg/types-of-ml-models.html"
+        }
       ]
     },
     {
@@ -182,9 +290,21 @@
       "explanation": "Amazon Bedrock is a regional service. When you call Bedrock in a specific region (e.g., eu-west-1), the request is processed within that region and data stays there. Adding VPC endpoints (PrivateLink) ensures traffic never leaves the AWS network. Customer-managed KMS keys add another layer of control.\n\nThis is a common misconception — developers assume Bedrock is 'global' because models are from global providers, but the service itself is regional and honors data residency.",
       "pattern": "AWS service residency model: most services are regional (Bedrock, SageMaker, S3, DynamoDB). Global services: IAM, Route 53, CloudFront, WAF. For data residency, deploy workloads in the required region + use VPC endpoints to keep traffic on AWS network + customer-managed KMS + SCPs to restrict cross-region activity.",
       "references": [
-        {"type": "doc", "title": "Amazon Bedrock supported regions", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/bedrock-regions.html"},
-        {"type": "doc", "title": "Bedrock VPC endpoints", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/vpc-interface-endpoints.html"},
-        {"type": "whitepaper", "title": "AWS data residency", "url": "https://aws.amazon.com/compliance/data-residency/"}
+        {
+          "type": "doc",
+          "title": "Amazon Bedrock supported regions",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/bedrock-regions.html"
+        },
+        {
+          "type": "doc",
+          "title": "Bedrock VPC endpoints",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/vpc-interface-endpoints.html"
+        },
+        {
+          "type": "whitepaper",
+          "title": "AWS data residency",
+          "url": "https://aws.amazon.com/compliance/data-residency/"
+        }
       ]
     },
     {
@@ -202,9 +322,341 @@
       "explanation": "Prompt engineering is the practice of crafting prompts (inputs) to foundation models to produce better outputs. Techniques include: clear instructions, providing examples (few-shot prompting), using role specifications ('You are an expert...'), chain-of-thought prompting ('Think step by step...'), and structuring inputs with delimiters.\n\nFine-tuning (A) modifies model weights via training. Hyperparameter tuning (C) optimizes training-phase parameters. Transfer learning (D) is reusing a pre-trained model.",
       "pattern": "Prompt engineering techniques: (1) Clear and specific instructions, (2) Few-shot examples in the prompt, (3) Role specifications, (4) Chain-of-thought prompts ('think step by step'), (5) Delimiters to structure input (XML tags, triple quotes), (6) Output format specifications. Costs: zero training cost, fast iteration. Limitations: prompt length limits, can't teach new domains deeply.",
       "references": [
-        {"type": "doc", "title": "Prompt engineering guidelines — Amazon Bedrock", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-engineering-guidelines.html"},
-        {"type": "doc", "title": "What is prompt engineering?", "url": "https://aws.amazon.com/what-is/prompt-engineering/"},
-        {"type": "doc", "title": "Bedrock model parameters and prompts", "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/inference-parameters.html"}
+        {
+          "type": "doc",
+          "title": "Prompt engineering guidelines — Amazon Bedrock",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-engineering-guidelines.html"
+        },
+        {
+          "type": "doc",
+          "title": "What is prompt engineering?",
+          "url": "https://aws.amazon.com/what-is/prompt-engineering/"
+        },
+        {
+          "type": "doc",
+          "title": "Bedrock model parameters and prompts",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/inference-parameters.html"
+        }
+      ]
+    },
+    {
+      "id": "aif011",
+      "domain": "D2",
+      "scenario": "A developer is building a semantic search system that finds documents with similar meaning rather than exact keyword matches. They need to convert text into numerical representations that capture meaning.",
+      "question": "What are these numerical representations called?",
+      "choices": [
+        "Tokens",
+        "Embeddings (vector representations)",
+        "Parameters",
+        "Weights"
+      ],
+      "correct": 1,
+      "explanation": "Embeddings are dense numerical vectors (arrays of numbers) that represent the semantic meaning of text, images, or other data. Similar content produces vectors that are close in vector space, enabling semantic search, recommendation, and retrieval.\n\nTokens (A) are the units (words, sub-words) that text is broken into before processing. Parameters (C) and Weights (D) are the learned values inside a neural network, not the representations of input.",
+      "pattern": "Key terms: Tokens = units of text (roughly: word pieces). Embeddings = vector representations capturing meaning. Parameters/weights = learned values in the model. Context window = max tokens a model can process. For 'represent text as numbers to compare meaning' → embeddings. AWS: Bedrock Titan Embeddings, OpenSearch + pgvector for storage.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "What are embeddings?",
+          "url": "https://aws.amazon.com/what-is/embeddings-in-machine-learning/"
+        },
+        {
+          "type": "doc",
+          "title": "Amazon Titan Embeddings",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/titan-embedding-models.html"
+        },
+        {
+          "type": "doc",
+          "title": "Vector databases for GenAI",
+          "url": "https://aws.amazon.com/what-is/vector-databases/"
+        }
+      ]
+    },
+    {
+      "id": "aif012",
+      "domain": "D4",
+      "scenario": "A hiring platform uses an ML model to screen job applicants. An audit reveals the model gives systematically lower scores to applicants from certain demographic groups, despite them having similar qualifications.",
+      "question": "What ML concern does this scenario represent?",
+      "choices": [
+        "Model overfitting",
+        "Algorithmic bias",
+        "Data drift",
+        "Model latency"
+      ],
+      "correct": 1,
+      "explanation": "Algorithmic bias occurs when an ML model produces systematically unfair outcomes for certain groups. Causes include: biased training data (historical hiring patterns reflecting past discrimination), biased labeling, proxy variables (zip code as proxy for race), or flawed feature engineering. Responsible AI requires detection and mitigation of bias.\n\nOverfitting (A) is when a model memorizes training data instead of generalizing. Data drift (C) is input distribution changing over time. Latency (D) is response time.",
+      "pattern": "Responsible AI concerns: bias (systematic unfairness), transparency (explainability), privacy (PII protection), safety (harmful outputs), robustness (handling edge cases). AWS tools: SageMaker Clarify for bias detection and explainability. Bedrock Guardrails for safety. Model Cards for transparency. Bias is often from training data, not the algorithm itself.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "SageMaker Clarify — bias detection",
+          "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-fairness-and-explainability.html"
+        },
+        {
+          "type": "doc",
+          "title": "Responsible AI at AWS",
+          "url": "https://aws.amazon.com/machine-learning/responsible-ai/"
+        },
+        {
+          "type": "doc",
+          "title": "Bias metrics in Clarify",
+          "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-measure-data-bias.html"
+        }
+      ]
+    },
+    {
+      "id": "aif013",
+      "domain": "D3",
+      "scenario": "A software development team wants an AI assistant integrated into their IDE to generate code, explain existing code, and help with debugging.",
+      "question": "Which Amazon Q variant BEST fits this use case?",
+      "choices": [
+        "Amazon Q Business",
+        "Amazon Q Developer",
+        "Amazon Q in QuickSight",
+        "Amazon Q in Connect"
+      ],
+      "correct": 1,
+      "explanation": "Amazon Q Developer (formerly CodeWhisperer) is the AI assistant integrated with IDEs (VS Code, JetBrains, etc.) and the AWS Console/CLI for developer tasks: code generation, code explanations, unit test writing, debugging help, and AWS service guidance.\n\nQ Business (A) is for general enterprise knowledge Q&A from business documents. Q in QuickSight (C) is for BI and analytics. Q in Connect (D) is for contact center agents.",
+      "pattern": "Amazon Q variants: Q Developer = code assistant in IDE/console. Q Business = enterprise knowledge Q&A. Q in QuickSight = natural language BI. Q in Connect = customer service agent assist. Q in [specific service] = scoped assistant for that service. Match the use case to the right Q: coding → Developer, business docs → Business, data/BI → QuickSight.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon Q Developer",
+          "url": "https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html"
+        },
+        {
+          "type": "doc",
+          "title": "Amazon Q overview",
+          "url": "https://aws.amazon.com/q/"
+        },
+        {
+          "type": "doc",
+          "title": "Amazon Q variants",
+          "url": "https://aws.amazon.com/q/developer/"
+        }
+      ]
+    },
+    {
+      "id": "aif014",
+      "domain": "D2",
+      "scenario": "A developer is using a large language model and gets an error about exceeding the context window. The prompt and expected response together are too long.",
+      "question": "What does the 'context window' refer to?",
+      "choices": [
+        "The time window during which a model stays loaded in memory",
+        "The maximum number of tokens (input + output) a model can process in a single request",
+        "The amount of RAM allocated to the model",
+        "The graphical window in the console where prompts are entered"
+      ],
+      "correct": 1,
+      "explanation": "The context window is the maximum number of tokens a model can process in a single request, including both the input prompt and the generated output. Models have varying context windows: some support a few thousand tokens, others support 100K+ or even 1M+ tokens.\n\nTokens are roughly equivalent to word pieces (on average, 100 tokens ≈ 75 English words). Exceeding the context window causes errors or truncation.",
+      "pattern": "Token and context concepts: (1) Token = unit of text (~0.75 words on average), (2) Context window = max input + output tokens per request, (3) Different models have different context limits — check before choosing, (4) Very long documents may need chunking or RAG (retrieval-augmented generation) rather than dumping into context. Price often scales with tokens processed.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Bedrock foundation models — context limits",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html"
+        },
+        {
+          "type": "doc",
+          "title": "Inference parameters",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/inference-parameters.html"
+        },
+        {
+          "type": "doc",
+          "title": "Bedrock pricing (per-token)",
+          "url": "https://aws.amazon.com/bedrock/pricing/"
+        }
+      ]
+    },
+    {
+      "id": "aif015",
+      "domain": "D4",
+      "scenario": "A data scientist needs to explain predictions made by a credit scoring model to regulators. The regulators want to know which features contributed most to an individual applicant's decline.",
+      "question": "Which AWS service provides this ML explainability?",
+      "choices": [
+        "SageMaker Clarify",
+        "SageMaker Studio",
+        "SageMaker Canvas",
+        "SageMaker Data Wrangler"
+      ],
+      "correct": 0,
+      "explanation": "Amazon SageMaker Clarify provides both bias detection and ML explainability. For explainability, Clarify uses SHAP (SHapley Additive exPlanations) values to compute how much each feature contributed to an individual prediction — answering 'why was this decision made?'\n\nSageMaker Studio (B) is the ML IDE. Canvas (C) is no-code ML. Data Wrangler (D) is for data preparation. None of these provide prediction-level explainability like Clarify.",
+      "pattern": "SageMaker Clarify provides two capabilities: (1) Bias detection (pre-training and post-training), (2) Explainability via SHAP values — per-prediction feature importance. Used during model development AND post-deployment (with Model Monitor) to track attribution drift. For regulated industries needing 'explain this decision' → Clarify.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon SageMaker Clarify",
+          "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-configure-processing-jobs.html"
+        },
+        {
+          "type": "doc",
+          "title": "Clarify feature attribution (SHAP)",
+          "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-feature-attribute.html"
+        },
+        {
+          "type": "doc",
+          "title": "ML explainability overview",
+          "url": "https://aws.amazon.com/blogs/machine-learning/explain-your-ml-model-predictions-with-local-and-global-shap-values-using-amazon-sagemaker-clarify/"
+        }
+      ]
+    },
+    {
+      "id": "aif016",
+      "domain": "D3",
+      "scenario": "A developer provides the following prompt to a foundation model: 'Classify as Positive, Negative, or Neutral. Example 1: I love this product! → Positive. Example 2: Terrible experience. → Negative. Now classify: The package arrived today.'",
+      "question": "Which prompting technique does this demonstrate?",
+      "choices": [
+        "Zero-shot prompting",
+        "Few-shot prompting (in-context learning with examples)",
+        "Fine-tuning",
+        "Chain-of-thought prompting"
+      ],
+      "correct": 1,
+      "explanation": "Few-shot prompting provides a handful of examples (shots) in the prompt itself to demonstrate the desired pattern. The model learns the task from context without any training. Two examples = 'two-shot.' This is powerful for teaching format or style without model weights changing.\n\nZero-shot (A) = no examples, just instructions. Fine-tuning (C) modifies model weights via training data. Chain-of-thought (D) prompts the model to show reasoning steps ('think step by step').",
+      "pattern": "Prompting techniques: Zero-shot = instruction only, no examples. One-shot = one example. Few-shot = several examples (2-10 typically). Chain-of-thought = 'think step by step' to show reasoning. Role prompting = 'You are an expert X'. Choose based on task difficulty and model capability. Few-shot usually improves accuracy on structured tasks.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Prompt engineering guidelines",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-engineering-guidelines.html"
+        },
+        {
+          "type": "doc",
+          "title": "Few-shot prompting",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/general-guidelines-for-bedrock-users.html"
+        },
+        {
+          "type": "doc",
+          "title": "What is prompt engineering?",
+          "url": "https://aws.amazon.com/what-is/prompt-engineering/"
+        }
+      ]
+    },
+    {
+      "id": "aif017",
+      "domain": "D3",
+      "scenario": "A company has a specific industry vocabulary and response style they want a foundation model to always use. Prompt engineering alone isn't consistent enough. They have 5,000 high-quality examples of desired input-output pairs.",
+      "question": "Which approach BEST fits?",
+      "choices": [
+        "Continue with prompt engineering only.",
+        "Fine-tune the foundation model on the 5,000 examples using Amazon Bedrock or SageMaker JumpStart.",
+        "Train a new foundation model from scratch on the 5,000 examples.",
+        "Use retrieval-augmented generation (RAG) with the 5,000 examples as the knowledge base."
+      ],
+      "correct": 1,
+      "explanation": "Fine-tuning adjusts a foundation model's weights using labeled examples to bake in specific style, vocabulary, or patterns. Bedrock supports fine-tuning for certain models; SageMaker JumpStart also offers fine-tuning workflows. 5,000 high-quality examples is a reasonable size for fine-tuning.\n\nPrompt engineering alone (A) is less reliable for consistent style. Training from scratch (C) requires millions-to-billions of examples and massive compute. RAG (D) is for injecting knowledge, not changing style consistently.",
+      "pattern": "When to use each FM customization: Prompt engineering (best first try, fast iteration, no training). Few-shot in prompt (small examples, same-request only). RAG (inject external knowledge, no weight changes). Fine-tuning (consistent style/vocab with labeled examples, changes weights). Pre-training (build new model — rarely appropriate). Start simple, escalate as needed.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Bedrock custom models — fine-tuning",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/custom-models.html"
+        },
+        {
+          "type": "doc",
+          "title": "SageMaker JumpStart fine-tuning",
+          "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/studio-jumpstart-fine-tune.html"
+        },
+        {
+          "type": "doc",
+          "title": "Customize FMs",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-customization.html"
+        }
+      ]
+    },
+    {
+      "id": "aif018",
+      "domain": "D5",
+      "scenario": "A company uses Amazon Bedrock for a customer-facing chatbot. They want documentation about the intended use cases, limitations, and responsible-use guidance for each foundation model they use.",
+      "question": "Which AWS resource provides this information?",
+      "choices": [
+        "AWS AI Service Cards",
+        "AWS Trusted Advisor reports",
+        "AWS CloudTrail logs",
+        "AWS Compliance Reports"
+      ],
+      "correct": 0,
+      "explanation": "AWS AI Service Cards document intended use cases, design choices, performance characteristics, and best practices for AWS AI services and foundation models. They provide transparency for customers to make informed decisions about AI use.\n\nTrusted Advisor (B) provides operational best-practice checks. CloudTrail (C) logs API calls. Compliance Reports (D) cover regulatory compliance, not AI-specific design documentation.",
+      "pattern": "Responsible AI transparency tools: AWS AI Service Cards (intended use, limitations, best practices). Model Cards in SageMaker (team-authored documentation per model). AWS Compliance resources (for regulatory needs). For 'official AWS documentation about intended use of AI services' → AI Service Cards.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS AI Service Cards",
+          "url": "https://aws.amazon.com/machine-learning/responsible-ai/resources/"
+        },
+        {
+          "type": "doc",
+          "title": "SageMaker Model Cards",
+          "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/model-cards.html"
+        },
+        {
+          "type": "doc",
+          "title": "Responsible AI at AWS",
+          "url": "https://aws.amazon.com/machine-learning/responsible-ai/"
+        }
+      ]
+    },
+    {
+      "id": "aif019",
+      "domain": "D2",
+      "scenario": "A user asks a large language model a factual question, and the model confidently provides an answer that is entirely fabricated — including fake citations and fake statistics.",
+      "question": "What is this phenomenon called?",
+      "choices": [
+        "Overfitting",
+        "Hallucination",
+        "Prompt injection",
+        "Model drift"
+      ],
+      "correct": 1,
+      "explanation": "Hallucination is when a generative AI model produces confident-sounding but fabricated information. Foundation models generate plausible-sounding text based on patterns, not facts — when asked about topics they lack reliable information on, they may invent details.\n\nMitigation techniques: (1) Use RAG to ground responses in real sources, (2) Prompt the model to say 'I don't know' when uncertain, (3) Use Bedrock Guardrails contextual grounding check, (4) Verify critical outputs with humans or authoritative sources.",
+      "pattern": "GenAI failure modes: Hallucination (fabricated facts, common), Prompt injection (malicious input manipulates behavior), Jailbreak (bypassing safety guardrails), Toxicity (harmful outputs), Bias (unfair outputs). Mitigations: RAG, Guardrails, human oversight, output validation. Hallucinations are inherent to LLMs — assume and plan for them.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon Bedrock Guardrails contextual grounding",
+          "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-contextual-grounding-check.html"
+        },
+        {
+          "type": "doc",
+          "title": "What is generative AI?",
+          "url": "https://aws.amazon.com/what-is/generative-ai/"
+        },
+        {
+          "type": "doc",
+          "title": "Reducing hallucinations with RAG",
+          "url": "https://aws.amazon.com/what-is/retrieval-augmented-generation/"
+        }
+      ]
+    },
+    {
+      "id": "aif020",
+      "domain": "D1",
+      "scenario": "A company wants to use a pre-trained ML model for image classification instead of training one from scratch, saving time and compute resources.",
+      "question": "Which ML concept allows using pre-trained models as a starting point for new tasks?",
+      "choices": [
+        "Unsupervised learning",
+        "Transfer learning",
+        "Ensemble learning",
+        "Reinforcement learning"
+      ],
+      "correct": 1,
+      "explanation": "Transfer learning reuses a model trained on one task as the starting point for a new related task. For image classification, you can start with a model trained on ImageNet (millions of images) and fine-tune it on your specific images — dramatically reducing data and compute needs.\n\nUnsupervised learning (A) finds patterns without labels. Ensemble learning (C) combines multiple models. Reinforcement learning (D) learns from trial-and-error with rewards.",
+      "pattern": "Transfer learning benefits: (1) Less training data needed, (2) Faster training, (3) Often better performance than from-scratch for small datasets. AWS tools: SageMaker JumpStart (pre-trained models ready to fine-tune), Bedrock (foundation models to customize). For computer vision and NLP, transfer learning is the default — not from-scratch training.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "What is transfer learning?",
+          "url": "https://aws.amazon.com/what-is/transfer-learning/"
+        },
+        {
+          "type": "doc",
+          "title": "SageMaker JumpStart pre-trained models",
+          "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/studio-jumpstart.html"
+        },
+        {
+          "type": "doc",
+          "title": "Transfer learning with SageMaker",
+          "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/transfer-learning.html"
+        }
       ]
     }
   ]
