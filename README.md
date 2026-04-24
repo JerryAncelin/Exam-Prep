@@ -45,8 +45,8 @@ If you see a message like "⚠ sap-c02.json could not load — serve via local H
 ```
 exam-prep/
 ├── index.html       The app (single file, ~900 lines)
-├── sap-c02.json     SAP-C02 question bank (40 questions)
-├── mla-c01.json     MLA-C01 question bank (40 questions)
+├── sap-c02.json     SAP-C02 question bank (90 questions)
+├── mla-c01.json     MLA-C01 question bank (90 questions)
 └── README.md        This file
 ```
 
