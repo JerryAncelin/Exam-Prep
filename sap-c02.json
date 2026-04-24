@@ -10,10 +10,10 @@
       "D4": 20
     },
     "question_distribution": {
-      "D1": 21,
-      "D2": 25,
-      "D3": 19,
-      "D4": 15
+      "D1": 23,
+      "D2": 28,
+      "D3": 21,
+      "D4": 18
     }
   },
   "questions": [
@@ -2577,6 +2577,328 @@
           "type": "whitepaper",
           "title": "AWS M&A integration best practices",
           "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-strategy/welcome.html"
+        }
+      ]
+    },
+    {
+      "id": "sap081",
+      "domain": "D4",
+      "scenario": "GlobalShip Logistics is a 40-year-old freight company headquartered in Rotterdam with operations in 23 countries. They recently appointed a new CIO from a tech-first competitor who is driving digital transformation. The company's IT estate includes a mix of on-premises VMware (about 1,200 VMs in their primary Rotterdam data center and 400 in a secondary Amsterdam facility), a Microsoft Azure deployment for their new customer portal, and some older AWS usage from an acquired subsidiary (Accounts in us-east-1 and eu-west-1 managed separately from corporate IT).\n\nThe flagship application to migrate is their Tariff Calculation Engine (TCE), a 15-year-old .NET Framework 4.6 application running on 18 Windows Server 2016 VMs, backed by a SQL Server 2017 Enterprise 6 TB database with Always On Availability Groups across the two data centers. TCE processes approximately 2.4 million tariff calculations daily with seasonal peaks during Q4 (3× normal volume). The application uses SQL Server Service Broker for async queueing between stored procedures, Windows-authenticated connections from internal applications, and SQL CLR assemblies for specialized math functions developed in C# over the past decade.\n\nThe business has approved a 14-month migration timeline, a budget of €8M for the migration itself, and wants to 'modernize where sensible' without open-ended refactoring. The CISO has specified that the new architecture must support audit logging per ISO 27001 requirements (already in place on-premises) and that customer tariff data cannot leave the EU. The CIO publicly committed to '50% infrastructure cost reduction within 24 months of migration' in a recent press interview.\n\nThe CTO of the acquired subsidiary has offered to lead the migration, proposing to refactor the entire TCE to .NET 8 on Linux containers in EKS with Aurora PostgreSQL using Babelfish for Aurora PostgreSQL for SQL Server compatibility.",
+      "question": "Which migration approach BEST fits the actual constraints in the scenario?",
+      "choices": [
+        "Accept the CTO's refactor proposal. Babelfish provides SQL Server compatibility, .NET 8 on Linux is modern, and EKS gives container flexibility. This achieves maximum modernization and meets the CIO's cost-reduction commitment.",
+        "Rehost to EC2 using AWS Application Migration Service (MGN) for the 18 Windows VMs. Use RDS for SQL Server Enterprise (BYOL from existing licensing) in eu-west-1 for data residency. Migrate Always On AGs to RDS Multi-AZ. Plan modernization as a post-migration phase.",
+        "Use Azure Migrate since the company already has Azure presence; consolidate onto Azure for operational simplicity.",
+        "Replatform using AWS Elastic Beanstalk for the .NET application with RDS for SQL Server, achieving 'modernize where sensible' via managed runtime without code changes."
+      ],
+      "correct": 1,
+      "explanation": "The noise in this scenario is substantial — 40 years old, 23 countries, new CIO, acquired subsidiary, Rotterdam, press interview, €8M budget, Q4 peaks — most of it irrelevant to the actual architectural decision.\n\nThe real constraints that matter:\n1. SQL CLR assemblies — Babelfish doesn't support CLR. Refactor answer (A) breaks.\n2. Service Broker — Babelfish doesn't support. Refactor (A) breaks again.\n3. 14-month timeline + 'modernize where sensible' + 'no open-ended refactoring' — argues against aggressive refactor.\n4. Data residency (EU only) — any target works if deployed in eu-west-1.\n5. Existing SQL Server Enterprise licenses — BYOL opportunity.\n6. Windows Authentication — RDS for SQL Server supports this; may not work on Aurora.\n\nOption A (refactor to Babelfish): Babelfish compatibility gap is a deal-breaker. The CTO's proposal sounds great but violates hard constraints. Common trap: the internal advocate's plan.\n\nOption B (rehost): respects all hard constraints. Modernization happens later when the compatibility gaps can be addressed.\n\nOption C (Azure): the scenario mentions Azure as noise — the company has Azure for ONE thing (customer portal). That doesn't mean consolidating there is right, especially since the question is an AWS certification context and there's no architectural reason to switch platforms.\n\nOption D (Beanstalk): Beanstalk supports .NET on Windows, but the underlying SQL Server CLR and Service Broker dependencies still exist — Beanstalk doesn't magically make those work elsewhere. The 'managed runtime' framing is tempting but doesn't solve the actual problems.\n\nThe CIO's press commitment (50% cost reduction) is pure noise. It sounds important but doesn't change the technical architecture — it's a business-political consideration.",
+      "pattern": "Long-scenario discipline: (1) read the question first, (2) identify hard technical constraints (SQL CLR, Service Broker, Windows Auth — feature dependencies), (3) identify data/compliance constraints (EU residency), (4) ignore business-political noise (press commitments, new CIO, org history), (5) eliminate options that violate hard constraints. Advocate-named solutions in scenarios (the CTO's proposal here) are frequently wrong — red flag.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Babelfish compatibility with SQL Server features",
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/babelfish-compatibility.html"
+        },
+        {
+          "type": "doc",
+          "title": "AWS Application Migration Service (MGN)",
+          "url": "https://docs.aws.amazon.com/mgn/latest/ug/what-is-application-migration-service.html"
+        },
+        {
+          "type": "doc",
+          "title": "RDS for SQL Server — CLR and Service Broker support",
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_SQLServer.html"
+        }
+      ]
+    },
+    {
+      "id": "sap082",
+      "domain": "D2",
+      "scenario": "MedStream Analytics is building a patient monitoring platform for hospital ICUs. The system ingests vital-sign data from approximately 50,000 bedside monitors across 180 partner hospitals in North America. Each monitor emits a JSON message every 2 seconds containing heart rate, blood pressure, oxygen saturation, respiratory rate, and several other measurements. The platform also ingests periodic lab results from hospital EHR systems (HL7 FHIR format, arriving in bursts of 500–10,000 messages every 15 minutes).\n\nClinicians access the data through a web dashboard showing near-real-time patient status, with alerts fired when specific thresholds are breached (e.g., tachycardia, hypotension). Alert latency is critical — end-to-end from sensor emission to alert delivery must be under 10 seconds at p99. Clinicians expect to see dashboard values within 5 seconds of the underlying measurement. Historical data is used for trend analysis and is retained for 7 years per HIPAA requirements.\n\nThe current architecture, designed 3 years ago by a contractor who has since left the company, uses Amazon Kinesis Data Streams with a shard count of 32, Lambda consumers that perform threshold evaluation, and DynamoDB for current-state storage with a TTL of 72 hours. Historical data lands in S3 via a separate Kinesis Data Firehose branch. Alerts are delivered via SNS to hospital pager systems. The team's SRE lead noticed that during Q4 respiratory season (November-January), Kinesis throttling occurs intermittently — specific shards get overwhelmed while others are underutilized. CloudWatch shows IteratorAge spiking to 45+ seconds on affected shards, violating the 10-second alert SLA.\n\nA newly-hired architect proposes migrating ingestion from Kinesis to Amazon MSK, citing Kafka's better partition rebalancing. The CTO is hesitant about the operational burden of managed Kafka. The VP of Engineering asks whether Kinesis can be tuned to solve this.",
+      "question": "Which approach MOST effectively addresses the root cause?",
+      "choices": [
+        "Migrate to Amazon MSK as the new architect proposes. Kafka's consumer group rebalancing inherently handles uneven partition load better than Kinesis.",
+        "The root cause is hot shards — specific hospitals likely send data with partition keys that hash to the same shards, causing uneven distribution. Fix: change the partition key strategy to better distribute (e.g., include a random suffix, or use UUID-based keys with explicit hash-based distribution). If per-hospital ordering is required, use a composite key that distributes across shards while maintaining per-hospital order via sequencing.",
+        "Increase Kinesis shard count from 32 to 128 to spread load across more shards.",
+        "Migrate to Kinesis Data Streams on-demand mode, which auto-scales shards based on load."
+      ],
+      "correct": 1,
+      "explanation": "This scenario is loaded with noise: hospital count, vital signs enumeration, HL7 FHIR, contractor history, HIPAA retention, architect-vs-CTO politics. The real symptom is buried: **IteratorAge spiking on specific shards while others underutilize = classic hot-shard pattern from poor partition key distribution.**\n\nOption A (MSK migration): MSK has similar partition-key issues — Kafka also distributes by key hash. Rebalancing in Kafka occurs when consumers join/leave; it doesn't fix skewed PRODUCER distribution. The migration is operational overhead without fixing the root cause.\n\nOption B (partition key redesign): the correct diagnosis. If all sensors from one hospital use the hospital ID as partition key, that hospital's traffic hits one shard regardless of total shard count. A composite key (hospital_id + bed_id + random_suffix, or hospital_id# with proper distribution) spreads the load. If per-patient ordering is required, use patient_id as partition key (many patients = many partition values = natural distribution).\n\nOption C (more shards): doesn't help if one hospital's key still hashes to one shard. Also doubles cost.\n\nOption D (on-demand mode): Kinesis on-demand auto-scales total throughput, but a single partition key still hits one logical shard. On-demand helps with overall scale, not hot-key problems.\n\nThe noise successfully obscures the diagnosis: respiratory season, ICU drama, contractor who left. None of that tells you the shard is hot for KEY DISTRIBUTION reasons. The CloudWatch detail (IteratorAge on specific shards while others underutilized) is the actual diagnostic signal.",
+      "pattern": "Kinesis hot shard diagnosis: if IteratorAge is high on SPECIFIC shards while others are low, partition key distribution is the problem — not shard count. Fixes: change partition key to distribute better, or accept per-key latency for ordering guarantees. On-demand mode fixes aggregate scale, not key-distribution skew. MSK migration doesn't fix producer-side skew.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Kinesis Data Streams — resharding and key distribution",
+          "url": "https://docs.aws.amazon.com/streams/latest/dev/kinesis-using-sdk-java-resharding.html"
+        },
+        {
+          "type": "doc",
+          "title": "Kinesis hot shard diagnosis",
+          "url": "https://docs.aws.amazon.com/streams/latest/dev/monitoring-with-cloudwatch.html"
+        },
+        {
+          "type": "blog",
+          "title": "Kinesis partition key best practices",
+          "url": "https://aws.amazon.com/blogs/big-data/category/analytics/amazon-kinesis/"
+        }
+      ]
+    },
+    {
+      "id": "sap083",
+      "domain": "D1",
+      "scenario": "Prothera Financial is a mid-sized wealth management firm serving high-net-worth clients in the US, UK, and Singapore. Founded in 1998 and recently acquired by a larger private equity firm, Prothera operates 47 AWS accounts managed through AWS Organizations with all features enabled. They were an early AWS customer (since 2011) and have accumulated technical debt in their Org structure — the top-level OU structure doesn't match current business units, and some accounts are in the root OU because historical moves were never completed.\n\nThe new parent PE firm has mandated unified security posture across its portfolio companies within 90 days. Prothera's CISO has identified three immediate priorities: (1) every account must have AWS Config enabled with a specific set of 34 managed rules evaluating compliance with the parent firm's baseline; (2) GuardDuty must be enabled in all accounts and regions; (3) detailed CloudTrail logs from all accounts must flow to a central Logging account, retained for 7 years with tamper-evident controls.\n\nThe current state: Config is enabled in 31 of 47 accounts, with inconsistent rule sets. GuardDuty is enabled in 22 accounts, with different detectors across regions. CloudTrail management events are logged per-account to per-account S3 buckets; there's no central aggregation. The parent firm uses AWS Control Tower in their own environment but Prothera's existing multi-account structure predates Control Tower.\n\nThe CTO is evaluating two options: (A) enroll all 47 Prothera accounts into a new Control Tower landing zone, migrating workloads to the new account factory accounts over time; or (B) keep existing accounts and apply the required baselines via Organization-level service configurations (Config organizational rules, GuardDuty delegated admin with auto-enable, CloudTrail organization trail). The junior security engineer favors option A because 'Control Tower is the best practice.' The platform lead favors option B because 'we can't disrupt 47 accounts in 90 days.'",
+      "question": "Which approach MEETS the 90-day mandate while MINIMIZING disruption?",
+      "choices": [
+        "Option A — enroll all accounts into a new Control Tower landing zone. The migration will be complete within 90 days using the account factory.",
+        "Option B — apply Organization-level service configurations: enable AWS Config with Organizational Rules and deploy the 34 required rules via Config conformance packs; use GuardDuty delegated admin with auto-enable-for-new-accounts; create an Organization CloudTrail trail with a central S3 bucket in the Logging account with Object Lock for tamper-evidence. This meets the mandate without requiring workload migration.",
+        "Hybrid: enroll only NEW accounts into Control Tower; leave the existing 47 as-is indefinitely.",
+        "Neither option; recommend a 6-month project to Control Tower-ify everything properly."
+      ],
+      "correct": 1,
+      "explanation": "The scenario is loaded with noise: founded 1998, PE acquisition, OU structure drift, early AWS customer, regional spread. The hard constraints buried inside:\n- 90-day deadline (non-negotiable)\n- 47 existing accounts with workloads (disruption risk)\n- Three specific security requirements (Config with 34 rules, GuardDuty org-wide, CloudTrail centralized with 7-year tamper-evident retention)\n\nOption A (Control Tower enrollment): Control Tower CAN enroll existing accounts, but migrating 47 accounts' workloads to new account factory accounts in 90 days is implausible. Also, Control Tower has guardrails that may conflict with existing configurations, requiring remediation. The junior engineer's 'Control Tower is best practice' is the kind of advocate-opinion that's often wrong under time pressure.\n\nOption B (Org-level services): hits every requirement without touching workloads.\n- Config Organizational Rules + conformance packs: deploy the 34 rules across all accounts from one place.\n- GuardDuty delegated admin with auto-enable: org-wide enablement.\n- Organization CloudTrail trail + S3 Object Lock in Logging account: centralized tamper-evident logs.\n\nThis is achievable in 90 days and meets every stated requirement.\n\nOption C (hybrid new-only): doesn't cover the 47 existing accounts, failing the mandate.\n\nOption D (6-month proper project): violates 90-day mandate.\n\nThe subtle trap: Control Tower is the 'pristine greenfield' answer. For existing multi-account environments with deadlines, direct use of Organizations' governance services is usually faster and less risky. You don't HAVE to use Control Tower to get good governance.",
+      "pattern": "Governance at scale without Control Tower: Organizations + delegated admin (GuardDuty, Security Hub, Config) + Organization trails (CloudTrail) + RAM-shared resources. Control Tower is optional — it packages these into a landing zone but the underlying services can be used directly. Existing environments with deadlines favor direct-service approach over Control Tower enrollment.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Config Organizational Rules",
+          "url": "https://docs.aws.amazon.com/config/latest/developerguide/config-rule-multi-account-deployment.html"
+        },
+        {
+          "type": "doc",
+          "title": "Organization CloudTrail trails",
+          "url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-trail-organization.html"
+        },
+        {
+          "type": "doc",
+          "title": "GuardDuty multi-account management with delegated admin",
+          "url": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_organizations.html"
+        }
+      ]
+    },
+    {
+      "id": "sap084",
+      "domain": "D2",
+      "scenario": "RetailPulse operates a flash-sale e-commerce platform. Customer acquisition spikes 40× during flash sale events (which run 3–5 times per month, each lasting 90 minutes). Outside flash sales, traffic is roughly 500 RPS; during flash sales, traffic hits 20,000 RPS. The platform's core services run on ECS Fargate behind an Application Load Balancer, with DynamoDB for product catalog and user sessions, and RDS for PostgreSQL (db.r6g.4xlarge, Multi-AZ) for order processing.\n\nThree years ago, the team built a custom 'warm-up' system — a scheduled Lambda that pre-scales ECS services and triggers RDS read replica creation 30 minutes before each announced flash sale. This system works but requires the marketing team to enter sale start times into a custom web form, and missed pre-warming has caused two outages in the past year when marketing failed to enter times. The CTO wants to eliminate the manual coordination.\n\nThe order-processing RDS instance has been the primary bottleneck — CPU spikes to 95%+ during sales, write latency climbs from 3ms baseline to 120ms+. The DBA has tried vertical scaling to db.r6g.8xlarge but the cost of running the larger instance continuously is prohibitive. A proposal was made to migrate to Aurora PostgreSQL, but the application uses specific PostgreSQL extensions (pg_cron for job scheduling, plpython3u for custom functions) and the team isn't sure if Aurora supports them.\n\nThe SRE team has been asked to redesign the architecture to handle flash sales without manual pre-warming. Budget for the redesign is approved but the team must quantify the expected improvement.",
+      "question": "Which architectural change BEST addresses the recurring flash-sale challenges?",
+      "choices": [
+        "Migrate RDS PostgreSQL to Aurora Serverless v2 (min ACU low, max ACU high) — Aurora Serverless v2 auto-scales without manual intervention and handles the 40× variance natively. Verify pg_cron and plpython3u support (both are available on Aurora PostgreSQL). Combine with ECS capacity providers using Fargate + Fargate Spot for cost-optimized scale-out, and DynamoDB on-demand for the catalog/sessions which already scales automatically.",
+        "Migrate to Aurora PostgreSQL provisioned with db.r6g.16xlarge instance and add 4 read replicas to always be ready for sales.",
+        "Keep RDS PostgreSQL but upgrade to Reserved Instances for the larger db.r6g.8xlarge to reduce always-on cost.",
+        "Move order processing to DynamoDB entirely to eliminate the RDS bottleneck."
+      ],
+      "correct": 0,
+      "explanation": "Buried in the scenario are several critical constraints:\n- Flash-sale pattern (40× spike, 3-5×/month, 90 min each) — variance is the core problem\n- Manual coordination problem (marketing entering times) — automation needed\n- Aurora migration concern (pg_cron, plpython3u extensions) — compatibility question\n- Budget approved but quantification expected\n- Always-on large instance cost concern\n\nOption A (Aurora Serverless v2): this is the answer that addresses every constraint.\n- Auto-scaling (0.5–128 ACU range) handles 40× variance natively; no manual pre-warming\n- Aurora PostgreSQL DOES support pg_cron and plpython3u (both in the Aurora PostgreSQL extensions list)\n- Serverless v2 scales in seconds, not minutes like provisioned\n- Cost: pay for capacity used, not peak always-on\n- Fargate Spot for ECS cost optimization\n\nOption B (provisioned larger instance + replicas): always-on cost for 3-5 hours/month of actual peak. Wasteful. Also doesn't solve manual pre-warming — provisioned still requires capacity planning.\n\nOption C (RI for larger instance): RI is a financial instrument, not a scaling solution. Still always-on.\n\nOption D (DynamoDB for orders): major refactor; orders typically have relational constraints (transactions, foreign keys to inventory, payments) that DynamoDB models differently.\n\nThe pg_cron/plpython3u mention is a red herring — seems like a constraint, but Aurora PostgreSQL supports both. The test is whether you verify compatibility or eliminate Aurora reflexively.\n\nAurora Serverless v2 is specifically the newer (post-2022) offering that doesn't have v1's significant limitations. v1 had 'pause' behavior, v2 doesn't. v1 had limited Aurora features, v2 has them all.",
+      "pattern": "Flash-sale architecture: Aurora Serverless v2 for DB auto-scaling, DynamoDB on-demand, Fargate + Fargate Spot for ECS, CloudFront for static. Manual pre-warming is a code smell — the architecture should absorb variance. Aurora Serverless v2 (not v1) is the modern answer; v1 had significant limitations that v2 removed. Always verify extension compatibility but don't eliminate Aurora reflexively.",
+      "note": "Aurora PostgreSQL supported extensions are listed in AWS docs; both pg_cron and plpython3u are supported. The extension list evolves — always check current docs before assuming a specific extension is or isn't supported.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon Aurora Serverless v2",
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.html"
+        },
+        {
+          "type": "doc",
+          "title": "Aurora PostgreSQL supported extensions",
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraPostgreSQLReleaseNotes/AuroraPostgreSQL.Extensions.html"
+        },
+        {
+          "type": "doc",
+          "title": "ECS capacity providers with Fargate Spot",
+          "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-capacity-providers.html"
+        }
+      ]
+    },
+    {
+      "id": "sap085",
+      "domain": "D3",
+      "scenario": "CloudAnalytix is a SaaS provider offering business intelligence dashboards to 2,800 enterprise customers. Their core architecture runs across three AWS regions (us-east-1, us-west-2, eu-west-1) with regional isolation — customer data stays in the region where they signed up. The platform uses EKS for compute, Aurora PostgreSQL for metadata, DynamoDB for dashboard state, and S3 for analytical data. Typical customer has 50–500 daily active users querying dashboards.\n\nAfter 5 years of growth, the CFO is pushing for cost optimization. Current monthly spend: $2.1M across the three regions. Cost Explorer analysis reveals the following breakdown: EC2/EKS compute 38%, RDS 18%, DynamoDB 14%, S3 11%, data transfer 9%, other (CloudFront, NAT Gateways, Lambda, etc.) 10%. The FinOps team flagged that RDS costs grew 43% year-over-year despite customer growth of only 22%. Most of that growth is in Aurora read replicas — currently 3 per region (9 total) added over time to handle dashboard query load.\n\nThe engineering team proposed three optimization initiatives: (1) migrate Aurora reads to Aurora Optimized Reads or larger instance types with Graviton processors; (2) implement query-result caching in ElastiCache Redis to reduce database load; (3) adopt Aurora zero-ETL integration with Redshift for analytical queries, offloading complex aggregations from Aurora to Redshift.\n\nThe CTO wants to prioritize based on expected cost impact AND implementation risk. Each initiative requires different effort levels and has different risk profiles. The FinOps team needs recommendations within two weeks to present to the board.",
+      "question": "Which prioritization BEST balances cost impact and implementation risk?",
+      "choices": [
+        "Start with (2) ElastiCache query caching — lowest risk, immediate impact on DB load, reduces need for read replicas. Then (1) Graviton migration for remaining RDS workload. Evaluate (3) zero-ETL to Redshift only if analytical workload justifies Redshift cost; for dashboard queries, Aurora with caching may be sufficient.",
+        "Start with (3) zero-ETL to Redshift — moves the most expensive queries to cheaper analytical storage.",
+        "Start with (1) Graviton migration — lowest code change, 20% price-performance improvement.",
+        "Implement all three simultaneously to maximize savings in the shortest time."
+      ],
+      "correct": 0,
+      "explanation": "This question tests optimization sequencing judgment. The noise: customer count, year-over-year growth, multiple regions, spending breakdown percentages. The real question is ordering initiatives by risk-adjusted value.\n\nCost analysis:\n- RDS is 18% of $2.1M = ~$378k/month\n- 43% growth YoY on RDS vs 22% on customers = excess growth driven by read replicas\n- 9 read replicas total = significant caching candidate\n\nOption 2 (ElastiCache caching):\n- Relatively low risk: caching is opt-in per query, cache misses still work\n- Can reduce read replica count if caching covers common queries\n- Direct impact on the fastest-growing cost\n\nOption 1 (Graviton):\n- Lower risk (instance-type migration), but ~20% savings on RDS = ~$75k/month\n- Doesn't address the growth driver (too many read replicas)\n\nOption 3 (Aurora zero-ETL to Redshift):\n- Higher risk: requires query rewriting, new service introduction\n- Redshift adds its own cost; may not be net savings unless workload fits Redshift's model\n- Best value if analytical workload is clearly analytical (aggregations, scans); not necessarily for dashboard queries that may be point-reads or small aggregations\n\nOption A sequence addresses the growth driver first (caching), then optimizes remaining capacity (Graviton). The conditional on Redshift is correct — zero-ETL is powerful but only if workload actually fits Redshift.\n\nOption B (Redshift first): highest risk, biggest architectural change. Not wrong long-term but bad first step.\n\nOption C (Graviton first): lower risk but smaller impact; doesn't address the read-replica proliferation.\n\nOption D (all simultaneously): violates risk management; concurrent changes make debugging harder.\n\nThe subtle exam value: cost optimization always sequences by highest-impact-lowest-risk. Caching is classic low-risk high-impact. Architectural rewrites (like Redshift) are high-impact high-risk and should come later with clearer ROI signals.",
+      "pattern": "Cost optimization sequencing: (1) eliminate waste (orphans, idle), (2) rightsize existing resources, (3) add caching / architectural leverage, (4) major architectural rewrites only if justified. Always prefer low-risk high-impact first — gives time for measurement and course correction before committing to bigger changes. Redshift zero-ETL is powerful but only for workloads that genuinely fit analytical queries.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Aurora zero-ETL integration with Redshift",
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/zero-etl.html"
+        },
+        {
+          "type": "doc",
+          "title": "Graviton instance migration for Aurora",
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Overview.DBInstanceClasses.html"
+        },
+        {
+          "type": "doc",
+          "title": "ElastiCache for Redis caching patterns",
+          "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/Strategies.html"
+        }
+      ]
+    },
+    {
+      "id": "sap086",
+      "domain": "D4",
+      "scenario": "ThornBridge Manufacturing operates 12 industrial facilities across North America, Europe, and Asia. Each facility runs on-premises OT (operational technology) systems controlling manufacturing equipment, plus IT systems for scheduling, inventory, and quality management. The company has been migrating IT workloads to AWS over 3 years, but OT systems remain entirely on-premises for latency and safety-certification reasons.\n\nA new initiative requires near-real-time integration between OT and cloud IT systems: equipment sensor data (from OT) must feed machine learning models in AWS that predict maintenance needs, and production schedule updates (from cloud IT systems) must flow to OT scheduling systems within 30 seconds. Each facility has different OT systems (Rockwell, Siemens, Mitsubishi, GE — dictated by equipment vendor and historical choices), using a mix of OPC UA, MQTT, and proprietary protocols.\n\nNetwork connectivity between facilities and AWS varies: three major facilities have dual 1 Gbps Direct Connect; six facilities have single 500 Mbps Direct Connect; three smaller facilities use VPN over commodity internet (typically 100-200 Mbps, variable latency). All facilities require that any connectivity outage cannot disrupt OT operations — OT must continue running even if the cloud connection is down for hours.\n\nThe CISO has specified security requirements: all OT-to-cloud traffic must be encrypted, authenticated per-device, and auditable. No OT device may be directly internet-accessible. The CTO is evaluating three approaches: (1) AWS IoT Greengrass at each facility running local processing + cloud sync; (2) AWS Outposts at each facility providing AWS services locally; (3) a custom edge computing solution built on EC2-compatible hardware with bidirectional sync to AWS.\n\nBudget is constrained — the smaller facilities cannot justify high-capital-cost solutions.",
+      "question": "Which approach BEST handles the heterogeneous facility requirements?",
+      "choices": [
+        "AWS Outposts at all 12 facilities to provide consistent AWS services locally.",
+        "AWS IoT Greengrass at each facility: runs local (so OT operations continue during connectivity loss), supports OPC UA, MQTT, and custom protocols via Greengrass components, provides local ML inference for predictive maintenance with cloud model updates, handles per-device authentication via IoT certificates, and works across the heterogeneous network tiers (DX and VPN). For smaller facilities, Greengrass runs on modest hardware — unlike Outposts which requires capital-heavy infrastructure.",
+        "Custom edge solution on EC2-compatible hardware — maximum flexibility.",
+        "Deploy AWS Local Zones at the three larger facilities and use direct VPN from smaller facilities."
+      ],
+      "correct": 1,
+      "explanation": "The noise in this scenario is substantial: 12 facilities, multiple OT vendors, various protocols, network tier differences, CISO requirements, budget constraints. The real decision is 'which edge architecture.'\n\nOption A (Outposts everywhere): Outposts is capital-intensive hardware that requires space, power, cooling, and significant upfront cost (~$250k+ per rack). Three smaller facilities cannot justify this. Consistent AWS experience, but cost-prohibitive at scale.\n\nOption B (Greengrass): addresses every constraint:\n- Offline capability (OT continues during connectivity loss) — Greengrass runs local Lambdas, stores data locally, syncs when connected\n- Protocol support — Greengrass components for OPC UA, MQTT; custom components for proprietary protocols\n- Local ML inference — Greengrass ML components support on-device inference\n- Authentication — IoT certificates per device\n- Hardware flexibility — runs on modest industrial PCs, not special hardware\n- Works across DX and VPN tiers — no special network requirements\n\nOption C (custom edge): reinvents Greengrass. More work, more risk.\n\nOption D (Local Zones): Local Zones are AWS-owned infrastructure in specific metros — they're not deployable at customer facilities. This option misunderstands Local Zones.\n\nThe subtle exam value: knowing the difference between Outposts (customer-site AWS hardware), Local Zones (AWS-owned edge infrastructure in metros), Wavelength (5G edge), and IoT Greengrass (software edge runtime). Each fits different scenarios. For heterogeneous customer facilities with OT integration, Greengrass is the right tool.",
+      "pattern": "AWS edge service selection: Outposts (customer-site hardware, expensive, consistent AWS), Local Zones (AWS-owned, specific metros), Wavelength (5G/mobile), IoT Greengrass (software runtime on customer hardware). For industrial/OT integration with connectivity resilience, Greengrass fits. Outposts is overkill for most IoT scenarios — capital cost doesn't justify for telemetry/control use cases.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS IoT Greengrass",
+          "url": "https://docs.aws.amazon.com/greengrass/latest/developerguide/what-is-iot-greengrass.html"
+        },
+        {
+          "type": "doc",
+          "title": "AWS Outposts",
+          "url": "https://docs.aws.amazon.com/outposts/latest/userguide/what-is-outposts.html"
+        },
+        {
+          "type": "whitepaper",
+          "title": "AWS Industrial IoT Solutions",
+          "url": "https://aws.amazon.com/industrial/"
+        }
+      ]
+    },
+    {
+      "id": "sap087",
+      "domain": "D2",
+      "scenario": "StreamVault is a video-on-demand platform with 12 million subscribers globally. Their content library includes 35,000 titles across multiple languages and formats, totaling about 8 petabytes of encoded video. The platform uses a hub-and-spoke content distribution model: master content lands in S3 in us-east-1, then is replicated to regional S3 buckets in us-west-2, eu-west-1, ap-southeast-1, and sa-east-1. CloudFront distributes to end users globally.\n\nThe business recently won a rights deal with a major European broadcaster requiring that all EU subscriber viewing data, including viewing sessions and analytics events, remain in EU jurisdictions. Viewing data is currently collected by a Kinesis Data Streams pipeline in us-east-1 from edge Lambda@Edge functions attached to CloudFront. The data feeds a Kinesis Data Firehose to S3 for analytics and a DynamoDB global table for real-time recommendation updates.\n\nThe VP of Engineering tasked her team to re-architect EU data handling without disrupting the current architecture for other regions. Specific requirements: (1) EU subscriber viewing events must be collected in EU infrastructure and never transit non-EU regions; (2) recommendation updates for EU subscribers must happen within 2 seconds of viewing events; (3) analytics queries must be able to combine EU and non-EU data for global reporting while respecting that EU RAW data doesn't leave the EU (aggregated statistics can); (4) the content library replication to EU S3 buckets must continue.\n\nThe team proposed using CloudFront Functions (instead of Lambda@Edge) in EU edge locations to route EU viewing events to EU-region Kinesis, and maintaining the existing us-east-1 pipeline for non-EU events. A concern was raised that CloudFront edge locations aren't strictly EU even when serving EU users — some traffic may hit a CloudFront POP in a non-EU country (e.g., Morocco, which is not EU).",
+      "question": "Which architecture BEST handles EU data residency requirements?",
+      "choices": [
+        "Use CloudFront Functions at all edge locations to identify EU subscriber IPs via GeoIP and route accordingly. EU events go to a Kinesis stream in eu-west-1; non-EU events go to the existing us-east-1 stream.",
+        "Use Lambda@Edge in the REGIONAL edge caches (which are in specific AWS regions, not edge POPs) to process events after initial CloudFront handling. Regional edge caches in the EU (eu-west-1, eu-central-1) process EU events and route to EU Kinesis; regional edge caches outside EU handle others. However, the PRIMARY control is at the application layer: the player/client sends events directly to a regional endpoint based on subscriber region stored in the user profile — API Gateway in eu-west-1 for EU subscribers, not edge-based routing. DynamoDB global tables become region-restricted (not global) for EU data.",
+        "Disable Lambda@Edge entirely; use regional API Gateway endpoints in each region with client-side region selection.",
+        "Continue with us-east-1 collection; apply Macie to detect and delete EU data after the fact."
+      ],
+      "correct": 1,
+      "explanation": "This question tests deep understanding of CloudFront's architecture and data residency constraints.\n\nCloudFront has two types of infrastructure:\n- **Edge locations (POPs)**: 600+ locations globally, including in non-EU countries near EU markets (Morocco, Turkey, etc.). Lambda@Edge runs here in viewer-request/response or origin-request/response triggers.\n- **Regional edge caches**: ~13 larger caches in specific AWS regions. Lambda@Edge CAN run here for origin-facing triggers.\n\nThe edge-POP-in-Morocco concern is real. If an EU subscriber's request hits a Moroccan POP, and data is processed there, data has transited non-EU territory.\n\nOption A (CloudFront Functions + GeoIP): CloudFront Functions run in all edge locations, which includes non-EU POPs. GeoIP is a viewer-level signal, but the FUNCTION EXECUTION is in whatever POP the request hit. Data residency fails at the execution location.\n\nOption B: the correct answer is nuanced and multi-layered:\n- Application-layer control is primary: the client/player knows the subscriber's region (from profile) and sends events to a regional endpoint directly (API Gateway in eu-west-1 for EU subscribers). This bypasses CloudFront's edge layer for analytics events.\n- Lambda@Edge in regional edge caches (which ARE in specific regions) is a backup option but less clean than direct application-layer routing.\n- DynamoDB global tables become a problem: if the table replicates globally, EU data would flow to non-EU regions. Solution: separate EU-only table, not globally replicated.\n\nOption C (disable Lambda@Edge entirely): partially correct direction (client-side routing), but throws away valid uses of Lambda@Edge for other purposes.\n\nOption D (Macie after the fact): reactive detection doesn't meet 'never transit' residency requirement.\n\nThe subtle exam value: testing whether you know CloudFront edge POPs are GLOBAL (not region-bound), that data residency at the edge layer is hard to guarantee, and that application-layer routing via regional endpoints is often the correct architectural answer for strict residency. Also testing DynamoDB global tables caveat — 'global' means data everywhere, incompatible with residency.",
+      "pattern": "Data residency at the edge: CloudFront edge POPs are not region-bound — Lambda@Edge at POPs runs in whatever POP handled the request, including non-EU POPs. For strict residency, application-layer routing via regional endpoints (API Gateway in specific regions) is cleaner than edge-layer logic. DynamoDB global tables replicate globally — incompatible with 'data stays in region X.' Use regional tables or isolated tables per residency zone.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "CloudFront edge locations vs regional edge caches",
+          "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HowCloudFrontWorksRegionalCaches.html"
+        },
+        {
+          "type": "doc",
+          "title": "Lambda@Edge — execution location",
+          "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-the-edge.html"
+        },
+        {
+          "type": "whitepaper",
+          "title": "AWS Data Residency Guide",
+          "url": "https://docs.aws.amazon.com/whitepapers/latest/data-residency-guide/data-residency-guide.html"
+        }
+      ]
+    },
+    {
+      "id": "sap088",
+      "domain": "D1",
+      "scenario": "Carbon Valley Pharmaceuticals is a drug research company with 4,200 employees across labs in Boston, San Diego, Basel, and Singapore. They were FDA-audited in 2024 and received observations about access control and audit trail gaps. The remediation plan includes comprehensive IAM overhaul.\n\nThe current state: 147 AWS accounts in one Organization, federated via SAML from Okta (using IAM Identity Center). Most accounts use a baseline permission set called 'Researcher' that grants broad access to S3, SageMaker, EC2, and some other services. Data scientists need access to specific S3 buckets containing clinical trial data, with different buckets having different access controls (some require specific training, some are restricted to specific nationalities for export control, some are time-limited for specific studies).\n\nThe new IAM architect proposed an elaborate design using IAM Identity Center permission sets plus attribute-based access control (ABAC) using session tags from Okta. The design has session tags for: training_completed (comma-separated list of trainings), nationality (ISO country code), active_studies (comma-separated list), and department. S3 bucket policies would use conditions matching these session tags against bucket tags (aws:PrincipalTag/training_completed includes 'GCP' AND aws:ResourceTag/required_training, etc.).\n\nThe security lead is concerned about complexity — 'we have 2,400 S3 buckets, each with different tags. Writing bucket policies to match session tags for all combinations seems fragile.' The IAM architect insists ABAC is the AWS best practice. The VP of Engineering asks whether there's a simpler approach that still meets FDA requirements.",
+      "question": "Which approach BEST meets FDA audit requirements with manageable complexity?",
+      "choices": [
+        "Adopt the ABAC design — it's the AWS-recommended pattern for scaling permissions across many resources.",
+        "Use AWS Lake Formation for the clinical trial data (which is fundamentally a data-lake pattern with fine-grained access needs). Lake Formation provides tag-based access control purpose-built for this scenario, with tag inheritance, catalog integration, and audit via CloudTrail. IAM Identity Center permission sets handle infrastructure access; Lake Formation handles data access. This separates concerns: IAM Identity Center for services/APIs, Lake Formation for data.",
+        "Create one IAM role per study and per training combination, manually maintaining the matrix.",
+        "Use OpenID Connect federation directly without IAM Identity Center for simpler permission management."
+      ],
+      "correct": 1,
+      "explanation": "This scenario wraps a data-access problem in an IAM architecture question. The noise: FDA audit context, multi-site organization, elaborate ABAC proposal, architect-vs-security-lead dynamics.\n\nThe real insight: for fine-grained access to DATA (S3 buckets with complex conditions on training, nationality, study membership), Lake Formation is AWS's purpose-built tool. It provides:\n- LF-Tags (tag-based access control) designed for this scale\n- Tag inheritance down data hierarchies\n- Integration with Glue Data Catalog\n- Audit via CloudTrail\n- Cross-account sharing via RAM\n\nOption A (ABAC everywhere): ABAC can work but at 2,400 buckets with multiple dimensions, the policy matrix becomes unmaintainable. Complex condition expressions are fragile and hard to audit.\n\nOption B (Lake Formation for data + Identity Center for services): separation of concerns. Infrastructure access (EC2, SageMaker, Lambda) via Identity Center permission sets. Data access via Lake Formation permissions. Clean, auditable, purpose-built.\n\nOption C (role-per-study): explodes in a matrix; operational disaster.\n\nOption D (OIDC without Identity Center): rebuilds what Identity Center already provides; doesn't solve the data-access complexity.\n\nThe subtle exam value: recognizing that the problem is data access, not infrastructure access, and that Lake Formation exists for this specific use case. Many architects default to 'IAM can do everything' and miss Lake Formation's role. FDA audits care about auditable access control — Lake Formation's access grants are CloudTrail-logged and auditable out of the box.",
+      "pattern": "IAM Identity Center vs Lake Formation: Identity Center handles human-to-AWS-service access (APIs, console). Lake Formation handles human-to-data access (databases, tables, columns, tag-based). For fine-grained data access scenarios, Lake Formation is the right tool. Don't try to encode 2000+ data permissions in IAM policies — use the purpose-built service.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Lake Formation — tag-based access control (LF-TBAC)",
+          "url": "https://docs.aws.amazon.com/lake-formation/latest/dg/tag-based-access-control.html"
+        },
+        {
+          "type": "doc",
+          "title": "IAM Identity Center — permission sets",
+          "url": "https://docs.aws.amazon.com/singlesignon/latest/userguide/permissionsetsconcept.html"
+        },
+        {
+          "type": "doc",
+          "title": "Lake Formation cross-account sharing",
+          "url": "https://docs.aws.amazon.com/lake-formation/latest/dg/cross-account-permissions.html"
+        }
+      ]
+    },
+    {
+      "id": "sap089",
+      "domain": "D3",
+      "scenario": "Vertex Analytics runs a petabyte-scale data platform on AWS processing advertising analytics for major brands. The architecture is heavily Apache Spark-based, running on Amazon EMR clusters. Typical workload: 40-80 Spark jobs daily, ranging from 15-minute quick analyses to 8-hour batch aggregations. Data lives in S3 (Parquet and Iceberg formats). The team has been running EMR for 4 years on long-running clusters — a large production cluster (50 r5.4xlarge instances) plus a smaller dev cluster (10 r5.2xlarge).\n\nRecent observations: the production cluster's CPU averages 28% utilization across the month but spikes to 90% during peak hours. The dev cluster averages 12% utilization. Monthly EMR cost is $180,000. The platform team has been asked to reduce cost by 40% while maintaining or improving job completion times.\n\nThree alternatives have been proposed:\n(1) Migrate to EMR Serverless — pay for only the compute used during each job execution, scale automatically.\n(2) Adopt EMR on EKS — run Spark on existing EKS clusters, sharing resources with other workloads.\n(3) Keep EMR but switch to transient clusters (create per-job, terminate after) with aggressive Spot instance use and fleet-based provisioning across multiple instance types.\n\nThe data engineering lead prefers (1) for operational simplicity. The platform engineering lead prefers (2) for unified infrastructure. The FinOps lead prefers (3) for maximum cost control. The CTO must decide.",
+      "question": "Which migration BEST balances the 40% cost reduction target with job performance?",
+      "choices": [
+        "EMR Serverless (option 1) — simplest migration, scales to zero between jobs, no cluster management. Pricing model (pay for memory-seconds and vCPU-seconds) aligns with variable workload and typically achieves 40%+ savings on bursty workloads. Job startup is sub-minute for warm pools. Minimal operational overhead. Some workload caveats (strict initialization time, certain Spark configurations) may require minor adjustment.",
+        "EMR on EKS (option 2) — shared infrastructure maximizes utilization.",
+        "Transient EMR clusters (option 3) — finest-grained control.",
+        "Stay on EMR with reserved instances to achieve savings via commitments."
+      ],
+      "correct": 0,
+      "explanation": "The scenario noise: company background, Spark adoption, specific cluster sizes, utilization numbers, advocate preferences. The real question: which gives 40% savings while maintaining performance?\n\nCost analysis:\n- Production 28% average utilization = 72% idle. Long-running cluster pays for idle capacity.\n- Dev 12% average = 88% idle.\n- Together, ~80% of spend is for idle capacity.\n\nOption 1 (EMR Serverless): pay per vCPU-second and memory-GB-second used. No idle charge. For 28% average utilization, you'd pay for ~28% of current capacity + some overhead = ~30-40% of current cost. 40%+ savings achievable.\n- Operational simplicity: no cluster sizing, no idle management\n- Job startup: sub-minute with pre-initialized capacity pools\n- Caveat: not all EMR workloads run identically; some Spark configurations need adjustment\n\nOption 2 (EMR on EKS): good for organizations with existing EKS and desire for unified platform. But introduces EKS operational complexity to the data team. Savings come from shared-resource efficiency, but depend heavily on what else runs on EKS and whether idle time is truly shared.\n\nOption 3 (Transient + Spot): maximum control, biggest savings potential, but operational complexity is high. Every job needs cluster creation/termination, Spot interruption handling, and cluster-fleet configuration. For 40-80 jobs daily, this is meaningful ops burden.\n\nOption 4 (RIs on EMR): RIs lock capacity at discount, but don't solve the fundamental 'paying for idle' problem. Saves some money, not 40%.\n\nThe subtle exam value: EMR Serverless is the 2022+ offering that removes cluster management entirely. For teams without EKS skills and with bursty workloads, it's often the right first move. EMR on EKS is powerful for teams already EKS-deep. Transient EMR is powerful but operationally complex.",
+      "pattern": "EMR cost optimization: EMR Serverless (pay-per-use, no cluster management) for bursty or low-utilization workloads. EMR on EKS for teams already on EKS wanting consolidation. Transient EMR for steady-state workloads with good Spot tolerance. For 40% savings on 28%-utilized clusters, Serverless typically wins with least operational disruption.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon EMR Serverless",
+          "url": "https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/emr-serverless.html"
+        },
+        {
+          "type": "doc",
+          "title": "EMR on EKS",
+          "url": "https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks.html"
+        },
+        {
+          "type": "doc",
+          "title": "EMR pricing models comparison",
+          "url": "https://aws.amazon.com/emr/pricing/"
+        }
+      ]
+    },
+    {
+      "id": "sap090",
+      "domain": "D4",
+      "scenario": "Haldenmark Bank is a regional commercial bank with 680 branches across Germany. The IT estate includes a core banking system running on IBM Power systems on-premises (10-year-old hardware), plus satellite systems on Windows and Linux. The Power system hardware reaches end-of-life in 14 months. The CIO has been given a mandate: migrate off Power to a cloud architecture.\n\nThe core banking application was written in PL/I and C, with approximately 4 million lines of code. It runs on AIX on Power, with a DB2 database (8 TB, heavily tuned with bufferpool and storage group configurations) and a complex batch architecture with 300+ JCL-equivalent job definitions. Integration with satellite systems uses IBM MQ. Transaction volume is 12 million per day with peaks of 400 TPS during morning openings.\n\nThe migration team assessed three paths:\n(1) **Rehost** to AWS using a combination of EC2 (for AIX workloads — specifically Dedicated Hosts with custom AIX images if available, though AIX on EC2 has limitations) or Mainframe Modernization with Micro Focus.\n(2) **Refactor** using AWS Mainframe Modernization Blu Age to convert PL/I/C to Java running on EC2 or containers.\n(3) **Repurchase** — replace the core banking system with a modern SaaS core banking platform (Temenos, Mambu, etc.) and migrate data.\n\nRegulatory context: BaFin (German financial regulator) requires that banks provide evidence of appropriate testing and risk management for core system changes; regulatory approval takes 4-6 months for major core banking changes. The board requires a functioning core banking system in 14 months.\n\nThe CTO noted: 'Each migration path has different risk profiles. Getting this wrong is existential — a bank that can't process transactions is a bank that loses its license.'",
+      "question": "Given the 14-month deadline and regulatory constraints, which path BEST balances risk and feasibility?",
+      "choices": [
+        "**Refactor** via Mainframe Modernization Blu Age — modernized Java code positions the bank for future agility. Estimated 10-12 months for conversion plus regulatory approval.",
+        "**Repurchase** — move to modern SaaS core banking, eliminating the Power migration problem entirely while modernizing.",
+        "**Rehost** via AWS Mainframe Modernization with Micro Focus runtime running the existing PL/I/C code on AWS-hosted runtime on EC2 (or EC2 with AIX-compatible alternatives). Estimated 6-9 months plus regulatory approval. Refactor can occur in a subsequent phase once stability is established.",
+        "Extend the Power hardware lease for 24 months and plan a proper multi-year migration."
+      ],
+      "correct": 2,
+      "explanation": "This is a life-or-death-of-the-business question under deadline. The scenario noise: bank size, branch count, specific technology details, regulatory mention. The real constraints: 14-month hard deadline, regulatory review taking 4-6 months, and 'existential risk.'\n\nOption A (Refactor via Blu Age): conversion timeline 10-12 months + 4-6 months regulatory = 14-18 months. Very tight; if conversion slips (common), the bank misses the deadline.\n\nOption B (Repurchase SaaS): moving to new core banking platform is a multi-year project. Data migration alone for 4 million LOC of custom banking logic + DB2 data would take 12+ months. Adds implementation partner coordination. Too risky for 14 months.\n\nOption C (Rehost via Micro Focus): 6-9 months implementation + 4-6 months regulatory = 10-15 months. Buffer for slippage. Keeps existing code, reducing business logic risk. Modernization happens in phase 2 when not under existential deadline.\n\nOption D (extend hardware): the scenario implies this isn't possible or is undesirable — 'mandate' to migrate. Also depends on Power hardware vendor, which may not offer extension.\n\nThe hard tradeoff: Option A produces better long-term artifacts (modern Java) but at higher schedule risk. Option C produces uglier long-term artifacts (COBOL-like code running on a runtime emulator) but is schedule-safer. For existential deadlines in regulated industries, schedule safety wins.\n\nThe regulatory point is critical: 4-6 months of approval testing is fixed overhead. Shorter implementation = more buffer before regulatory submission + more buffer after for any regulator-requested changes.\n\nThe subtle exam value: testing whether you pick pragmatic Rehost over aspirational Refactor when existence depends on schedule. Mainframe Modernization (M2) supports both runtimes — Micro Focus for rehost, Blu Age for refactor — and the choice depends on schedule risk tolerance.",
+      "pattern": "Mainframe/legacy migrations with deadlines: rehost first (Micro Focus), refactor later. Regulatory approval adds fixed overhead (4-6 months for banking/healthcare). Repurchase (SaaS replacement) is multi-year — not a short-timeline option. When deadline risk is existential, schedule-safe wins over architecturally-cleaner.",
+      "note": "AIX on EC2 is not a standard offering — scenarios involving AIX typically require either Power Systems on-premises, a third-party provider (Skytap on AWS historically provided IBM Power in cloud), or migration to another OS. Mainframe Modernization covers IBM z/OS but 'AIX Power' is a different migration pattern. Check current AWS offerings for Power migration paths.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Mainframe Modernization",
+          "url": "https://docs.aws.amazon.com/m2/latest/userguide/what-is-m2.html"
+        },
+        {
+          "type": "doc",
+          "title": "Mainframe Modernization — Micro Focus vs Blu Age",
+          "url": "https://docs.aws.amazon.com/m2/latest/userguide/getting-started-application.html"
+        },
+        {
+          "type": "whitepaper",
+          "title": "Migrating mainframe applications to AWS",
+          "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-mainframe-to-aws/welcome.html"
         }
       ]
     }
