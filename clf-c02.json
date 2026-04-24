@@ -1,0 +1,211 @@
+{
+  "meta": {
+    "exam": "CLF-C02",
+    "name": "AWS Certified Cloud Practitioner",
+    "version": "1.0",
+    "domain_weights": { "D1": 24, "D2": 30, "D3": 34, "D4": 12 },
+    "question_distribution_target_90q": { "D1": 22, "D2": 27, "D3": 31, "D4": 10 }
+  },
+  "questions": [
+    {
+      "id": "clf001",
+      "domain": "D1",
+      "scenario": "A company is evaluating whether to move its infrastructure to AWS. The CFO asks about the cost benefits compared to running their own data center.",
+      "question": "Which cloud computing benefit BEST describes paying only for the resources consumed?",
+      "choices": [
+        "Economies of scale",
+        "Variable expense instead of capital expense",
+        "Global reach",
+        "Increased speed and agility"
+      ],
+      "correct": 1,
+      "explanation": "Moving from capital expense (CapEx) to variable/operating expense (OpEx) is a foundational cloud benefit. Instead of paying upfront for hardware that may be underutilized, companies pay only for what they use.\n\nEconomies of scale (A) refers to AWS's ability to pass lower costs to customers because of its large purchasing power. Global reach (C) is about deploying worldwide quickly. Speed and agility (D) is about faster provisioning and deployment — all are real cloud benefits, but the specific concept of 'pay only for what you consume' is variable expense.",
+      "pattern": "Six advantages of cloud (memorize): (1) Trade CapEx for variable/OpEx, (2) Benefit from economies of scale, (3) Stop guessing capacity, (4) Increase speed and agility, (5) Stop spending on running data centers, (6) Go global in minutes. Pay-per-use = variable expense.",
+      "references": [
+        {"type": "doc", "title": "What is cloud computing?", "url": "https://aws.amazon.com/what-is-cloud-computing/"},
+        {"type": "whitepaper", "title": "AWS Cloud Adoption Framework", "url": "https://aws.amazon.com/professional-services/CAF/"},
+        {"type": "doc", "title": "Six Advantages of Cloud Computing", "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-overview/six-advantages-of-cloud-computing.html"}
+      ]
+    },
+    {
+      "id": "clf002",
+      "domain": "D2",
+      "scenario": "A company is deploying an application on Amazon EC2. They want to understand what security tasks are their responsibility versus AWS's responsibility.",
+      "question": "Under the AWS Shared Responsibility Model, which task is the CUSTOMER'S responsibility?",
+      "choices": [
+        "Maintaining the physical security of data centers",
+        "Patching the hypervisor",
+        "Patching the guest operating system on EC2 instances",
+        "Replacing failed hardware in AWS facilities"
+      ],
+      "correct": 2,
+      "explanation": "The Shared Responsibility Model divides security tasks between AWS and the customer. AWS handles 'security OF the cloud' (physical infrastructure, hardware, hypervisor, network). Customers handle 'security IN the cloud' — including patching the guest OS on EC2 instances, application security, IAM configuration, and data encryption.\n\nOptions A, B, and D are all AWS's responsibility as part of managing the underlying infrastructure.",
+      "pattern": "Shared Responsibility Model mnemonic: AWS = security OF the cloud (physical, hardware, hypervisor, network). Customer = security IN the cloud (guest OS, app, data, IAM, encryption). For managed services (S3, DynamoDB, Lambda), AWS handles more — customer still handles IAM and data classification.",
+      "references": [
+        {"type": "doc", "title": "AWS Shared Responsibility Model", "url": "https://aws.amazon.com/compliance/shared-responsibility-model/"},
+        {"type": "whitepaper", "title": "AWS Security Best Practices", "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-security-best-practices/aws-security-best-practices.html"},
+        {"type": "doc", "title": "EC2 security", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-security.html"}
+      ]
+    },
+    {
+      "id": "clf003",
+      "domain": "D3",
+      "scenario": "A company needs to store 5 TB of static files (images, PDFs, video clips) that will be accessed by their web application. The files need to be highly available and accessible via HTTP/HTTPS.",
+      "question": "Which AWS service BEST fits this requirement?",
+      "choices": [
+        "Amazon EBS",
+        "Amazon S3",
+        "Amazon EFS",
+        "Amazon FSx"
+      ],
+      "correct": 1,
+      "explanation": "Amazon S3 (Simple Storage Service) is object storage designed for web-accessible static content. Objects are accessed via HTTP/HTTPS URLs, stored redundantly across multiple facilities for high durability (11 nines), and scale automatically.\n\nEBS (A) is block storage attached to a single EC2 instance — not directly web-accessible. EFS (C) is file storage for Linux EC2 instances using NFS protocol. FSx (D) is file storage for Windows or specialized workloads (Lustre, NetApp).",
+      "pattern": "Storage type selection: S3 = object storage for web-accessible files, backups, data lakes. EBS = block storage attached to one EC2 instance. EFS = file storage shared across multiple Linux EC2 instances. FSx = file storage for Windows or HPC workloads. Static files on web → always S3.",
+      "references": [
+        {"type": "doc", "title": "Amazon S3", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html"},
+        {"type": "doc", "title": "AWS Storage Services Overview", "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-overview/storage-services.html"},
+        {"type": "doc", "title": "S3 vs EBS vs EFS comparison", "url": "https://aws.amazon.com/products/storage/"}
+      ]
+    },
+    {
+      "id": "clf004",
+      "domain": "D3",
+      "scenario": "A startup wants to run a web application without managing servers, patching operating systems, or handling scaling. They only want to write the code and pay per execution.",
+      "question": "Which AWS compute service BEST meets these requirements?",
+      "choices": [
+        "Amazon EC2",
+        "AWS Elastic Beanstalk",
+        "AWS Lambda",
+        "Amazon ECS"
+      ],
+      "correct": 2,
+      "explanation": "AWS Lambda is serverless — developers upload code, and AWS handles all infrastructure management including scaling, patching, and availability. Billing is based on number of requests and execution duration (pay-per-execution).\n\nEC2 (A) requires customer to manage the OS and scaling. Elastic Beanstalk (B) abstracts some management but still uses EC2 under the hood (customer pays for instances). ECS (D) runs containers and requires managing the underlying compute unless using Fargate.",
+      "pattern": "Compute service ladder (most → least management): EC2 (manage OS and runtime) → Elastic Beanstalk (platform managed, EC2 under hood) → ECS/EKS (container orchestration) → Fargate (serverless containers) → Lambda (serverless functions). 'No servers, pay per execution' = Lambda.",
+      "references": [
+        {"type": "doc", "title": "AWS Lambda", "url": "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html"},
+        {"type": "doc", "title": "AWS Compute Services Overview", "url": "https://aws.amazon.com/products/compute/"},
+        {"type": "doc", "title": "Lambda pricing", "url": "https://aws.amazon.com/lambda/pricing/"}
+      ]
+    },
+    {
+      "id": "clf005",
+      "domain": "D2",
+      "scenario": "A security administrator wants to enable multi-factor authentication (MFA) for all users in their AWS account to add a second layer of protection beyond passwords.",
+      "question": "Which AWS service is used to manage users, groups, and MFA settings?",
+      "choices": [
+        "AWS Shield",
+        "Amazon GuardDuty",
+        "AWS Identity and Access Management (IAM)",
+        "AWS Config"
+      ],
+      "correct": 2,
+      "explanation": "AWS IAM (Identity and Access Management) is the service for managing users, groups, roles, policies, and authentication settings including MFA. IAM is free to use and fundamental to AWS security.\n\nShield (A) protects against DDoS attacks. GuardDuty (B) provides threat detection using machine learning. Config (D) tracks resource configuration changes for compliance — none of them manage user identities.",
+      "pattern": "AWS security service roles: IAM = identity/permissions (users, groups, roles, MFA). Shield = DDoS protection. GuardDuty = threat detection. Config = configuration compliance. WAF = web application firewall. Inspector = vulnerability assessment. Macie = data classification (PII detection).",
+      "references": [
+        {"type": "doc", "title": "AWS IAM User Guide", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html"},
+        {"type": "doc", "title": "IAM MFA", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa.html"},
+        {"type": "doc", "title": "IAM best practices", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"}
+      ]
+    },
+    {
+      "id": "clf006",
+      "domain": "D4",
+      "scenario": "A company wants to understand and reduce their AWS spending. They need a tool that visualizes their spending patterns and provides recommendations for cost optimization.",
+      "question": "Which AWS service BEST supports this need?",
+      "choices": [
+        "AWS Budgets",
+        "AWS Cost Explorer",
+        "AWS CloudTrail",
+        "Amazon CloudWatch"
+      ],
+      "correct": 1,
+      "explanation": "AWS Cost Explorer provides visual analysis of spending with breakdowns by service, account, tag, and time period. It includes rightsizing recommendations for EC2 instances, Reserved Instance recommendations, and Savings Plans recommendations.\n\nBudgets (A) lets you SET spending thresholds and alerts but is less about visualization/analysis. CloudTrail (C) tracks API call history, not spending. CloudWatch (D) monitors operational metrics, not costs primarily.",
+      "pattern": "AWS cost tools: Cost Explorer = visualize and analyze spending, get recommendations. Budgets = set alerts when spending crosses thresholds. Cost and Usage Report (CUR) = detailed line-item billing data. Cost Anomaly Detection = ML-based unusual spending alerts. Trusted Advisor = cost (and other) checks across the account.",
+      "references": [
+        {"type": "doc", "title": "AWS Cost Explorer", "url": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/ce-what-is.html"},
+        {"type": "doc", "title": "AWS Cost Management overview", "url": "https://aws.amazon.com/aws-cost-management/"},
+        {"type": "doc", "title": "AWS Budgets", "url": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/budgets-managing-costs.html"}
+      ]
+    },
+    {
+      "id": "clf007",
+      "domain": "D1",
+      "scenario": "A global company wants to deploy their application in multiple geographic locations for fault tolerance and to reduce latency for their international users.",
+      "question": "Which AWS concept describes physically separated geographic locations, each with multiple isolated data centers?",
+      "choices": [
+        "AWS Availability Zones",
+        "AWS Regions",
+        "AWS Edge Locations",
+        "AWS Local Zones"
+      ],
+      "correct": 1,
+      "explanation": "AWS Regions are physically separated geographic locations worldwide (e.g., us-east-1 in Virginia, eu-west-1 in Ireland). Each Region contains multiple Availability Zones (AZs), which are the isolated data centers within the Region.\n\nAvailability Zones (A) are isolated data centers WITHIN a Region, not separate geographic locations. Edge Locations (C) are CDN caching sites for CloudFront, not full compute locations. Local Zones (D) are AWS infrastructure in specific metros for ultra-low latency use cases, distinct from Regions.",
+      "pattern": "AWS geographic hierarchy: Region (geographic location) → contains multiple Availability Zones (isolated data centers). Edge Locations = CloudFront CDN cache. Local Zones = AWS infrastructure in metros (subset of AWS services). Regions for geographic separation; AZs for high availability within a Region.",
+      "references": [
+        {"type": "doc", "title": "AWS Global Infrastructure", "url": "https://aws.amazon.com/about-aws/global-infrastructure/"},
+        {"type": "doc", "title": "Regions and Availability Zones", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html"},
+        {"type": "doc", "title": "AWS Regions, Availability Zones, Local Zones", "url": "https://aws.amazon.com/about-aws/global-infrastructure/regions_az/"}
+      ]
+    },
+    {
+      "id": "clf008",
+      "domain": "D2",
+      "scenario": "A developer needs temporary credentials to call AWS APIs from an application running on an EC2 instance. They want to avoid hardcoding access keys.",
+      "question": "Which AWS IAM feature BEST addresses this?",
+      "choices": [
+        "IAM users with access keys stored in the application",
+        "IAM roles attached to the EC2 instance",
+        "IAM groups with broad permissions",
+        "Root user credentials"
+      ],
+      "correct": 1,
+      "explanation": "IAM roles attached to EC2 instances provide temporary credentials automatically — the EC2 instance metadata service supplies credentials that rotate automatically. No hardcoded keys needed. This is the security best practice for EC2-to-AWS-API access.\n\nHardcoded access keys (A) is a security anti-pattern; keys can leak in code repositories. Groups (C) are for organizing users, not for instance authentication. Root credentials (D) should never be used by applications.",
+      "pattern": "EC2-to-AWS authentication: use IAM roles attached to the instance. Never hardcode credentials. The metadata service (169.254.169.254) provides temporary rotating credentials. Same principle for Lambda (execution role), ECS tasks (task role), and other AWS services calling AWS APIs.",
+      "references": [
+        {"type": "doc", "title": "IAM roles for Amazon EC2", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html"},
+        {"type": "doc", "title": "IAM best practices", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html"},
+        {"type": "doc", "title": "Using instance profiles", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html"}
+      ]
+    },
+    {
+      "id": "clf009",
+      "domain": "D3",
+      "scenario": "A web application runs on multiple EC2 instances across two Availability Zones. The company needs to distribute incoming traffic across the instances for high availability.",
+      "question": "Which AWS service distributes traffic across multiple EC2 instances?",
+      "choices": [
+        "Amazon CloudFront",
+        "AWS Direct Connect",
+        "Elastic Load Balancing (ELB)",
+        "Amazon Route 53"
+      ],
+      "correct": 2,
+      "explanation": "Elastic Load Balancing (ELB) distributes incoming application traffic across multiple EC2 instances (or containers/IPs/Lambda) for high availability and fault tolerance. Three types: Application Load Balancer (HTTP/HTTPS), Network Load Balancer (TCP/UDP, high performance), and Gateway Load Balancer (for network appliances).\n\nCloudFront (A) is a CDN for caching content at edge locations. Direct Connect (B) provides a dedicated network connection from on-premises to AWS. Route 53 (D) is DNS — it can route traffic but doesn't 'load balance' across instances in the ELB sense.",
+      "pattern": "Traffic distribution services: ELB = distributes within a Region across instances. CloudFront = caches content at edge for global speed. Route 53 = DNS routing (geographic, weighted, failover) typically between regions. Global Accelerator = TCP/UDP routing on AWS backbone. 'Load balance across EC2' → always ELB.",
+      "references": [
+        {"type": "doc", "title": "Elastic Load Balancing", "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html"},
+        {"type": "doc", "title": "ELB types comparison", "url": "https://aws.amazon.com/elasticloadbalancing/features/"},
+        {"type": "doc", "title": "Application Load Balancer", "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html"}
+      ]
+    },
+    {
+      "id": "clf010",
+      "domain": "D4",
+      "scenario": "A company runs production workloads 24/7 and expects consistent usage for the next 3 years. They want to reduce EC2 costs significantly compared to On-Demand pricing.",
+      "question": "Which EC2 pricing model provides the GREATEST discount for this steady, long-term workload?",
+      "choices": [
+        "On-Demand instances",
+        "Spot Instances",
+        "Savings Plans or Reserved Instances with 3-year all-upfront commitment",
+        "Dedicated Hosts"
+      ],
+      "correct": 2,
+      "explanation": "Savings Plans (Compute or EC2 Instance) and Reserved Instances offer up to 72% discount compared to On-Demand when committing to 3 years all-upfront. This is the deepest discount available for predictable, steady workloads.\n\nOn-Demand (A) has the highest cost (no discount). Spot Instances (B) offer up to 90% discount but can be interrupted — not suitable for steady production. Dedicated Hosts (D) are for licensing/compliance needs and are MORE expensive than standard instances, not cheaper.",
+      "pattern": "EC2 pricing models (cheapest first for steady workloads): Reserved Instances / Savings Plans 3yr all-upfront (~72% off) > RI/SP 3yr partial-upfront > RI/SP 1yr > On-Demand. Spot (up to 90% off) for interruption-tolerant only. Dedicated Hosts for compliance, NOT cost. Steady long-term = commitment plans.",
+      "references": [
+        {"type": "doc", "title": "AWS Savings Plans", "url": "https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html"},
+        {"type": "doc", "title": "EC2 Reserved Instances", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-reserved-instances.html"},
+        {"type": "doc", "title": "EC2 Pricing", "url": "https://aws.amazon.com/ec2/pricing/"}
+      ]
+    }
+  ]
+}
