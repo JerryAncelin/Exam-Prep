@@ -229,18 +229,74 @@
   .modal .modal-close { float: right; cursor: pointer; color: var(--text-dim); font-size: 20px; background: none; border: none; padding: 0; }
 
   /* ========= GAUNTLET MODE ========= */
-  .gauntlet-banner { max-width: 820px; margin: 40px auto 0; background: linear-gradient(135deg, rgba(255,59,59,0.08) 0%, rgba(199,125,255,0.05) 100%); border: 1px solid rgba(255,59,59,0.35); border-radius: var(--radius); padding: 28px 32px 28px 120px; cursor: pointer; position: relative; overflow: hidden; transition: all 0.2s; }
-  .gauntlet-banner:hover { border-color: #ff3b3b; transform: translateY(-2px); box-shadow: 0 10px 28px rgba(255,59,59,0.15); }
-  .gauntlet-banner::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #ff3b3b, #c77dff); transform: scaleX(0); transform-origin: left; transition: transform 0.4s; }
+  .gauntlet-banner {
+    max-width: 820px;
+    margin: 40px auto 0;
+    background-color: #0e0406;
+    background-image: url("gauntlet-bg.svg");
+    background-repeat: repeat-x;
+    background-position: center bottom;
+    background-size: auto 100%;
+    image-rendering: pixelated;
+    border: 1px solid rgba(255,59,59,0.45);
+    border-radius: var(--radius);
+    padding: 32px 36px 32px 130px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+    min-height: 180px;
+    animation: gauntletBgDrift 18s linear infinite;
+  }
+  /* Subtle horizontal drift so flames feel alive */
+  @keyframes gauntletBgDrift {
+    from { background-position: 0 bottom; }
+    to   { background-position: -240px bottom; }
+  }
+  /* Dark readability overlay — kept under content via z-index */
+  .gauntlet-banner::after {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(90deg, rgba(14,4,6,0.88) 0%, rgba(14,4,6,0.55) 45%, rgba(14,4,6,0.3) 100%),
+      radial-gradient(ellipse at 20% 50%, rgba(255,59,59,0.12), transparent 60%);
+    pointer-events: none;
+    z-index: 1;
+  }
+  /* Top accent bar on hover */
+  .gauntlet-banner::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #ff3b3b, #ffaa22, #ff3b3b);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.4s;
+    z-index: 3;
+  }
+  .gauntlet-banner:hover { border-color: #ff3b3b; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255,59,59,0.28); }
   .gauntlet-banner:hover::before { transform: scaleX(1); }
-  .gauntlet-banner .heart-deco { position: absolute; left: 28px; top: 50%; transform: translateY(-50%); width: 68px; height: 64px; background-image: var(--heart-full); background-repeat: no-repeat; background-position: center; background-size: contain; image-rendering: pixelated; filter: drop-shadow(0 0 12px rgba(255,59,59,0.45)); animation: heartIdlePulse 2.2s ease-in-out infinite; }
-  @keyframes heartIdlePulse { 0%,100% { transform: translateY(-50%) scale(1); } 50% { transform: translateY(-50%) scale(1.08); } }
-  .gauntlet-banner .tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #ff3b3b; margin-bottom: 10px; font-weight: 700; }
-  .gauntlet-banner h2 { font-family: var(--serif); font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
-  .gauntlet-banner h2 em { font-style: italic; color: #ff3b3b; font-weight: 600; }
-  .gauntlet-banner p { color: var(--text-dim); font-size: 14px; max-width: 560px; line-height: 1.5; }
-  .gauntlet-banner .pool-stats { font-family: var(--mono); font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 16px; display: flex; gap: 22px; flex-wrap: wrap; }
-  .gauntlet-banner .pool-stats b { color: #ff3b3b; font-weight: 700; }
+  /* All content above the overlay */
+  .gauntlet-banner > * { position: relative; z-index: 2; }
+  .gauntlet-banner .heart-deco {
+    position: absolute;
+    left: 30px; top: 50%;
+    transform: translateY(-50%);
+    width: 72px; height: 68px;
+    background-image: var(--heart-full);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 14px rgba(255,59,59,0.6));
+    animation: heartIdlePulse 2.2s ease-in-out infinite;
+    z-index: 2;
+  }
+  @keyframes heartIdlePulse { 0%,100% { transform: translateY(-50%) scale(1); filter: drop-shadow(0 0 12px rgba(255,59,59,0.55)); } 50% { transform: translateY(-50%) scale(1.08); filter: drop-shadow(0 0 20px rgba(255,59,59,0.85)); } }
+  .gauntlet-banner .tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #ff6b6b; margin-bottom: 10px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+  .gauntlet-banner h2 { font-family: var(--serif); font-size: 34px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; color: #f2e6dc; text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 24px rgba(255,59,59,0.25); }
+  .gauntlet-banner h2 em { font-style: italic; color: #ff3b3b; font-weight: 600; text-shadow: 0 2px 10px rgba(255,59,59,0.6); }
+  .gauntlet-banner p { color: #d0c4bc; font-size: 14px; max-width: 560px; line-height: 1.5; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+  .gauntlet-banner .pool-stats { font-family: var(--mono); font-size: 11px; color: #a39a94; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 16px; display: flex; gap: 22px; flex-wrap: wrap; text-shadow: 0 1px 2px rgba(0,0,0,0.9); }
+  .gauntlet-banner .pool-stats b { color: #ff6b6b; font-weight: 700; }
 
   /* Config screen */
   .gauntlet-hero { text-align: center; padding: 40px 0 24px; }
@@ -262,6 +318,29 @@
   .exam-picker-card .pcount { font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
   .exam-picker-card .pcount b { color: var(--text); }
   .exam-picker-card.unavailable { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+  /* Mode picker (Sprint / Marathon / Ironman) */
+  .mode-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; max-width: 720px; margin: 0 auto; }
+  .mode-picker-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; }
+  .mode-picker-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+  .mode-picker-card.selected { border-color: #ff3b3b; background: rgba(255,59,59,0.06); box-shadow: 0 0 0 1px rgba(255,59,59,0.2) inset; }
+  .mode-picker-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; transform: scaleX(0); transform-origin: left; transition: transform 0.3s; }
+  .mode-picker-card[data-mode="sprint"]::before { background: #3ddc97; }
+  .mode-picker-card[data-mode="marathon"]::before { background: #ffc857; }
+  .mode-picker-card[data-mode="ironman"]::before { background: #ff3b3b; }
+  .mode-picker-card.selected::before, .mode-picker-card:hover::before { transform: scaleX(1); }
+  .mode-picker-card .mlabel { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; }
+  .mode-picker-card[data-mode="sprint"] .mlabel { color: #3ddc97; }
+  .mode-picker-card[data-mode="marathon"] .mlabel { color: #ffc857; }
+  .mode-picker-card[data-mode="ironman"] .mlabel { color: #ff3b3b; }
+  .mode-picker-card .mtitle { font-family: var(--serif); font-size: 22px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .mode-picker-card .mstats { font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin-bottom: 10px; }
+  .mode-picker-card .mstats b { color: var(--text); }
+  .mode-picker-card .mhearts { display: flex; gap: 3px; align-items: center; }
+  .mode-picker-card .mhearts .heart { width: 20px; height: 19px; }
+  .mode-picker-card .mpb { font-family: var(--mono); font-size: 10px; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 10px; }
+  .mode-picker-card .mpb b { color: #ff3b3b; }
+  .mode-picker-card.unavailable { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 
   /* HUD with hearts */
   .gauntlet-hud { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
@@ -407,10 +486,10 @@
     <div class="heart-deco"></div>
     <div class="tag">⚔ SUDDEN-DEATH MODE</div>
     <h2>The <em>Gauntlet.</em></h2>
-    <p>90 of the hardest scenario questions per exam. Three hearts. Wrong answers cost a heart. Zero hearts ends the run. No navigation, no flagging, no going back.</p>
+    <p>The hardest scenario questions per exam. Choose your run: Sprint (25Q · 3♥), Marathon (50Q · 4♥), or Ironman (90Q · 5♥). Wrong answers cost a heart. Zero hearts ends the run.</p>
     <div class="pool-stats">
       <span>POOL: <b id="gauntlet-pool-count">—</b></span>
-      <span>LIVES: <b>♥ ♥ ♥</b></span>
+      <span>MODES: <b>3</b></span>
       <span>BEST: <b id="gauntlet-best-any">—</b></span>
     </div>
   </div>
@@ -518,18 +597,26 @@
   <span class="back-link" style="font-family: var(--mono); font-size: 11px; color: var(--text-faint); cursor: pointer; letter-spacing: 0.08em; text-transform: uppercase;" onclick="goToExamSelect()">← Back to exam select</span>
   <div class="gauntlet-hero">
     <h1>The <em>Gauntlet.</em></h1>
-    <p class="subtitle">Pick your exam. Survive as long as you can. Three hearts, one run. Miss a question, lose a heart. Lose them all, game over.</p>
+    <p class="subtitle">Pick your exam. Pick your difficulty. Survive. Miss a question, lose a heart. Lose them all, game over.</p>
     <div class="warning">⚠ No going back · No flagging · No hints</div>
   </div>
 
+  <div style="max-width: 720px; margin: 0 auto 12px;">
+    <div style="font-family: var(--mono); font-size: 11px; color: var(--text-faint); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 12px;">① Choose your exam</div>
+  </div>
   <div class="exam-picker" id="gauntlet-exam-picker"></div>
 
-  <div style="text-align: center; margin-top: 16px;">
+  <div style="max-width: 720px; margin: 28px auto 12px;">
+    <div style="font-family: var(--mono); font-size: 11px; color: var(--text-faint); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 12px;">② Choose your run</div>
+  </div>
+  <div class="mode-picker" id="gauntlet-mode-picker"></div>
+
+  <div style="text-align: center; margin-top: 24px;">
     <button class="primary" id="gauntlet-start-btn" disabled onclick="startGauntlet()" style="padding: 14px 38px; font-size: 14px;">⚔ Enter the Gauntlet</button>
   </div>
 
   <div style="max-width: 600px; margin: 40px auto 0; font-family: var(--mono); font-size: 11px; color: var(--text-faint); text-align: center; line-height: 1.9;">
-    HEARTS WARN AT LOW HP · CLASSIC "BIP BIP BIP" ENGAGES WHEN YOU'RE DOWN TO ONE HEART
+    HEARTS PULSE AT LOW HP · CLASSIC "BIP BIP BIP" ENGAGES WHEN YOU'RE DOWN TO YOUR LAST HEART
   </div>
 </section>
 
@@ -1176,7 +1263,8 @@ function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Mat
 
 /* ============================================================
  * GAUNTLET MODE
- * Three hearts. Hardest questions. Sudden death.
+ * GAUNTLET MODE
+ * Three tiered modes (Sprint / Marathon / Ironman). Zelda hearts. Sudden death.
  * ============================================================ */
 const GAUNTLET_FILES = {
   sap: 'sap-c02-gauntlet.json',
@@ -1184,36 +1272,49 @@ const GAUNTLET_FILES = {
   aif: 'aif-c01-gauntlet.json',
   clf: 'clf-c02-gauntlet.json'
 };
-const GAUNTLET_STARTING_HEARTS = 3;
+
+// Three difficulty tiers — picker shown on config screen
+const GAUNTLET_MODES = {
+  sprint:   { label: 'Sprint',   questions: 25, hearts: 3, description: 'Quick bite' },
+  marathon: { label: 'Marathon', questions: 50, hearts: 4, description: 'Mid-length grind' },
+  ironman:  { label: 'Ironman',  questions: 90, hearts: 5, description: 'The full gauntlet' }
+};
 
 const gState = {
   exam: null,
-  pool: [],      // shuffled question pool for this run
-  idx: 0,        // current question index in the run
-  hearts: GAUNTLET_STARTING_HEARTS,
+  mode: null,          // 'sprint' | 'marathon' | 'ironman'
+  maxHearts: 3,        // set from chosen mode at start
+  pool: [],
+  idx: 0,
+  hearts: 3,
   streak: 0,
   bestStreak: 0,
   totalCorrect: 0,
   totalAnswered: 0,
   startTime: null,
-  answers: [],   // [{q, selected, correct}]
+  answers: [],
   answered: false,
-  available: {}, // {examKey: {count, available:bool}}
+  available: {},
   audioCtx: null,
   bipInterval: null
 };
 
-// Persisted best-streak per exam
+// Persisted best-streak per (exam, mode) tuple — key = "exam_mode"
 function loadGauntletPBs() {
   if (!useStorage) return {};
   try { return JSON.parse(localStorage.getItem('aws_cert_gauntlet_pb') || '{}'); } catch(e) { return {}; }
 }
-function saveGauntletPB(examKey, streak) {
-  if (!useStorage) return;
+function pbKey(examKey, mode) { return `${examKey}_${mode}`; }
+function getGauntletPB(examKey, mode) {
+  return loadGauntletPBs()[pbKey(examKey, mode)] || 0;
+}
+function saveGauntletPB(examKey, mode, streak) {
+  if (!useStorage) return false;
   try {
     const pbs = loadGauntletPBs();
-    if (!pbs[examKey] || streak > pbs[examKey]) {
-      pbs[examKey] = streak;
+    const k = pbKey(examKey, mode);
+    if (!pbs[k] || streak > pbs[k]) {
+      pbs[k] = streak;
       localStorage.setItem('aws_cert_gauntlet_pb', JSON.stringify(pbs));
       return true;
     }
@@ -1246,18 +1347,20 @@ async function probeGauntletBanks() {
 
 function goToGauntletConfig() {
   gState.exam = null;
+  gState.mode = null;
   renderGauntletPicker();
-  document.body.setAttribute('data-exam', 'clf'); // neutral-ish accent
+  renderGauntletModePicker();
+  document.body.setAttribute('data-exam', 'clf');
   showScreen('gauntlet-config');
 }
 
 function renderGauntletPicker() {
-  const pbs = loadGauntletPBs();
   const picker = $('#gauntlet-exam-picker');
   picker.innerHTML = '';
   Object.entries(EXAMS).forEach(([key, exam]) => {
     const info = gState.available[key] || { count: 0, available: false };
-    const pb = pbs[key] || 0;
+    // Show best across all modes for this exam in the picker card
+    const bestAny = ['sprint','marathon','ironman'].reduce((m, mode) => Math.max(m, getGauntletPB(key, mode)), 0);
     const card = document.createElement('div');
     card.className = 'exam-picker-card' + (info.available ? '' : ' unavailable');
     card.dataset.exam = key;
@@ -1265,24 +1368,84 @@ function renderGauntletPicker() {
       <div class="pcode">${exam.code}</div>
       <div class="pname">${exam.name.split('—')[0].trim()}</div>
       <div class="pcount">${info.available ? `<b>${info.count}</b> questions` : 'coming soon'}</div>
-      ${pb > 0 ? `<div class="pcount" style="margin-top:4px;">BEST: <b style="color:#ff3b3b">${pb}</b></div>` : ''}
+      ${bestAny > 0 ? `<div class="pcount" style="margin-top:4px;">BEST: <b style="color:#ff3b3b">${bestAny}</b></div>` : ''}
     `;
-    if (info.available) {
-      card.onclick = () => selectGauntletExam(key);
-    }
+    if (info.available) card.onclick = () => selectGauntletExam(key);
     picker.appendChild(card);
   });
-  $('#gauntlet-start-btn').disabled = true;
+  updateStartButton();
+}
+
+function renderGauntletModePicker() {
+  const picker = $('#gauntlet-mode-picker');
+  picker.innerHTML = '';
+  Object.entries(GAUNTLET_MODES).forEach(([key, mode]) => {
+    const card = document.createElement('div');
+    // Disable modes whose question count exceeds the selected exam's available bank
+    const available = gState.available[gState.exam];
+    const enough = !available || available.count >= mode.questions; // allow if no exam selected yet (visual)
+    card.className = 'mode-picker-card' + (enough ? '' : ' unavailable');
+    card.dataset.mode = key;
+    // Best streak for this exam+mode, shown if exam is selected
+    const pb = gState.exam ? getGauntletPB(gState.exam, key) : 0;
+    // Render mini-hearts preview
+    let heartsHtml = '<div class="mhearts">';
+    for (let i = 0; i < mode.hearts; i++) heartsHtml += '<span class="heart full"></span>';
+    heartsHtml += '</div>';
+    card.innerHTML = `
+      <div class="mlabel">${mode.label}</div>
+      <div class="mtitle">${mode.description}</div>
+      <div class="mstats"><b>${mode.questions}</b> questions · <b>${mode.hearts}</b> hearts</div>
+      ${heartsHtml}
+      ${pb > 0 ? `<div class="mpb">BEST: <b>${pb}</b></div>` : ''}
+    `;
+    if (enough) card.onclick = () => selectGauntletMode(key);
+    picker.appendChild(card);
+  });
 }
 
 function selectGauntletExam(examKey) {
   gState.exam = examKey;
   $$('#gauntlet-exam-picker .exam-picker-card').forEach(c => c.classList.toggle('selected', c.dataset.exam === examKey));
-  $('#gauntlet-start-btn').disabled = false;
+  // Re-render modes so PBs and availability update for this exam
+  renderGauntletModePicker();
+  // Keep mode selection if still valid for this exam
+  if (gState.mode) {
+    const avail = gState.available[examKey];
+    const mode = GAUNTLET_MODES[gState.mode];
+    if (avail && avail.count < mode.questions) {
+      gState.mode = null;
+    } else {
+      // Re-apply visual selection
+      const sel = document.querySelector(`#gauntlet-mode-picker .mode-picker-card[data-mode="${gState.mode}"]`);
+      if (sel) sel.classList.add('selected');
+    }
+  }
+  updateStartButton();
+}
+
+function selectGauntletMode(modeKey) {
+  gState.mode = modeKey;
+  $$('#gauntlet-mode-picker .mode-picker-card').forEach(c => c.classList.toggle('selected', c.dataset.mode === modeKey));
+  updateStartButton();
+}
+
+function updateStartButton() {
+  const btn = $('#gauntlet-start-btn');
+  if (!btn) return;
+  const ok = gState.exam && gState.mode;
+  btn.disabled = !ok;
+  if (ok) {
+    const m = GAUNTLET_MODES[gState.mode];
+    btn.textContent = `⚔ Enter the Gauntlet · ${m.label} (${m.questions}Q · ${m.hearts}♥)`;
+  } else {
+    btn.textContent = '⚔ Enter the Gauntlet';
+  }
 }
 
 async function startGauntlet() {
-  if (!gState.exam) return;
+  if (!gState.exam || !gState.mode) return;
+  const mode = GAUNTLET_MODES[gState.mode];
   const file = GAUNTLET_FILES[gState.exam];
   let questions = [];
   try {
@@ -1297,10 +1460,14 @@ async function startGauntlet() {
   if (questions.length === 0) { alert('No questions in gauntlet bank.'); return; }
 
   shuffle(questions);
-  gState.pool = questions;
+  // Slice to the mode's target count (if bank has fewer, run with what's available)
+  const targetCount = Math.min(mode.questions, questions.length);
+  gState.pool = questions.slice(0, targetCount);
   gState.idx = 0;
-  gState.hearts = GAUNTLET_STARTING_HEARTS;
+  gState.maxHearts = mode.hearts;
+  gState.hearts = mode.hearts;
   gState.streak = 0;
+  gState.bestStreak = 0;
   gState.totalCorrect = 0;
   gState.totalAnswered = 0;
   gState.startTime = Date.now();
@@ -1308,12 +1475,11 @@ async function startGauntlet() {
   gState.answered = false;
   stopBipBip();
 
-  // Set body accent to the chosen exam color for visual consistency
   document.body.setAttribute('data-exam', gState.exam);
-  $('#logo-text').textContent = EXAMS[gState.exam].code + ' · GAUNTLET';
+  $('#logo-text').textContent = `${EXAMS[gState.exam].code} · GAUNTLET · ${mode.label.toUpperCase()}`;
 
-  $('#gauntlet-qtotal').textContent = questions.length;
-  $('#gauntlet-exam-pill').textContent = EXAMS[gState.exam].code;
+  $('#gauntlet-qtotal').textContent = gState.pool.length;
+  $('#gauntlet-exam-pill').textContent = `${EXAMS[gState.exam].code} · ${mode.label}`;
   $('#gauntlet-exam-pill').className = 'exam-pill ' + gState.exam;
 
   renderHearts();
@@ -1324,12 +1490,12 @@ async function startGauntlet() {
 function renderHearts() {
   const el = $('#gauntlet-hearts');
   el.innerHTML = '';
-  for (let i = 0; i < GAUNTLET_STARTING_HEARTS; i++) {
+  for (let i = 0; i < gState.maxHearts; i++) {
     const h = document.createElement('span');
     h.className = 'heart ' + (i < gState.hearts ? 'full' : 'empty');
     el.appendChild(h);
   }
-  // Low-hp pulse + bip when at 1 heart
+  // Low-hp pulse + bip when at LAST heart (regardless of starting count)
   const hud = $('#gauntlet-hud');
   if (gState.hearts === 1) {
     hud.classList.add('low-hp');
@@ -1459,17 +1625,18 @@ function abandonGauntlet() {
 function endGauntlet(victory) {
   stopBipBip();
   const duration = Date.now() - gState.startTime;
-  const isNewPB = saveGauntletPB(gState.exam, gState.bestStreak);
+  const isNewPB = saveGauntletPB(gState.exam, gState.mode, gState.bestStreak);
+  const mode = GAUNTLET_MODES[gState.mode];
 
   // Render game-over UI
-  $('#gauntlet-verdict').textContent = victory ? '⚔ GAUNTLET CLEARED' : 'GAME OVER';
+  $('#gauntlet-verdict').textContent = victory ? `⚔ ${mode.label.toUpperCase()} CLEARED` : 'GAME OVER';
   $('#gauntlet-verdict').className = 'verdict' + (victory ? ' victory' : '');
   $('#gauntlet-final-streak').textContent = gState.bestStreak;
   $('#gauntlet-final-streak').className = 'final-streak' + (victory ? ' victory' : '');
 
   const deadHearts = $('#gauntlet-dead-hearts');
   deadHearts.innerHTML = '';
-  for (let i = 0; i < GAUNTLET_STARTING_HEARTS; i++) {
+  for (let i = 0; i < gState.maxHearts; i++) {
     const h = document.createElement('span');
     h.className = 'heart ' + (victory ? 'full' : 'empty');
     deadHearts.appendChild(h);

@@ -601,6 +601,1500 @@
           "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html"
         }
       ]
+    },
+    {
+      "id": "clfg024",
+      "domain": "D1",
+      "scenario": "A development team argues about which AWS Well-Architected pillar to prioritize. The CFO insists on reducing waste and avoiding unused resources. The CTO wants to ensure the system keeps running through failures. The security officer wants stronger access controls.",
+      "question": "Which pillar BEST addresses the CFO's concern?",
+      "choices": [
+        "Performance Efficiency",
+        "Cost Optimization",
+        "Operational Excellence",
+        "Sustainability"
+      ],
+      "correct": 1,
+      "explanation": "Cost Optimization is the pillar about delivering business value at the lowest price point — right-sizing, eliminating unused resources, using managed services, matching supply with demand. 'Reducing waste and avoiding unused resources' is its language.\n\nPerformance Efficiency (A) is about using compute resources efficiently — adjacent but focused on technical fit, not spend. Operational Excellence (C) covers running and monitoring. Sustainability (D) is environmental impact (energy efficiency, for planet, not just budget). The trap: Sustainability overlaps with waste reduction, but 'avoiding unused resources' + CFO framing is Cost Optimization.",
+      "pattern": "Well-Architected pillar quick-match: Operational Excellence = run/monitor/improve. Security = protect data/systems. Reliability = recover + availability. Performance Efficiency = right-sized resources. Cost Optimization = maximize value, minimize spend. Sustainability = minimize environmental impact. Keywords: 'waste'/'unused resources'/'budget' ⇒ Cost Optimization. 'planet'/'carbon'/'energy' ⇒ Sustainability.",
+      "references": [
+        {
+          "type": "whitepaper",
+          "title": "AWS Well-Architected — Cost Optimization Pillar",
+          "url": "https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg025",
+      "domain": "D1",
+      "scenario": "A company wants to deploy an application with components that can fail independently without cascading. They want a principle to guide their architecture.",
+      "question": "Which AWS design principle BEST fits this requirement?",
+      "choices": [
+        "Vertical scaling for simplicity",
+        "Loose coupling via message queues or event-driven communication",
+        "Monolithic deployment to minimize surface area",
+        "Colocating all tiers on a single instance"
+      ],
+      "correct": 1,
+      "explanation": "Loose coupling is a foundational cloud principle: components communicate through well-defined interfaces (SQS queues, SNS topics, EventBridge, APIs) so failure or slowness in one doesn't propagate. Classic pattern: web tier writes to SQS, back-end processes at its own pace; either side can fail without taking the other down.\n\nVertical scaling (A) makes a single server bigger — opposite of the distributed pattern. Monolithic deployment (C) tightly couples components. Colocation (D) is maximum coupling. The trap: vertical scaling sounds 'more resilient' because one big server feels sturdy, but scaling up doesn't prevent cascading failures — it just concentrates risk.",
+      "pattern": "Cloud design principles: design for failure, loose coupling (queues/topics between tiers), horizontal scaling (scale out, not up), stateless services (state in DynamoDB/Redis/S3, not on instance), infrastructure as code, automate everything. Opposite of traditional on-prem patterns that favored vertical scaling and tight integration.",
+      "references": [
+        {
+          "type": "whitepaper",
+          "title": "AWS Architecture Best Practices",
+          "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg026",
+      "domain": "D1",
+      "scenario": "A small team is used to planning server capacity 18 months in advance. In AWS they're told they can 'stop guessing capacity.' They want to understand how this works in practice.",
+      "question": "Which AWS capability BEST enables 'stop guessing capacity'?",
+      "choices": [
+        "Reserved Instances, which lock in capacity for 1 or 3 years",
+        "AWS Auto Scaling, which adds or removes resources based on real-time demand",
+        "AWS Trusted Advisor, which warns about over-provisioning",
+        "AWS Budgets, which alerts on unexpected spend"
+      ],
+      "correct": 1,
+      "explanation": "AWS Auto Scaling (for EC2, ECS, DynamoDB, Aurora, etc.) scales capacity in and out automatically based on real demand signals. Instead of predicting demand, you react to it. That's the operational embodiment of 'stop guessing capacity.'\n\nReserved Instances (A) require you to GUESS capacity — 1 or 3 year commitment. Trusted Advisor (C) recommends best practices but doesn't scale anything. Budgets (D) is cost monitoring. The trap: RIs sound capacity-related, but they're a commitment tool, not an elastic scaling tool.",
+      "pattern": "Six cloud advantages: trade CapEx for OpEx, economies of scale, **stop guessing capacity** (via elasticity + Auto Scaling), speed/agility, stop running data centers, go global in minutes. Auto Scaling family: EC2 ASG + Application Auto Scaling (ECS, DynamoDB, Aurora RR) + predictive scaling.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Auto Scaling",
+          "url": "https://aws.amazon.com/autoscaling/"
+        },
+        {
+          "type": "doc",
+          "title": "Six Advantages of Cloud Computing",
+          "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-overview/six-advantages-of-cloud-computing.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg027",
+      "domain": "D1",
+      "scenario": "A CTO explains cloud service models to a non-technical board. Three tiers: one where the customer manages the application only, one where the customer manages the OS and above, and one where the customer manages nothing except configuration.",
+      "question": "Which mapping is correct?",
+      "choices": [
+        "IaaS = manage only configuration; PaaS = manage OS and above; SaaS = manage application only",
+        "IaaS = manage OS and above; PaaS = manage application only; SaaS = manage only configuration",
+        "IaaS = manage application only; PaaS = manage only configuration; SaaS = manage OS and above",
+        "IaaS, PaaS, and SaaS all require managing the OS"
+      ],
+      "correct": 1,
+      "explanation": "IaaS (Infrastructure as a Service) — customer manages guest OS, middleware, runtime, data, and application. AWS example: EC2. PaaS (Platform as a Service) — customer manages only the application and data; provider handles OS, runtime, middleware. AWS example: Elastic Beanstalk, Lambda (more extreme PaaS). SaaS (Software as a Service) — customer uses the application; provider handles everything. AWS example: Amazon WorkMail, WorkDocs; external example: Salesforce.\n\nMnemonic: the further up the stack the service model, the less the customer manages. IaaS = most work, most control. SaaS = least work, least control. PaaS in the middle.",
+      "pattern": "Service model stack (customer responsibility shrinks as you go up): IaaS (EC2) → CaaS (Fargate) → PaaS (Beanstalk, App Runner, Lambda) → SaaS (Chime, WorkMail). Each step up = less OS/runtime management, less flexibility. Shared responsibility shifts accordingly.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Types of Cloud Computing",
+          "url": "https://aws.amazon.com/types-of-cloud-computing/"
+        }
+      ]
+    },
+    {
+      "id": "clfg028",
+      "domain": "D1",
+      "scenario": "A company evaluates three deployment models: fully on AWS, fully on-premises, and a model where some workloads stay in their data center while others run in AWS with connectivity between the two.",
+      "question": "What is the third model called?",
+      "choices": [
+        "Multi-cloud",
+        "Hybrid cloud",
+        "Private cloud",
+        "Community cloud"
+      ],
+      "correct": 1,
+      "explanation": "Hybrid cloud combines on-premises (or private cloud) with public cloud, connected via Direct Connect or Site-to-Site VPN. Enterprises use it to keep sensitive or latency-critical workloads on-prem while running new ones cloud-native.\n\nMulti-cloud (A) means two or more public clouds (AWS + Azure) — not on-prem + one cloud. Private cloud (C) is all-on-premises or dedicated single-tenant infra. Community cloud (D) is shared infra among organizations with common requirements (e.g., government agencies) — rare in practice.",
+      "pattern": "Deployment models: public (all AWS), private (all on-prem), hybrid (on-prem + public, connected), multi-cloud (multiple public clouds). Hybrid connectivity: Direct Connect (dedicated fiber), Site-to-Site VPN (over internet, IPsec), AWS Outposts (AWS hardware on-prem), Local Zones/Wavelength (AWS edge near users).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Types of Cloud Computing",
+          "url": "https://aws.amazon.com/types-of-cloud-computing/"
+        }
+      ]
+    },
+    {
+      "id": "clfg029",
+      "domain": "D1",
+      "scenario": "A startup provisions new staging environments in minutes to test features, versus months of procurement on-premises. This speed unlocks a new culture of experimentation.",
+      "question": "Which cloud benefit does this BEST represent?",
+      "choices": [
+        "Elasticity",
+        "Durability",
+        "Agility",
+        "Fault tolerance"
+      ],
+      "correct": 2,
+      "explanation": "Agility (also called 'speed and agility') is the benefit describing how quickly new resources and environments can be provisioned — minutes vs months. It enables cheap experimentation: spin up, test, tear down.\n\nElasticity (A) is automatic scale up/down with demand — about runtime resource adjustment, not provisioning new environments. Durability (B) is data not being lost over time (S3 = 11 nines). Fault tolerance (D) is continuing to operate despite failures. The trap: elasticity and agility both involve speed, but elasticity = runtime scaling; agility = provisioning speed and experimentation.",
+      "pattern": "Cloud-benefit vocabulary: Agility = provisioning speed + experimentation. Elasticity = auto scale with demand. Scalability = architectural growth capacity. High availability = uptime. Durability = data not lost. Fault tolerance = operates through failure. Memorize the keyword map — CLF tests it constantly.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Six Advantages of Cloud Computing",
+          "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-overview/six-advantages-of-cloud-computing.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg030",
+      "domain": "D1",
+      "scenario": "A finance team compares AWS to their previous data center. On-prem required large upfront hardware purchases. AWS lets them pay only for what they use each month, with no long-term commitments required.",
+      "question": "Which cloud benefit does this describe?",
+      "choices": [
+        "Go global in minutes",
+        "Trade capital expense for variable expense",
+        "Economies of scale",
+        "Increased speed and agility"
+      ],
+      "correct": 1,
+      "explanation": "Moving from capital expense (upfront hardware purchases) to variable/operating expense (pay-per-use, no upfront) is one of the six foundational cloud benefits. The CFO story: don't guess and buy hardware — rent exactly what you use.\n\nGo global in minutes (A) is about multi-region deployment speed. Economies of scale (C) is AWS passing lower per-unit costs to customers because of its massive scale. Speed and agility (D) is provisioning velocity. All are real cloud benefits, but 'pay only for what you use + no upfront' is specifically the CapEx-to-OpEx benefit.",
+      "pattern": "Six advantages of cloud (memorize — CLF favorite): (1) Trade CapEx for variable expense. (2) Benefit from economies of scale. (3) Stop guessing capacity. (4) Increase speed and agility. (5) Stop spending on running data centers. (6) Go global in minutes.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Six Advantages of Cloud Computing",
+          "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-overview/six-advantages-of-cloud-computing.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg031",
+      "domain": "D2",
+      "scenario": "A security engineer wants an application running on an EC2 instance to access S3 WITHOUT embedding long-lived AWS credentials on the instance.",
+      "question": "What is the correct mechanism?",
+      "choices": [
+        "Store access keys in an environment variable on the EC2 instance",
+        "Attach an IAM role to the EC2 instance via an instance profile",
+        "Create an IAM user for the EC2 instance and authenticate as that user",
+        "Use the AWS root account credentials for the EC2 instance"
+      ],
+      "correct": 1,
+      "explanation": "IAM roles attached to EC2 (via instance profile) provide temporary, automatically-rotated credentials delivered through the instance metadata service (IMDS). The SDK and CLI retrieve them transparently. No keys on disk, no rotation to manage, no leakage from embedded secrets.\n\nOption A is the classic anti-pattern — keys leak via logs, snapshots, compromised hosts. Option C (IAM user per instance) means long-lived credentials and operational misery. Option D is a catastrophic security violation — root should never be used routinely. The trap: IAM users feel like 'the identity for machines,' but for AWS workloads, **roles** are the mechanism.",
+      "pattern": "IAM identity types: users (humans with console/programmatic access), groups (collections of users), roles (assumable identity for services, federation, cross-account). Rule: any AWS service calling other AWS services uses a role. EC2 → role via instance profile. Lambda → execution role. ECS task → task role. Never embed long-lived access keys.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "IAM roles for Amazon EC2",
+          "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg032",
+      "domain": "D2",
+      "scenario": "A company prepares for a compliance audit. The auditor asks for evidence of AWS's SOC 1, SOC 2, ISO 27001, and PCI DSS certifications to support the customer's own compliance attestation.",
+      "question": "Which service provides on-demand access to these AWS compliance reports?",
+      "choices": [
+        "AWS Trusted Advisor",
+        "AWS Artifact",
+        "AWS Audit Manager",
+        "AWS Config"
+      ],
+      "correct": 1,
+      "explanation": "AWS Artifact is the no-cost, self-service portal for downloading AWS's compliance reports (SOC, ISO, PCI DSS, FedRAMP, IRAP, etc.) and agreements (BAA, GDPR DPA). It's where auditors and compliance teams get the current attestation documents.\n\nTrusted Advisor (A) gives best-practice recommendations, not compliance documents. Audit Manager (C) helps the CUSTOMER collect evidence for THEIR audit against frameworks (PCI, HIPAA, SOC 2) — it automates evidence collection from AWS resources but doesn't provide AWS's own reports. Config (D) tracks resource configuration compliance against YOUR rules. The trap: Audit Manager sounds like 'audit reports,' but it builds YOUR audit package, not AWS's.",
+      "pattern": "Compliance toolkit: Artifact = AWS's own compliance reports (download SOC/ISO/PCI). Audit Manager = automate YOUR audit evidence against PCI/HIPAA/SOC 2 frameworks. Config = resource config compliance against your rules. Security Hub = consolidated findings. Trusted Advisor = best-practice checks. Two different things: AWS's compliance reports vs. your compliance posture.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Artifact",
+          "url": "https://aws.amazon.com/artifact/"
+        }
+      ]
+    },
+    {
+      "id": "clfg033",
+      "domain": "D2",
+      "scenario": "A developer's laptop is compromised. The developer had programmatic access to AWS via IAM user access keys. The security team needs to minimize blast radius immediately.",
+      "question": "Which action is MOST effective as an immediate response?",
+      "choices": [
+        "Change the AWS root account password",
+        "Deactivate and delete the compromised IAM user's access keys, and audit CloudTrail for suspicious activity",
+        "Enable MFA on the root account",
+        "Terminate all EC2 instances in the account"
+      ],
+      "correct": 1,
+      "explanation": "The specific attack vector is the compromised IAM user's access keys. Deactivating them immediately cuts off the attacker's programmatic access; deleting them ensures they can't be reactivated; auditing CloudTrail reveals what was done while keys were live. Textbook key-compromise incident response.\n\nOption A doesn't help if root wasn't compromised. Option C (MFA on root) is a preventative best practice, not a response to THIS compromise. Option D (terminate all EC2) is extreme, causes self-inflicted outage, and doesn't address credential-level persistence — the attacker may have touched S3, RDS, IAM, Lambda too. The trap: 'compromise' makes candidates think broadly, but scope the response to the compromised identity first, then audit.",
+      "pattern": "IAM compromise response: (1) revoke the specific credentials (deactivate + delete access keys, force password reset, disable MFA if suspect). (2) audit CloudTrail for actions taken with those credentials. (3) check for newly-created users/roles/policies (attacker persistence). (4) rotate any secrets exposed. (5) post-mortem. Always: MFA on root and high-privilege users, and never use root for day-to-day work.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "What to do if you inadvertently expose an AWS access key",
+          "url": "https://aws.amazon.com/premiumsupport/knowledge-center/exposed-iam-key/"
+        }
+      ]
+    },
+    {
+      "id": "clfg034",
+      "domain": "D2",
+      "scenario": "A security team wants to continuously detect compromised EC2 instances, crypto-mining activity, and anomalous API calls across multiple AWS accounts. They don't want to deploy agents.",
+      "question": "Which service fits this requirement?",
+      "choices": [
+        "Amazon Inspector",
+        "Amazon GuardDuty",
+        "AWS Shield",
+        "Amazon Macie"
+      ],
+      "correct": 1,
+      "explanation": "GuardDuty is AWS's intelligent threat-detection service. It continuously analyzes CloudTrail events, VPC Flow Logs, and DNS logs (all log sources AWS already has — **no agent required**) to detect compromised instances, crypto-mining, reconnaissance, and unusual API activity. Multi-account via AWS Organizations.\n\nInspector (A) scans EC2 instances and ECR images for software vulnerabilities (CVEs). It's a vuln scanner, not a threat detector, and Inspector v2 uses the SSM agent on EC2. Shield (C) is DDoS protection. Macie (D) discovers and classifies sensitive data in S3 (PII, PHI). The trap: Inspector and GuardDuty both 'detect bad things,' but Inspector = known vulnerabilities (static); GuardDuty = active threats from behavior (dynamic).",
+      "pattern": "Threat detection vs vulnerability detection: GuardDuty = threats from behavior (log analysis, agentless). Inspector = software CVEs (scanning, uses SSM agent). Macie = S3 data classification (PII/PHI). Detective = threat investigation (deep graph on CloudTrail/VPC Flow/GuardDuty findings). Pairing: GuardDuty for detection, Detective for investigation, Inspector for vuln mgmt.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon GuardDuty",
+          "url": "https://aws.amazon.com/guardduty/"
+        }
+      ]
+    },
+    {
+      "id": "clfg035",
+      "domain": "D2",
+      "scenario": "A company must ensure certain S3 objects cannot be deleted or overwritten for a fixed retention period (e.g., 7 years) to meet regulatory requirements like SEC 17a-4.",
+      "question": "Which S3 feature meets this requirement?",
+      "choices": [
+        "S3 Versioning",
+        "S3 Object Lock in Compliance mode",
+        "S3 Bucket Policies denying delete",
+        "S3 Lifecycle policies"
+      ],
+      "correct": 1,
+      "explanation": "S3 Object Lock with Compliance mode provides WORM (Write Once Read Many) semantics. In Compliance mode, even the root account cannot delete or modify locked objects during the retention period — the strict mode designed for SEC 17a-4, FINRA, CFTC regulatory compliance. Governance mode is the softer variant (privileged users with special permissions can override).\n\nVersioning (A) preserves version history but doesn't prevent permanent deletion of versions. Bucket policies (C) can be modified by admins, so not a true immutability control. Lifecycle policies (D) transition or expire objects over time — opposite of retention. The trap: versioning + MFA delete gets close, but Object Lock Compliance is the explicit WORM compliance answer.",
+      "pattern": "S3 data protection layers: Versioning (multiple versions per key, soft delete via markers, MFA delete hardens deletion). Object Lock (Governance = privileged override; Compliance = strict WORM, even root can't delete during retention). Replication (CRR/SRR) for durability. Encryption for confidentiality. For regulatory WORM ⇒ Object Lock Compliance mode.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "S3 Object Lock",
+          "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg036",
+      "domain": "D2",
+      "scenario": "A company wants to centrally manage encryption keys for multiple AWS services across multiple accounts, audit every use of every key, and enforce annual key rotation.",
+      "question": "Which service provides these capabilities?",
+      "choices": [
+        "AWS Certificate Manager (ACM)",
+        "AWS Key Management Service (KMS)",
+        "AWS Secrets Manager",
+        "AWS CloudHSM"
+      ],
+      "correct": 1,
+      "explanation": "KMS is the managed service for creating, managing, and using encryption keys. Every use is logged to CloudTrail (full auditability), automatic annual rotation can be enabled on customer-managed keys, and keys can be shared across accounts via key policies and grants. KMS integrates natively with nearly all AWS services (S3, EBS, RDS, Lambda, etc.).\n\nACM (A) manages TLS/SSL certificates for HTTPS — not general encryption keys. Secrets Manager (C) stores secrets (passwords, API keys), uses KMS under the hood, but is about secrets, not key management itself. CloudHSM (D) provides dedicated single-tenant HSMs for FIPS 140-2 Level 3 requirements — more expensive, specialty use. The trap: CloudHSM sounds like 'the most secure option' but is the right answer only when dedicated HSMs are specifically required.",
+      "pattern": "Key/secret management: KMS = managed encryption keys (AWS-managed, customer-managed, imported, multi-Region). CloudHSM = dedicated FIPS 140-2 L3 HSMs (specialty/expensive). Secrets Manager = secret values (passwords, DB creds) with rotation. Parameter Store = config + secrets (cheap, no rotation). ACM = TLS certs.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Key Management Service",
+          "url": "https://docs.aws.amazon.com/kms/latest/developerguide/overview.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg037",
+      "domain": "D2",
+      "scenario": "A security engineer must decide between AWS IAM Identity Center (formerly AWS SSO) and creating IAM users for granting employees access to multiple AWS accounts.",
+      "question": "Which statement CORRECTLY describes the recommended approach for multi-account human access?",
+      "choices": [
+        "Create IAM users in every account for each employee — provides the best audit trail",
+        "Use IAM Identity Center to federate users from an external IdP (or its built-in directory) and map them to permission sets across accounts",
+        "Share the root account credentials across the team",
+        "Create one IAM user per employee in the management account and give them access keys to assume roles"
+      ],
+      "correct": 1,
+      "explanation": "IAM Identity Center is AWS's recommended identity solution for multi-account human access. Users authenticate once (federated from your IdP — Okta, Azure AD, Google Workspace, or Identity Center's internal store), then get short-lived credentials to each account via permission sets. Centralized management, MFA enforcement, SSO.\n\nOption A (IAM user per account per employee) is the painful old way — N accounts × M employees = credential sprawl. Option C is catastrophic — root must never be shared. Option D is an improvement but still relies on long-lived IAM user credentials in the management account; Identity Center delivers temporary credentials without persistent IAM users. The trap: IAM users feel like 'the' primary identity, but for humans in multi-account setups, Identity Center is current best practice.",
+      "pattern": "Human-access architecture: (best) IAM Identity Center + external IdP → permission sets → short-lived creds to any account in Organization. (legacy) IAM users + assume-role into member accounts. (worst) root / shared creds / per-account IAM users. SAML federation works directly too, but Identity Center reduces setup.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS IAM Identity Center",
+          "url": "https://aws.amazon.com/iam/identity-center/"
+        }
+      ]
+    },
+    {
+      "id": "clfg038",
+      "domain": "D3",
+      "scenario": "An online retailer wants to migrate their self-managed Cassandra cluster to a fully managed AWS service that preserves CQL (Cassandra Query Language) compatibility so existing application code keeps working.",
+      "question": "Which service fits?",
+      "choices": [
+        "Amazon DynamoDB",
+        "Amazon Keyspaces (for Apache Cassandra)",
+        "Amazon DocumentDB",
+        "Amazon Neptune"
+      ],
+      "correct": 1,
+      "explanation": "Amazon Keyspaces is AWS's managed, serverless Cassandra-compatible service. It speaks CQL, so existing Cassandra drivers and application code work with minimal changes. Fully managed, auto-scaling, pay-per-request or provisioned capacity.\n\nDynamoDB (A) is AWS's proprietary NoSQL — excellent service but NOT Cassandra-compatible. Migration from Cassandra to DynamoDB requires application rewrites. DocumentDB (C) is MongoDB-compatible (document/JSON), not Cassandra (wide-column). Neptune (D) is a graph database. The trap: DynamoDB is AWS's marquee NoSQL, many default to it for any 'NoSQL workload' — but CQL compatibility requires Keyspaces.",
+      "pattern": "Purpose-built database map: DynamoDB (key-value/document, AWS-native API), Keyspaces (Cassandra/CQL), DocumentDB (MongoDB/JSON), Neptune (graph/Gremlin+SPARQL), ElastiCache Redis (in-memory), MemoryDB (Redis + durable), Timestream (time-series), QLDB (ledger/immutable), Aurora (relational MySQL/Postgres-compatible).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon Keyspaces",
+          "url": "https://aws.amazon.com/keyspaces/"
+        }
+      ]
+    },
+    {
+      "id": "clfg039",
+      "domain": "D3",
+      "scenario": "A fintech company needs an immutable, cryptographically verifiable transaction ledger. They must be able to prove mathematically to auditors that records have not been altered since they were written.",
+      "question": "Which service is purpose-built for this?",
+      "choices": [
+        "Amazon RDS for PostgreSQL with a trigger-based audit table",
+        "Amazon QLDB (Quantum Ledger Database)",
+        "Amazon Managed Blockchain",
+        "Amazon S3 with Object Lock"
+      ],
+      "correct": 1,
+      "explanation": "QLDB is a purpose-built ledger database: immutable, append-only history with a SHA-256 hash chain (the journal) that provides cryptographic proof no record has been tampered with. Designed specifically for system-of-record audit use cases — financial transactions, supply chain, claims, DMV records.\n\nRDS with triggers (A) can log changes but is NOT cryptographically verifiable and is tamperable by DB admins. Managed Blockchain (C) is for multi-party decentralized scenarios (Hyperledger Fabric, Ethereum) where no single party owns the ledger — overkill when a single company owns the data. S3 Object Lock (D) gives WORM for files but isn't a ledger — you'd have to build ledger semantics on top. The trap: Blockchain feels like the 'immutable ledger' answer by reflex, but QLDB is correct for single-owner ledgers with centralized trust.",
+      "pattern": "Ledger use cases: single owner needing immutable + cryptographic proof ⇒ QLDB. Multi-party trustless ledger (consortia, public chains) ⇒ Managed Blockchain. WORM files for compliance ⇒ S3 Object Lock. Database audit logs with less rigor ⇒ CloudTrail + app-level logging. QLDB gives digests you can hand to auditors for mathematical proof.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon QLDB",
+          "url": "https://aws.amazon.com/qldb/"
+        }
+      ]
+    },
+    {
+      "id": "clfg040",
+      "domain": "D3",
+      "scenario": "A media company encodes thousands of videos per month. Each job takes 30-90 minutes, is fault-tolerant (can restart), and arrives in unpredictable bursts. They want a managed service to queue, schedule, and run these jobs on cost-optimized compute.",
+      "question": "Which service is PURPOSE-BUILT for this pattern?",
+      "choices": [
+        "AWS Lambda",
+        "AWS Batch",
+        "Amazon ECS on EC2 with Auto Scaling",
+        "AWS Step Functions"
+      ],
+      "correct": 1,
+      "explanation": "AWS Batch is the managed service for batch computing at any scale. It handles job queueing, scheduling, and dynamic provisioning of compute resources (EC2 or Fargate, on-demand or Spot — Batch can auto-target Spot for cost). Bursty arrival + long jobs + fault tolerance is its sweet spot.\n\nLambda (A) has a hard 15-minute max runtime — 30-90 min jobs are impossible. ECS on EC2 with Auto Scaling (C) could work but you'd build job queueing, scheduling, retry logic yourself — Batch does all of it. Step Functions (D) orchestrates workflows across services, it's not a batch compute engine. The trap: 'batch processing' as a concept vs AWS Batch the service — both match here, but the product-specific answer is Batch. For video specifically, MediaConvert is even more purpose-built.",
+      "pattern": "Compute selection by job shape: <15 min event-driven ⇒ Lambda. Long-running always-on services ⇒ ECS/EKS/Fargate. Bursty, fault-tolerant, long-running jobs ⇒ AWS Batch (with Spot for cost). Complex multi-step workflows ⇒ Step Functions (orchestrator). Media-specific: Elemental MediaConvert for video transcoding.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Batch",
+          "url": "https://aws.amazon.com/batch/"
+        }
+      ]
+    },
+    {
+      "id": "clfg041",
+      "domain": "D3",
+      "scenario": "A web application in a VPC calls Amazon S3 thousands of times per hour. The architects want traffic to stay on the AWS private network, never traverse the public internet, and NOT incur NAT Gateway data-processing charges.",
+      "question": "Which solution BEST meets these requirements?",
+      "choices": [
+        "NAT Gateway in a public subnet",
+        "Gateway VPC Endpoint for S3",
+        "Interface VPC Endpoint (PrivateLink) for S3",
+        "Direct Connect to S3"
+      ],
+      "correct": 1,
+      "explanation": "Gateway VPC Endpoints for S3 (and DynamoDB) provide private connectivity from a VPC to those services via route-table entries. No data-processing charge, no NAT Gateway, no hourly endpoint fee — essentially free. Traffic stays on the AWS network.\n\nNAT Gateway (A) works but you pay the NAT hourly charge PLUS $0.045/GB data-processing fee, and traffic leaves the VPC for S3's public endpoint. Interface VPC Endpoint (C) uses PrivateLink and IS supported for S3 (added later), but charges hourly + per-GB — more expensive than Gateway Endpoint for same-VPC S3 access unless you specifically need DNS from on-prem or cross-VPC shared services. Direct Connect (D) is on-prem-to-AWS, not VPC-to-S3. The trap: Interface Endpoint sounds more 'modern,' but for S3 within one VPC, Gateway Endpoint is the right cheap answer.",
+      "pattern": "VPC private access to AWS services: Gateway Endpoints (S3 and DynamoDB ONLY, free, route-table based). Interface Endpoints / PrivateLink (most other AWS services; ENI in subnet, hourly + per-GB, supports DNS + on-prem access). For S3 inside one VPC ⇒ Gateway Endpoint. For S3 from many VPCs/on-prem with DNS resolution ⇒ Interface Endpoint.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Gateway VPC Endpoints",
+          "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg042",
+      "domain": "D3",
+      "scenario": "An Auto Scaling Group sits behind an Application Load Balancer. The team wants unhealthy instances to be detected and replaced automatically, and no traffic routed to them in the meantime.",
+      "question": "Which health-check combination is REQUIRED?",
+      "choices": [
+        "Only EC2 status checks on each instance",
+        "Only ALB target group health checks",
+        "EC2 status checks AND ALB target group health checks, with Auto Scaling configured to use ELB health checks",
+        "No health checks needed — AWS automatically detects failed instances"
+      ],
+      "correct": 2,
+      "explanation": "Two layers cooperate: ALB target group health checks determine whether the load balancer sends traffic to an instance (application-level health). Auto Scaling group health checks determine whether the ASG replaces an instance. By default, ASG uses only EC2 status checks, but you should add 'ELB' to the ASG health check types so an ALB-unhealthy instance triggers replacement too. Without this, an app crash that doesn't crash the instance will stop ALB routing but nothing replaces the broken instance.\n\nOption A misses the app layer — EC2 status checks only detect hardware/OS reachability. Option B stops traffic but nothing replaces. Option D is wrong — AWS doesn't magically know your app is broken. The trap: candidates assume either layer alone is sufficient; both are needed, and ASG must trust the ELB verdict.",
+      "pattern": "Health-check layers: EC2 status checks (hardware + reachability, AWS-provided). ALB/NLB target health checks (your app endpoint, determines routing). ASG health check type (EC2 default; add 'ELB' for replacement on LB-unhealthy). Route 53 health checks (DNS-level). Proper pattern: ALB target health + ASG with 'ELB' enabled.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "ELB health checks for Auto Scaling",
+          "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/healthcheck.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg043",
+      "domain": "D3",
+      "scenario": "A small team wants to deploy a simple WordPress site with a managed database, SSD storage, and predictable monthly cost. They don't want to configure VPCs, security groups, or load balancers.",
+      "question": "Which service is MOST appropriate?",
+      "choices": [
+        "Amazon EC2 with manual WordPress install",
+        "Amazon Lightsail",
+        "AWS Elastic Beanstalk",
+        "Amazon LightWave"
+      ],
+      "correct": 1,
+      "explanation": "Amazon Lightsail is AWS's simplified VPS offering: preconfigured stacks (WordPress, LAMP, Node.js, etc.) bundled with storage, data transfer, and a static IP at a flat monthly price starting at $3.50. No VPC/security-group configuration needed for basic use. Perfect for simple sites.\n\nEC2 with manual install (A) works but requires VPC + security groups + EBS + AMI selection + stack setup — much more work, variable cost. Elastic Beanstalk (C) is PaaS for deploying applications — simplifies some infra but still more complex than Lightsail and has variable billing. Option D is fake. The trap: Beanstalk and Lightsail both simplify EC2, but Lightsail is the 'WordPress-in-a-box for $5/month' answer.",
+      "pattern": "Managed simplification services: Lightsail = VPS/WordPress-in-a-box, fixed monthly pricing. Elastic Beanstalk = PaaS deploying code to managed EC2/ASG/ELB. App Runner = fully managed container/web app service. Amplify = full-stack web/mobile (front-end + back-end + CI/CD). For simplest WordPress at fixed cost ⇒ Lightsail.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon Lightsail",
+          "url": "https://aws.amazon.com/lightsail/"
+        }
+      ]
+    },
+    {
+      "id": "clfg044",
+      "domain": "D3",
+      "scenario": "A development team wants to deploy applications via Git push, with AWS handling build, test, and deploy phases, integrated with CodeCommit, and no servers to manage.",
+      "question": "Which pipeline of services provides the COMPLETE CI/CD experience?",
+      "choices": [
+        "CodeCommit → CodeBuild → CodeDeploy, orchestrated by CodePipeline",
+        "CodeCommit → S3 → Lambda, orchestrated by Step Functions",
+        "GitHub → Jenkins → CloudFormation, deployed on EC2",
+        "CodeStar → CloudFormation → Elastic Beanstalk"
+      ],
+      "correct": 0,
+      "explanation": "The canonical AWS CI/CD stack: CodeCommit (managed Git) → CodeBuild (managed build/test) → CodeDeploy (managed deployment to EC2/Lambda/ECS/on-prem), with CodePipeline as the orchestrator modeling source → build → test → deploy phases.\n\nOption B isn't CI/CD — it's event-driven compute. Option C mixes in non-AWS tools (GitHub, Jenkins) which work fine but don't match 'AWS to handle it all.' Option D mentions CodeStar (a project-management wrapper that uses the Code* services underneath — incomplete answer, and being de-emphasized in some regions). The trap: CodeStar sounds like the umbrella but the real backbone is Pipeline + Commit + Build + Deploy.",
+      "pattern": "AWS developer-tools suite: CodeCommit (Git), CodeBuild (build/test), CodeDeploy (deploy to EC2/Lambda/ECS), CodePipeline (orchestrate end-to-end), CodeArtifact (package repo), CodeGuru (code review + profiler), CodeStar (wrapper/project init). Full CI/CD: CodePipeline orchestrates CodeCommit → CodeBuild → CodeDeploy.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS CodePipeline",
+          "url": "https://aws.amazon.com/codepipeline/"
+        }
+      ]
+    },
+    {
+      "id": "clfg045",
+      "domain": "D3",
+      "scenario": "A company wants to send push notifications, SMS messages, and emails to millions of users. They want a single service that can handle all three channels and segment users based on attributes.",
+      "question": "Which service fits?",
+      "choices": [
+        "Amazon SNS",
+        "Amazon Pinpoint",
+        "Amazon SES",
+        "Amazon Connect"
+      ],
+      "correct": 1,
+      "explanation": "Amazon Pinpoint is a customer engagement service supporting push, SMS, email, voice, and in-app messaging from one service, with user segmentation, campaign analytics, and A/B testing. Built for marketing/engagement use cases.\n\nSNS (A) is a pub/sub messaging service supporting push + SMS + email — but it's transactional/fan-out, not a campaign tool with segmentation and analytics. SES (C) is email-only (highly scalable, cheap). Connect (D) is a cloud contact center / call center product — not for push/SMS/email campaigns. The trap: SNS and Pinpoint overlap on channels, but Pinpoint is the marketing/engagement tool, SNS is the simple pub/sub messaging primitive.",
+      "pattern": "Messaging/engagement services: SNS = pub/sub (fan-out, push/SMS/email, transactional). Pinpoint = marketing/engagement (push/SMS/email/in-app, segmentation, campaigns, analytics). SES = transactional email at scale. Chime SDK = video/voice/messaging for apps. Connect = cloud contact center. 'Campaign with segmentation' ⇒ Pinpoint. 'Simple fan-out' ⇒ SNS.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon Pinpoint",
+          "url": "https://aws.amazon.com/pinpoint/"
+        }
+      ]
+    },
+    {
+      "id": "clfg046",
+      "domain": "D4",
+      "scenario": "A company's AWS bill jumped 40% unexpectedly. Finance wants to identify which team or project drove the increase. Their accounts don't map one-to-one with teams — engineers share resources across teams.",
+      "question": "Which AWS mechanism is FOUNDATIONAL for enabling per-team chargeback/showback analysis?",
+      "choices": [
+        "Enable consolidated billing and rely on per-account totals",
+        "Apply a consistent cost allocation tag strategy, activate the tags in the Billing console, and analyze in Cost Explorer",
+        "Open a support case with AWS to manually split the bill",
+        "Use separate AWS accounts per team — it's the only way to track spend"
+      ],
+      "correct": 1,
+      "explanation": "Cost allocation tags are the AWS-native mechanism for splitting shared-account spend by team, project, environment, or any dimension. You tag resources consistently (e.g., `Team=backend`, `Project=checkout`, `Env=prod`), activate the tags as **cost allocation tags** in the Billing console (crucial step — raw tags aren't automatically billing-visible), and then Cost Explorer and the Cost and Usage Report filter and group by those tags.\n\nOption A (account-level totals) can't tell you which team spent what within a shared account. Option C isn't how AWS works — AWS won't manually split bills. Option D (one account per team) is a valid architectural approach but extreme and not 'foundational' — the question is about a team that has one account with shared resources. The trap: separate accounts is a legit answer for strict isolation, but for the stated scenario, cost allocation tags are the foundation.",
+      "pattern": "Cost-allocation foundations: (1) Consistent tagging strategy organization-wide (enforced via tag policies in Organizations). (2) Activate tags as cost allocation tags in the Billing console. (3) Analyze via Cost Explorer (tag filter/group). (4) Deep-dive via Cost and Usage Report in Athena/QuickSight. Alternatively: account-per-team for hard isolation (Control Tower helps scale this). Tags + multiple accounts complement each other.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Using cost allocation tags",
+          "url": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg047",
+      "domain": "D4",
+      "scenario": "A company commits to $100/hour of compute spend for 3 years via Compute Savings Plans. They want to understand where the savings applies.",
+      "question": "Which statement is CORRECT about Compute Savings Plans coverage?",
+      "choices": [
+        "Applies only to the specific EC2 instance type chosen at commitment",
+        "Applies to EC2, Fargate, and Lambda usage, regardless of instance family, size, region, or OS",
+        "Applies only to EC2 in a single region",
+        "Applies to EC2 and RDS database instances"
+      ],
+      "correct": 1,
+      "explanation": "Compute Savings Plans offer the most flexibility: they apply to EC2 (any instance family, size, region, OS, tenancy), Fargate, AND Lambda compute, up to 66% savings vs On-Demand. You commit to $X/hour for 1 or 3 years.\n\nOption A describes a Reserved Instance (Standard RI is instance-specific). Option C describes a regional RI with no cross-region flexibility. Option D mixes in RDS — RIs exist for RDS but Savings Plans don't cover RDS (RDS has its own Reserved Instances). The trap: there are TWO types of Savings Plans — Compute (the flexible one covering EC2/Fargate/Lambda) and EC2 Instance (cheaper savings but locked to a specific family in a specific region). Easy to confuse.",
+      "pattern": "Purchasing options ladder: On-Demand (no commit). Spot (interruptible, up to 90% off). Reserved Instances (1 or 3 yr, instance-specific; EC2/RDS/ElastiCache/Redshift/OpenSearch). Savings Plans — Compute (EC2/Fargate/Lambda, any family/region, up to 66% off). Savings Plans — EC2 Instance (specific family in a region, up to 72% off). Dedicated Hosts (licensing/compliance). SageMaker Savings Plans (ML-specific).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Savings Plans",
+          "url": "https://aws.amazon.com/savingsplans/"
+        }
+      ]
+    },
+    {
+      "id": "clfg048",
+      "domain": "D4",
+      "scenario": "A company wants to centralize billing across 30 AWS accounts AND apply preventive guardrails that block specific regions and specific services org-wide. They also want consolidated CloudTrail logs across accounts.",
+      "question": "Which combination meets ALL three requirements?",
+      "choices": [
+        "AWS Organizations with consolidated billing only — it handles all three",
+        "AWS Organizations with all features enabled, using SCPs for region/service guardrails and an organization trail in CloudTrail",
+        "A single AWS account with multiple IAM roles — simpler and achieves the same outcome",
+        "AWS Control Tower only — it replaces the need for Organizations"
+      ],
+      "correct": 1,
+      "explanation": "AWS Organizations with **all features enabled** unlocks SCPs (Service Control Policies) that preventively block specific regions, services, or actions org-wide — no matter what IAM permissions a member account's admins grant, SCPs win. Organization trails in CloudTrail collect events from all accounts into a central bucket. Consolidated billing is always included with Organizations. Three requirements, one Organization (with all features) satisfies all three.\n\nOption A (consolidated billing only mode) lacks SCPs — all-features mode is required for SCPs. Option C (one account) abandons the multi-account isolation model. Option D is misleading — Control Tower RUNS ON TOP of Organizations (it sets up a landing zone using Organizations + config/guardrails) and does not replace Organizations; it extends it with opinionated defaults. The trap: Control Tower and Organizations are sometimes confused — Organizations is the primitive, Control Tower is the opinionated setup layer.",
+      "pattern": "Multi-account governance stack: AWS Organizations (accounts + OUs + consolidated billing + SCPs if all features enabled). Control Tower (landing zone on top — uses Organizations + Config + CloudTrail + SSO/Identity Center with opinionated guardrails). SCPs = preventive guardrails, applied at root/OU/account level, override IAM allow. Organization Trail = central CloudTrail for all accounts. Config aggregator = central Config view.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Organizations — Enabling all features",
+          "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_support-all-features.html"
+        },
+        {
+          "type": "doc",
+          "title": "Service control policies (SCPs)",
+          "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg049",
+      "domain": "D1",
+      "scenario": "An auditor asks where AWS operates. The company needs to explain the difference between Regions, Availability Zones, Edge Locations, and Local Zones.",
+      "question": "Which statement CORRECTLY describes AWS's global infrastructure?",
+      "choices": [
+        "Edge Locations are large geographic areas; Regions are small caches for CloudFront",
+        "Regions contain multiple isolated Availability Zones; Edge Locations are CloudFront PoPs for content caching; Local Zones extend AWS infrastructure to metro areas closer to end users",
+        "Availability Zones are single data centers in one building; Regions are clusters of AZs in the same building",
+        "Local Zones are the same as Wavelength Zones — both are for 5G workloads only"
+      ],
+      "correct": 1,
+      "explanation": "Regions are geographic areas (e.g., us-east-1). Each Region contains multiple isolated AZs (each AZ is one or more physically separated data centers with independent power/cooling/networking, connected by low-latency private fiber). Edge Locations are CloudFront points of presence (hundreds globally) for caching. Local Zones extend AWS infrastructure (compute, storage, DB) to metro areas closer to end users for ultra-low latency. Wavelength Zones are specifically embedded in 5G carrier networks.\n\nOption A reverses the relationship. Option C is wrong — AZs are physically separated, often miles apart, not in one building. Option D is wrong — Local Zones are for metro-proximity latency, while Wavelength is specifically 5G carrier-embedded. The trap: Local Zones and Wavelength both 'extend AWS closer to users' but serve different purposes.",
+      "pattern": "Global infra hierarchy (memorize): Region (geographic area, e.g., eu-west-1) → AZ (isolated DC cluster within region, 3+ per region) → local racks. Plus: Edge Locations (600+ CloudFront PoPs, global DNS via Route 53, WAF/Shield), Local Zones (metro-proximity compute/storage), Wavelength Zones (inside 5G carrier networks), Outposts (AWS hardware physically ON customer's premises).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Global Infrastructure",
+          "url": "https://aws.amazon.com/about-aws/global-infrastructure/"
+        }
+      ]
+    },
+    {
+      "id": "clfg050",
+      "domain": "D1",
+      "scenario": "A company wants to understand the ONE thing that differentiates 'cloud computing' from traditional hosting.",
+      "question": "Which attribute is MOST characteristic of cloud computing per NIST and AWS definitions?",
+      "choices": [
+        "On-demand self-service provisioning over a network with rapid elasticity and measured service",
+        "Running virtual machines instead of physical servers",
+        "Renting hardware from a data center instead of buying it",
+        "Using open-source software for all workloads"
+      ],
+      "correct": 0,
+      "explanation": "NIST's canonical cloud-computing definition (and AWS's marketing framing) identifies five essential characteristics: (1) on-demand self-service, (2) broad network access, (3) resource pooling, (4) rapid elasticity, (5) measured service (pay-per-use). Option A captures the core distinguishing attributes.\n\nOption B (VMs) is a common technology of clouds but not the definition — bare-metal cloud offerings exist, and many non-cloud systems use VMs. Option C (renting hardware) describes colocation, not cloud — colo doesn't provide on-demand self-service. Option D (open source) is unrelated — AWS runs many proprietary technologies. The trap: candidates pick what cloud commonly IS (option B/C) instead of what DEFINES it.",
+      "pattern": "NIST cloud essentials (CLF quotes these regularly): On-demand self-service = provision without human interaction. Broad network access = available via standard networks. Resource pooling = multi-tenant shared infrastructure. Rapid elasticity = scale up/down quickly. Measured service = metered usage for billing. These five plus the three service models (IaaS/PaaS/SaaS) and four deployment models (public/private/hybrid/community) are the whole framework.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "What is Cloud Computing?",
+          "url": "https://aws.amazon.com/what-is-cloud-computing/"
+        }
+      ]
+    },
+    {
+      "id": "clfg051",
+      "domain": "D1",
+      "scenario": "A CTO is estimating total cost of ownership (TCO) of running on AWS vs their current data center. The CFO asks which cost categories AWS TCO analysis typically eliminates or reduces.",
+      "question": "Which categories are MOSTLY ELIMINATED or significantly reduced when moving to AWS?",
+      "choices": [
+        "Server hardware purchases, data center facility costs (power, cooling, space), and hardware refresh cycles",
+        "Software licensing costs for all third-party applications",
+        "Staff salaries across all roles",
+        "Application development costs"
+      ],
+      "correct": 0,
+      "explanation": "AWS TCO analysis focuses on the costs that migrating ELIMINATES (physical hardware purchases, data center facilities, power/cooling/space leases, hardware refresh every 3-5 years, physical security). Staff time shifts from hardware maintenance toward higher-value work; licensing may change (some BYOL, some AWS-managed); development cost remains.\n\nOption B (licensing) is partly true (RDS/EMR/managed services include licensing, and some BYOL options) but overstated — you still pay for third-party software like Oracle Database, Windows Server (though AWS offers included licensing), SAP, etc. Option C (all staff) is wrong — you still need developers, architects, SRE. Option D (app dev costs) is unrelated to the infra move. The TCO calculator compares infra cost categories specifically.",
+      "pattern": "AWS TCO categories: SERVER (hardware purchase + warranty + depreciation), STORAGE (SAN/NAS/backup), NETWORK (switches, load balancers, firewalls), DATA CENTER (real estate, power, cooling, physical security), IT LABOR (hardware ops). AWS move typically eliminates most of these, trades for variable pay-per-use. Use AWS Pricing Calculator for estimates.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Pricing Calculator",
+          "url": "https://calculator.aws/"
+        },
+        {
+          "type": "doc",
+          "title": "How AWS Pricing Works",
+          "url": "https://docs.aws.amazon.com/whitepapers/latest/how-aws-pricing-works/welcome.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg052",
+      "domain": "D1",
+      "scenario": "A team wants to 'go global in minutes' — deploy their app to users in Europe, Asia, and North America quickly. They use Route 53 latency-based routing to direct users to the nearest region.",
+      "question": "Which cloud advantage BEST matches this scenario?",
+      "choices": [
+        "Economies of scale",
+        "Go global in minutes",
+        "Stop guessing capacity",
+        "Variable expense"
+      ],
+      "correct": 1,
+      "explanation": "'Go global in minutes' is one of the six advantages of cloud — deploying an application in multiple Regions worldwide with low latency and redundancy, provisioned within minutes rather than the months it takes to establish overseas data centers.\n\nEconomies of scale (A) is about lower per-unit costs from AWS's purchasing power. Stop guessing capacity (C) is about elastic scaling to actual demand. Variable expense (D) is pay-per-use vs CapEx. All are real cloud advantages — but the SPECIFIC 'deploy worldwide fast' answer is 'go global in minutes.' The trap: candidates overlap the six advantages; memorize the specific keyword for each.",
+      "pattern": "Six cloud advantages keywords: (1) CapEx → OpEx = 'variable expense'. (2) Economies of scale = 'massive scale of AWS shared with you'. (3) Stop guessing capacity = 'elastic, match demand'. (4) Speed & agility = 'provision in minutes, experiment'. (5) Stop spending on running data centers = 'focus on differentiating work'. (6) Go global in minutes = 'multi-region deployment fast'.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Six Advantages of Cloud Computing",
+          "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-overview/six-advantages-of-cloud-computing.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg053",
+      "domain": "D1",
+      "scenario": "A team wants to use AWS resources for experimentation — trying new architectures, tearing them down, trying again. They want to make sure their infrastructure setup is REPRODUCIBLE from code.",
+      "question": "Which AWS approach BEST enables this reproducibility?",
+      "choices": [
+        "Click through the AWS Console and document each step in a wiki",
+        "Use Infrastructure as Code via AWS CloudFormation or AWS CDK",
+        "Email AWS Support to recreate environments on request",
+        "Manually snapshot every resource weekly"
+      ],
+      "correct": 1,
+      "explanation": "Infrastructure as Code (IaC) — AWS CloudFormation (declarative YAML/JSON templates) or AWS CDK (imperative code in TypeScript/Python/Java/C#/Go that compiles to CloudFormation) — lets you define infrastructure in code, version it in Git, and deploy identical copies on demand. Tear down and recreate reliably.\n\nOption A (Console + wiki) is the anti-pattern — drift, human error, slow, not reproducible. Option C isn't how AWS Support works. Option D (snapshots) is for data recovery, not infrastructure topology reproducibility. The trap: candidates know snapshots exist and think they qualify as 'infrastructure' — but a snapshot captures data/disk state, not the wiring of VPCs, ASGs, IAM, etc.",
+      "pattern": "IaC on AWS: CloudFormation (YAML/JSON, declarative, AWS-native, stacks/change sets), CDK (code-defined, transpiles to CFN), Terraform (HashiCorp, multi-cloud, external tool), SAM (Serverless Application Model, CFN wrapper for Lambda/API Gateway). IaC enables: reproducibility, drift detection, versioning in Git, peer review, rollback, multi-region copies.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS CloudFormation",
+          "url": "https://aws.amazon.com/cloudformation/"
+        },
+        {
+          "type": "doc",
+          "title": "AWS Cloud Development Kit",
+          "url": "https://aws.amazon.com/cdk/"
+        }
+      ]
+    },
+    {
+      "id": "clfg054",
+      "domain": "D1",
+      "scenario": "A company is evaluating which AWS services are globally scoped vs regionally scoped. Their architecture team wants to avoid surprises when deploying to a new region.",
+      "question": "Which of the following is a GLOBAL service (not region-scoped)?",
+      "choices": [
+        "Amazon EC2",
+        "Amazon S3 (buckets)",
+        "AWS IAM",
+        "Amazon RDS"
+      ],
+      "correct": 2,
+      "explanation": "AWS IAM is a global service — users, groups, roles, and policies are defined once per AWS account and are visible/usable in all regions. CloudFront, Route 53, IAM, and AWS Organizations are the classic 'global' services.\n\nEC2 (A) is region-scoped — instances exist in a specific region and AZ. S3 buckets (B) have a global NAMESPACE but buckets are CREATED in a specific region (data stored there) — this is the most common trick question: 'S3 is global' is false; 'S3 bucket names are globally unique' is true, but buckets are regional. RDS (D) is region-scoped. The trap: S3's global bucket namespace confuses candidates into calling S3 'global' — but data residency is regional.",
+      "pattern": "AWS service scope: GLOBAL = IAM, Route 53, CloudFront, WAF (when attached to CloudFront/Global Accelerator), AWS Organizations. REGIONAL (vast majority) = EC2, S3 (buckets created in a region), RDS, Lambda, DynamoDB (tables in a region, but Global Tables span regions), VPC. AZ-scoped = subnets, EBS volumes. Critical nuance: S3 bucket names are globally unique, but each bucket IS regional.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Regions and Availability Zones",
+          "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg055",
+      "domain": "D1",
+      "scenario": "A startup uses AWS for prototypes and often spins up resources that they forget to clean up. Costs are creeping up. They want a cultural/operational practice to address this.",
+      "question": "Which Well-Architected pillar MOST addresses 'don't forget to turn things off' discipline?",
+      "choices": [
+        "Reliability",
+        "Cost Optimization",
+        "Sustainability",
+        "Operational Excellence"
+      ],
+      "correct": 1,
+      "explanation": "Cost Optimization's core practices include matching supply to demand, right-sizing, expenditure awareness, and using managed services. 'Adopt a consumption model' — pay only for what you use — explicitly pairs with 'stop paying for things you don't use.' Automated shutdown of idle resources (dev/test outside work hours, deleting unused EBS volumes and snapshots, stopping forgotten instances) is a Cost Optimization pattern.\n\nReliability (A) is recovery/availability. Sustainability (C) also promotes reducing unused resources, but from an environmental angle; the CLF framing here is cost-driven. Operational Excellence (D) is broad (run/monitor/improve), overlaps but isn't the primary owner of the 'forgot to turn it off' problem. The trap: Sustainability and Cost Optimization both target waste — for a cost-focused scenario, pick Cost Optimization.",
+      "pattern": "Cost Optimization design principles: adopt consumption model (pay-per-use), measure overall efficiency (understand cost per business outcome), stop spending on undifferentiated heavy lifting (use managed services), analyze/attribute expenditure (tagging), use managed services to reduce TCO. Tools: Cost Explorer, Budgets, Trusted Advisor, Compute Optimizer, CUR for deep analysis.",
+      "references": [
+        {
+          "type": "whitepaper",
+          "title": "Cost Optimization Pillar",
+          "url": "https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg056",
+      "domain": "D1",
+      "scenario": "A company is evaluating the AWS Cloud Adoption Framework (CAF). Leadership asks which 'perspective' within the CAF addresses skills, organizational structure, and change management.",
+      "question": "Which CAF perspective MOST directly addresses people, skills, and change?",
+      "choices": [
+        "Platform perspective",
+        "Operations perspective",
+        "People perspective",
+        "Governance perspective"
+      ],
+      "correct": 2,
+      "explanation": "The AWS CAF organizes cloud transformation into six perspectives: Business, People, Governance, Platform, Security, Operations. The **People** perspective specifically addresses roles/skills, organizational structure, leadership, workforce transformation, and training — the 'human side' of cloud adoption.\n\nPlatform (A) covers architecture, engineering, and platform experience. Operations (B) covers running cloud workloads (observability, performance, incident response). Governance (D) covers portfolio management, program/project management, benefits realization. The trap: candidates see 'change management' and may pick Governance (which does include change), but the SKILLS + ROLES + ORG STRUCTURE focus is the People perspective.",
+      "pattern": "CAF six perspectives: BUSINESS (outcomes, value realization), PEOPLE (roles, skills, org, training, change), GOVERNANCE (portfolio, program, benefits, risk), PLATFORM (architecture, data, CI/CD), SECURITY (identity, detection, response, compliance), OPERATIONS (observability, performance, incident, continuity). Mnemonic: B-P-G-P-S-O.",
+      "references": [
+        {
+          "type": "whitepaper",
+          "title": "AWS Cloud Adoption Framework",
+          "url": "https://aws.amazon.com/professional-services/CAF/"
+        }
+      ]
+    },
+    {
+      "id": "clfg057",
+      "domain": "D1",
+      "scenario": "A company is mapping AWS services to the traditional stack. Someone asks: what's the AWS equivalent of a 'physical network switch' for routing between subnets in a VPC?",
+      "question": "Which VPC component is the logical analog of a router between subnets?",
+      "choices": [
+        "Internet Gateway",
+        "Route Table",
+        "Elastic Network Interface",
+        "NAT Gateway"
+      ],
+      "correct": 1,
+      "explanation": "The route table is the core VPC primitive that decides how traffic flows between subnets, to the internet gateway, to NAT gateways, to VPC endpoints, to peering connections, and to transit gateways. Each subnet is associated with exactly one route table. Route tables are the logical routers in a VPC.\n\nInternet Gateway (A) is the egress/ingress point to the public internet — attached to the VPC, referenced in a route table for public subnets. ENI (C) is a network interface attached to an instance (virtual NIC) — about instance connectivity, not inter-subnet routing. NAT Gateway (D) is specific — it translates private → public for outbound internet, not general routing. The trap: candidates pick IGW because it 'routes to internet,' but the primitive that DECIDES where packets go is the route table.",
+      "pattern": "VPC primitives: VPC (isolated network), Subnets (AZ-bound slices), Route Tables (logical routers per subnet), Internet Gateway (public egress/ingress), NAT Gateway (private → public egress only), VPC Endpoints (private connectivity to AWS services), Security Groups (stateful, instance-level firewall), NACLs (stateless, subnet-level firewall), ENIs (virtual NICs).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "VPC Route Tables",
+          "url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg058",
+      "domain": "D1",
+      "scenario": "A healthcare company is deciding whether AWS is 'HIPAA compliant' so they can store Protected Health Information (PHI) in S3 and run workloads on EC2.",
+      "question": "Which statement is CORRECT about AWS and HIPAA?",
+      "choices": [
+        "AWS is 'HIPAA certified' and any service can store PHI without restriction",
+        "AWS provides HIPAA-eligible services that customers can use to run HIPAA-compliant workloads, but the customer is responsible for configuring them compliantly and must sign an AWS Business Associate Addendum (BAA)",
+        "HIPAA compliance is entirely AWS's responsibility — the customer only needs to use AWS",
+        "AWS cannot be used for HIPAA workloads"
+      ],
+      "correct": 1,
+      "explanation": "AWS offers HIPAA-eligible services (S3, EC2, RDS, Lambda, and many more) and will sign a Business Associate Addendum (BAA) with customers that governs PHI handling. However, HIPAA compliance under the shared responsibility model is a partnership — AWS secures the infrastructure; the customer configures services compliantly (encrypt PHI in transit/at rest, restrict access with IAM, audit via CloudTrail, segregate environments). Not every AWS service is HIPAA-eligible; only those listed as such can handle PHI.\n\nOption A (HIPAA certified, any service) is wrong — there's no such thing as 'HIPAA certified'; HIPAA is a compliance program, not a certification. Option C dumps all responsibility on AWS (classic shared-responsibility fail). Option D is wrong — AWS absolutely supports HIPAA workloads. The trap: 'HIPAA-compliant cloud' is a marketing shorthand; the actual answer is eligible services + BAA + customer configuration.",
+      "pattern": "Compliance on AWS: AWS supplies compliance PROGRAMS (SOC 1/2/3, ISO 27001, PCI DSS, HIPAA, FedRAMP, etc.) via AWS Artifact. Customer must still: choose eligible services, sign BAAs where required (HIPAA), configure controls, audit via CloudTrail + Config + Security Hub, document in their own compliance program. Shared responsibility applies.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "HIPAA Compliance on AWS",
+          "url": "https://aws.amazon.com/compliance/hipaa-compliance/"
+        }
+      ]
+    },
+    {
+      "id": "clfg059",
+      "domain": "D1",
+      "scenario": "A company wants prescriptive guidance from AWS for deploying a baseline multi-account environment with governance, identity, logging, and guardrails built in from day one.",
+      "question": "Which service provides this opinionated multi-account landing zone?",
+      "choices": [
+        "AWS Organizations",
+        "AWS Control Tower",
+        "AWS Systems Manager",
+        "AWS Config"
+      ],
+      "correct": 1,
+      "explanation": "AWS Control Tower provides an opinionated 'landing zone' — a multi-account AWS environment with best-practice guardrails (preventive via SCPs, detective via Config rules), centralized logging (CloudTrail + Config to a log archive account), identity (integrated with IAM Identity Center), and an Account Factory for provisioning new accounts. It sits ON TOP OF Organizations + Config + CloudTrail + Identity Center with defaults.\n\nOrganizations (A) is the primitive that Control Tower uses — it manages accounts, OUs, SCPs, but doesn't set up the opinionated landing zone automatically. Systems Manager (C) is for operational management (Patch Manager, Session Manager, Run Command). Config (D) tracks resource configuration. The trap: Organizations alone is necessary but not sufficient for a 'baseline landing zone with governance' — Control Tower adds the opinions and defaults.",
+      "pattern": "Multi-account governance stack: AWS Organizations (accounts, OUs, SCPs, consolidated billing — primitive). AWS Control Tower (landing zone on top — log archive account, audit account, guardrails, Account Factory, IAM Identity Center integration). Builders hierarchy: Organizations first; Control Tower if you want the opinionated setup; Customizations for Control Tower (CfCT) to extend.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Control Tower",
+          "url": "https://aws.amazon.com/controltower/"
+        }
+      ]
+    },
+    {
+      "id": "clfg060",
+      "domain": "D1",
+      "scenario": "A team migrates an application from on-prem to AWS. They lift-and-shift the app as-is onto EC2, then later refactor it to use managed services (RDS, Lambda, SQS). These represent two of the AWS 'migration strategies.'",
+      "question": "Which two strategies does this describe?",
+      "choices": [
+        "Rehost then Replatform",
+        "Rehost then Refactor",
+        "Repurchase then Retire",
+        "Relocate then Retain"
+      ],
+      "correct": 1,
+      "explanation": "The AWS '7 Rs' migration strategies: **Rehost** ('lift and shift' — move to EC2 as-is), **Replatform** ('lift, tinker, and shift' — minor optimization like moving DB to RDS), **Refactor/Re-architect** (redesign to use cloud-native patterns like serverless, microservices, managed services), Repurchase (move to SaaS), Retire (decommission), Retain (keep on-prem), Relocate (move VMs to VMware Cloud on AWS without conversion).\n\nOption A (Rehost → Replatform) is close but Replatform is minor tweaks, not the full rewrite to managed services described. The scenario describes moving to serverless/managed — that's Refactor. Options C and D are wrong combinations. The trap: Replatform and Refactor both involve changes, but Replatform is 'lift, tinker, and shift' (small) while Refactor is 'redesign' (large).",
+      "pattern": "AWS 7 Rs: REHOST (lift-and-shift to EC2, fastest, least benefit). RELOCATE (VMware Cloud on AWS, VM-level move). REPLATFORM (lift-tinker-shift: DB → RDS, OS upgrades). REPURCHASE (switch to SaaS, e.g., CRM → Salesforce). REFACTOR/RE-ARCHITECT (redesign using cloud-native). RETIRE (shut down). RETAIN (keep on-prem). Effort and cloud-native benefit both increase left-to-right.",
+      "references": [
+        {
+          "type": "whitepaper",
+          "title": "AWS Migration Strategies — 7 Rs",
+          "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/strategy-migration/welcome.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg061",
+      "domain": "D2",
+      "scenario": "A developer is confused about what an IAM policy actually is and how it differs from a policy attached to a resource.",
+      "question": "Which statement is CORRECT about IAM policy types?",
+      "choices": [
+        "Identity-based policies are attached to users/groups/roles and define what THAT identity can do; resource-based policies are attached to resources (like S3 buckets) and define who can access THAT resource",
+        "Identity-based policies and resource-based policies are interchangeable — you can attach either type to any entity",
+        "Resource-based policies only exist for EC2 instances",
+        "All IAM policies are identity-based; there are no resource-based policies"
+      ],
+      "correct": 0,
+      "explanation": "Identity-based policies attach to IAM principals (users, groups, roles) and specify what actions that identity can perform on what resources. Resource-based policies attach directly to resources (S3 bucket policies, Lambda resource policies, SNS topic policies, KMS key policies, etc.) and specify who can perform which actions on THAT resource. Both policy types are evaluated together at request time.\n\nOption B is wrong — they're structurally similar but attach to different things. Option C is wrong — resource-based policies exist for many services: S3, KMS, SNS, SQS, Lambda, ECR, API Gateway, Secrets Manager, etc. Option D is wrong. The trap: candidates don't realize resource-based policies exist, and think 'all permissions come from IAM users.'",
+      "pattern": "IAM policy types: Identity-based (attach to user/group/role — 'what can this identity do'). Resource-based (attach to resource — 'who can access this resource'). Permissions boundaries (cap the max permissions an identity can have). SCPs (Organization-level preventive guardrails). Session policies (pass in AssumeRole). ACLs (legacy, mostly S3/VPC). All combine in evaluation: explicit DENY always wins; SCP must allow; identity AND resource policy are OR'd (grant from either).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "IAM policy types",
+          "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg062",
+      "domain": "D2",
+      "scenario": "A company wants a firewall that filters HTTP/HTTPS requests to their web application based on IP reputation, geographic origin, SQL injection patterns, and XSS patterns.",
+      "question": "Which service is DESIGNED for this?",
+      "choices": [
+        "AWS Security Groups",
+        "AWS Network ACLs",
+        "AWS WAF",
+        "AWS Shield Standard"
+      ],
+      "correct": 2,
+      "explanation": "AWS WAF (Web Application Firewall) is a layer-7 firewall that filters HTTP/HTTPS requests based on rules: IP-based, geographic, rate-based, managed rule groups for SQL injection (SQLi) and cross-site scripting (XSS), and custom regex. Attaches to CloudFront, ALB, API Gateway, App Runner, AppSync.\n\nSecurity Groups (A) and NACLs (B) operate at layers 3/4 (IP + port + protocol) — they don't inspect HTTP payloads. Shield Standard (D) is DDoS protection (layer 3/4 attack mitigation, free on all AWS accounts) — it doesn't inspect application-layer content. The trap: candidates conflate 'protects web app' → 'any AWS security service,' but the layer-7 HTTP-aware answer is WAF specifically.",
+      "pattern": "Layered security: SGs/NACLs (L3/L4 IP+port, VPC-level). WAF (L7 HTTP, inspects request content, rule-based). Shield Standard (L3/L4 DDoS, free, always on). Shield Advanced (enhanced DDoS + SRT support + cost protection, $3000/month). GuardDuty (threat detection from logs). Firewall Manager (centrally manage WAF/Shield/SGs across accounts).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS WAF",
+          "url": "https://aws.amazon.com/waf/"
+        }
+      ]
+    },
+    {
+      "id": "clfg063",
+      "domain": "D2",
+      "scenario": "A company's VPC has a private subnet containing an EC2 instance. The security team wants to SSH into the instance WITHOUT exposing any SSH ports to the internet and WITHOUT running a bastion host.",
+      "question": "Which AWS service provides this?",
+      "choices": [
+        "AWS Systems Manager Session Manager",
+        "AWS Direct Connect",
+        "Amazon WorkSpaces",
+        "AWS Client VPN"
+      ],
+      "correct": 0,
+      "explanation": "Systems Manager Session Manager provides browser-based or CLI shell access to EC2 instances (and on-prem servers) with no inbound ports open, no bastion, no SSH keys to manage. Instances need the SSM agent (preinstalled on Amazon Linux 2, Amazon Linux 2023, Windows AMIs) and an IAM role allowing Session Manager. All sessions are logged to CloudTrail (and optionally to S3/CloudWatch Logs).\n\nDirect Connect (B) is a dedicated network link on-prem → AWS, not a shell-access tool. WorkSpaces (C) is virtual desktops for end users, not EC2 access. Client VPN (D) gives remote users network access to a VPC via OpenVPN — you'd still need SSH afterward, still need an SSH port open. The trap: Client VPN solves network connectivity, but Session Manager is the 'zero open ports' answer.",
+      "pattern": "Remote access patterns: (traditional) bastion host in public subnet + SSH key. (better) EC2 Instance Connect for temporary SSH. (best) Systems Manager Session Manager — no inbound ports, IAM-controlled, CloudTrail-audited, works across SSH/RDP/PowerShell. For database port forwarding, use Session Manager port forwarding or AWS Client VPN.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Systems Manager Session Manager",
+          "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg064",
+      "domain": "D2",
+      "scenario": "An enterprise wants to automatically discover and protect sensitive data like credit card numbers, PII, and PHI stored in thousands of S3 buckets across their organization.",
+      "question": "Which service is PURPOSE-BUILT for this?",
+      "choices": [
+        "Amazon Macie",
+        "Amazon GuardDuty",
+        "AWS Config",
+        "Amazon Inspector"
+      ],
+      "correct": 0,
+      "explanation": "Amazon Macie uses machine learning and pattern matching to discover, classify, and protect sensitive data in S3 — PII (names, emails, addresses), financial data (credit card numbers, bank accounts), credentials, and regulated data types (PHI, intellectual property). It inventories S3 buckets, flags public/unencrypted ones, and generates findings.\n\nGuardDuty (B) is threat detection (compromised instances, unusual API calls). Config (C) tracks resource configuration changes. Inspector (D) scans EC2/ECR for CVEs. The trap: all four are 'security' services, easy to confuse — but Macie is specifically for sensitive-data discovery in S3.",
+      "pattern": "Security-service purpose matrix: GuardDuty = threat detection from logs (CloudTrail/VPC Flow/DNS). Inspector = vuln scanning on EC2/ECR/Lambda. Macie = sensitive-data classification in S3. Detective = investigate findings (graph analytics). Security Hub = aggregate findings. Config = resource config + compliance rules. IAM Access Analyzer = unintended external access paths.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon Macie",
+          "url": "https://aws.amazon.com/macie/"
+        }
+      ]
+    },
+    {
+      "id": "clfg065",
+      "domain": "D2",
+      "scenario": "A developer accidentally commits AWS access keys into a public GitHub repository. AWS's automated scanning detects the leak.",
+      "question": "What happens AUTOMATICALLY (before human intervention)?",
+      "choices": [
+        "Nothing — AWS waits for the customer to respond",
+        "AWS attaches a quarantine policy (AWSCompromisedKeyQuarantine) to the IAM user restricting the keys, notifies the account root email, and opens a support case",
+        "AWS deletes the IAM user to contain the breach",
+        "AWS charges a security-incident fee"
+      ],
+      "correct": 1,
+      "explanation": "When AWS detects exposed credentials (via its credential-scanning partnership with GitHub and other platforms), it automatically attaches a quarantine policy — `AWSCompromisedKeyQuarantineV2` — to the compromised IAM user. This policy blocks high-risk actions (like creating new users, launching expensive EC2 instances) while allowing the customer to rotate the keys. AWS simultaneously emails the account root and opens a support case alerting the customer.\n\nOption A is wrong — AWS takes automatic protective action. Option C is wrong — AWS doesn't delete the user (that could cause outages). Option D is invented. The trap: candidates don't know AWS has this scanning program and auto-quarantine response.",
+      "pattern": "AWS credential-leak response: (automatic) quarantine policy attached, root notification email, support case opened. (customer required) rotate the keys, audit CloudTrail for misuse, delete unused resources the attacker created, rotate anything the attacker might have touched. Long-term fix: eliminate long-lived access keys — use IAM roles for services, IAM Identity Center for humans, temporary credentials via STS.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "What to do if you inadvertently expose an AWS access key",
+          "url": "https://aws.amazon.com/premiumsupport/knowledge-center/exposed-iam-key/"
+        }
+      ]
+    },
+    {
+      "id": "clfg066",
+      "domain": "D2",
+      "scenario": "A company wants to encrypt data AT REST in an S3 bucket. They want AWS to manage the encryption keys entirely, with no customer key management overhead. They also want the encryption to be automatic on every PUT.",
+      "question": "Which encryption option fits?",
+      "choices": [
+        "SSE-S3 (Server-Side Encryption with Amazon S3-managed keys)",
+        "SSE-C (Server-Side Encryption with Customer-provided keys)",
+        "Client-side encryption with a customer-managed KMS key",
+        "SSE-KMS with a customer-managed key and manual rotation"
+      ],
+      "correct": 0,
+      "explanation": "SSE-S3 uses S3-managed encryption keys (AES-256) with AWS handling everything — automatic encryption on PUT, decryption on GET, no customer key management at all. Since January 2023, all new S3 objects are encrypted with SSE-S3 by default (unless another SSE type is specified). Zero overhead, no KMS charges.\n\nSSE-C (B) requires the customer to provide encryption keys on every request — the customer manages keys, not 'no overhead.' Client-side encryption (C) requires customer code to encrypt before uploading — maximum overhead. SSE-KMS with customer-managed key (D) offers audit trail and IAM-based key policies but has KMS API call overhead/costs and requires key management. The trap: many candidates pick SSE-KMS by default because it's the fanciest option, but for 'AWS manages everything with no overhead,' SSE-S3 is right.",
+      "pattern": "S3 encryption options: SSE-S3 (default, AES-256, AWS-managed keys, free, zero overhead). SSE-KMS (KMS-managed keys, customer-managed or AWS-managed, CloudTrail audit of key use, KMS API charges). SSE-C (customer provides keys on every request — used when customer wants full key custody but lets S3 do encryption). CSE (client-side encryption with KMS or external key — max control, max effort). DSSE-KMS (dual-layer encryption for strict compliance).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Protecting data with server-side encryption",
+          "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/serv-side-encryption.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg067",
+      "domain": "D2",
+      "scenario": "A developer writes an IAM policy that explicitly allows `s3:*` on a bucket. An SCP at the Organization level denies `s3:DeleteObject` on that bucket. The developer tries to delete an object.",
+      "question": "What happens?",
+      "choices": [
+        "The delete succeeds because the IAM policy explicitly allows it",
+        "The delete is denied because an SCP explicit DENY overrides any IAM allow",
+        "The delete succeeds because SCPs only apply to the management account",
+        "The delete is denied because IAM default-deny blocks the action"
+      ],
+      "correct": 1,
+      "explanation": "In AWS's policy evaluation logic, explicit DENY always wins — whether it comes from an IAM policy, a resource policy, a permissions boundary, or an SCP. SCPs are preventive guardrails that act as a filter on the maximum permissions any member-account identity can have; an IAM allow cannot exceed what the SCP permits. Net: delete is denied.\n\nOption A misses SCP precedence. Option C is wrong — SCPs apply to all accounts under the Organization (except the management account, where they're not enforced on root by default, which is its own gotcha). Option D is wrong — IAM default-deny is overridden by an explicit allow, so if no SCP existed, the delete would succeed. The trap: candidates think IAM is the final authority, but SCPs + permissions boundaries bound it.",
+      "pattern": "IAM evaluation order (simplified): (1) Explicit DENY anywhere → denied. (2) SCP must explicitly allow (implicit deny in SCP = denied). (3) For cross-account: resource-based policy OR identity-based policy must allow. (4) For same-account: identity-based policy must allow (or resource policy in same account). Permissions boundaries cap identity policies. Session policies cap sessions. DENY always wins.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "IAM policy evaluation logic",
+          "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg068",
+      "domain": "D2",
+      "scenario": "A company must provide end users access to an internal web app without exposing it on the public internet. Users are on corporate laptops and mobile devices. They want identity-aware access, no VPN client, and per-request authorization.",
+      "question": "Which service fits?",
+      "choices": [
+        "AWS Client VPN",
+        "AWS Verified Access",
+        "AWS Site-to-Site VPN",
+        "Amazon WorkSpaces"
+      ],
+      "correct": 1,
+      "explanation": "AWS Verified Access is a zero-trust application-access service — users authenticate via an identity provider (IAM Identity Center, Okta, JumpCloud, etc.) and, on every request, Verified Access evaluates identity and device posture against a policy (Cedar-based) before granting access to the app. No VPN client required, per-request authorization, works for private apps.\n\nClient VPN (A) gives users full network access to a VPC via OpenVPN — traditional VPN, not zero-trust, not identity-aware per-request. Site-to-Site VPN (C) connects networks (e.g., corporate DC ↔ VPC), not users. WorkSpaces (D) is virtual desktops. The trap: Client VPN feels like the right answer for 'remote users,' but Verified Access is the newer, zero-trust, per-request-authz answer.",
+      "pattern": "Remote/app access: Client VPN (network-level VPN for users, OpenVPN-based). Site-to-Site VPN (network-to-network IPsec). Direct Connect (dedicated fiber, on-prem to AWS). AWS Verified Access (zero-trust app access, identity + device posture per request, no VPN client). WorkSpaces (virtual desktops). AppStream 2.0 (stream desktop apps to browser). Transit Gateway (hub for multi-VPC/VPN connectivity).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Verified Access",
+          "url": "https://aws.amazon.com/verified-access/"
+        }
+      ]
+    },
+    {
+      "id": "clfg069",
+      "domain": "D2",
+      "scenario": "A company wants to detect and respond to changes in AWS resource configurations that violate their standards — e.g., an S3 bucket becoming public, a security group opening port 22 to 0.0.0.0/0, or an unencrypted EBS volume being created.",
+      "question": "Which service is DESIGNED for this?",
+      "choices": [
+        "AWS CloudTrail",
+        "AWS Config with managed or custom rules",
+        "Amazon CloudWatch metrics",
+        "AWS Trusted Advisor"
+      ],
+      "correct": 1,
+      "explanation": "AWS Config records configuration state of AWS resources over time AND evaluates resources against rules (managed rules like `s3-bucket-public-read-prohibited`, `encrypted-volumes`, `restricted-ssh`, or custom Lambda-backed rules). Non-compliant resources can trigger SNS notifications or automated remediation via Systems Manager Automation documents.\n\nCloudTrail (A) is an API audit log — records who called what, but doesn't evaluate configuration against rules. CloudWatch metrics (C) is for performance/operational metrics, not configuration compliance. Trusted Advisor (D) has a security section with fixed checks but isn't customizable and isn't focused on continuous compliance evaluation. The trap: CloudTrail + EventBridge rules CAN detect config changes, but Config is purpose-built for 'resource-configuration compliance' with pre-built and custom rules.",
+      "pattern": "Audit/compliance services: CloudTrail = API audit (who did what, when, from where). Config = resource CONFIGURATION state + compliance rules. CloudWatch = metrics + logs + alarms (operational). Config Conformance Packs = bundled compliance rulesets (e.g., PCI DSS, HIPAA). Security Hub = aggregate findings across Config/GuardDuty/Inspector/Macie. Use Config for 'is my S3 bucket public?'; use CloudTrail for 'who made it public?'",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Config",
+          "url": "https://aws.amazon.com/config/"
+        }
+      ]
+    },
+    {
+      "id": "clfg070",
+      "domain": "D3",
+      "scenario": "An application generates thousands of time-series metrics from IoT sensors — temperature, pressure, location over time. They need a purpose-built database for high-ingest, fast time-range queries, and automatic rollup of older data.",
+      "question": "Which service fits BEST?",
+      "choices": [
+        "Amazon DynamoDB",
+        "Amazon Timestream",
+        "Amazon RDS for PostgreSQL",
+        "Amazon DocumentDB"
+      ],
+      "correct": 1,
+      "explanation": "Amazon Timestream is AWS's managed, serverless time-series database. Designed for high ingest (millions of events/second), fast time-range queries, and automatic tiered storage — recent data in memory (hot), older in magnetic (cold, cheaper) — with configurable retention per tier. Built-in analytics functions (moving averages, interpolation).\n\nDynamoDB (A) can store time-series data but isn't optimized for it — you'd need careful partition key design to avoid hot partitions, and you'd lose built-in time-range functions. RDS PostgreSQL (C) works but won't scale to millions-of-events-per-second ingest without painful sharding. DocumentDB (D) is document/JSON for MongoDB compatibility, not time-series. The trap: DynamoDB is everyone's go-to NoSQL answer, but time-series has a purpose-built option.",
+      "pattern": "Purpose-built database decision: time-series ⇒ Timestream. Graph ⇒ Neptune. Ledger/immutable ⇒ QLDB. Document (MongoDB) ⇒ DocumentDB. Wide-column (Cassandra) ⇒ Keyspaces. Key-value ⇒ DynamoDB. In-memory ⇒ ElastiCache / MemoryDB. Relational ⇒ Aurora/RDS. Data warehouse ⇒ Redshift. Each is optimized for a specific access pattern — using the wrong one requires workarounds.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon Timestream",
+          "url": "https://aws.amazon.com/timestream/"
+        }
+      ]
+    },
+    {
+      "id": "clfg071",
+      "domain": "D3",
+      "scenario": "A company runs an analytics workload that scans petabytes of data in S3 to answer ad-hoc SQL queries. They want a serverless service that charges per query, with no cluster to manage.",
+      "question": "Which service is MOST appropriate?",
+      "choices": [
+        "Amazon Redshift Serverless",
+        "Amazon Athena",
+        "Amazon EMR",
+        "Amazon Aurora Serverless"
+      ],
+      "correct": 1,
+      "explanation": "Athena is serverless, pay-per-query (per TB scanned) SQL over data in S3. No cluster to manage, no warehouse to size, no servers. Perfect for ad-hoc analytics and log querying. Uses Presto/Trino under the hood, integrates with Glue Data Catalog for schema.\n\nRedshift Serverless (A) is also serverless but is a data-WAREHOUSE — you ingest data into Redshift storage (or use Redshift Spectrum to query S3). Great for repeated complex queries and BI dashboards at scale, but more overhead than Athena for truly ad-hoc one-offs. EMR (C) is managed Hadoop/Spark/Presto clusters — not serverless (though EMR Serverless now exists). Aurora Serverless (D) is a relational OLTP database, not for petabyte S3 analytics. The trap: Athena vs Redshift — Athena for ad-hoc S3 SQL; Redshift for ongoing analytical workloads with loaded data.",
+      "pattern": "Analytics service map: Athena = serverless SQL on S3 (ad-hoc, pay-per-query). Redshift = data warehouse (ongoing, high-performance analytics, columnar). Redshift Spectrum = query S3 from Redshift. EMR = managed big-data frameworks (Spark/Hadoop/Presto/Hive, clustered). Glue = serverless ETL + Data Catalog. Kinesis = real-time streaming. OpenSearch = search + log analytics. QuickSight = BI dashboards.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon Athena",
+          "url": "https://aws.amazon.com/athena/"
+        }
+      ]
+    },
+    {
+      "id": "clfg072",
+      "domain": "D3",
+      "scenario": "A company wants to stream real-time clickstream data from their website (millions of events per second) and process it with low latency for real-time dashboards.",
+      "question": "Which service is PURPOSE-BUILT for real-time data streaming at scale?",
+      "choices": [
+        "Amazon Kinesis Data Streams",
+        "Amazon SQS",
+        "Amazon S3 with event notifications",
+        "AWS Step Functions"
+      ],
+      "correct": 0,
+      "explanation": "Kinesis Data Streams is AWS's real-time data-streaming service — designed for high-throughput ingest (MB/s per shard, scalable to thousands of shards), sub-second latency, data retention 1-365 days for replay, multiple concurrent consumers (Lambda, Kinesis Data Analytics, Kinesis Data Firehose, custom consumers). Textbook use case.\n\nSQS (B) is a queue for decoupling — it's not a streaming service with multi-consumer replay semantics. Multiple consumers on the same SQS queue compete for messages; with Kinesis, each consumer sees all records. S3 event notifications (C) trigger downstream services per object PUT — not a streaming-ingest service. Step Functions (D) orchestrates workflows, not streaming. The trap: SQS and Kinesis both 'handle messages,' but queue vs stream differ — queue = single-consumer-per-message; stream = multi-consumer + replay.",
+      "pattern": "Messaging/streaming families: SQS (queue, point-to-point, pull, at-least-once or exactly-once for FIFO). SNS (pub/sub, push to multiple subscribers, at-least-once). EventBridge (event bus, rules + filtering across SaaS/AWS). Kinesis Data Streams (real-time streaming, multi-consumer + replay, sharded). Kinesis Data Firehose (managed delivery stream: buffer + load into S3/Redshift/OpenSearch). Kinesis Data Analytics / Managed Service for Apache Flink (stream processing SQL/Flink). MSK (managed Kafka).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon Kinesis Data Streams",
+          "url": "https://aws.amazon.com/kinesis/data-streams/"
+        }
+      ]
+    },
+    {
+      "id": "clfg073",
+      "domain": "D3",
+      "scenario": "A legacy application uses a Network File System (NFS) mount to share files between multiple Linux servers. The company wants to move to AWS while preserving the shared NFS semantics.",
+      "question": "Which AWS service is the DIRECT equivalent?",
+      "choices": [
+        "Amazon S3",
+        "Amazon EBS",
+        "Amazon EFS",
+        "Amazon FSx for Windows File Server"
+      ],
+      "correct": 2,
+      "explanation": "Amazon EFS is a fully managed, scalable NFS file system for Linux workloads. Multiple EC2 instances (or ECS/EKS tasks, Lambda functions, on-prem servers via Direct Connect/VPN) can mount the same EFS file system concurrently. Native NFS v4.x protocol. Perfect for lift-and-shift of NFS-based apps.\n\nS3 (A) is object storage, not a POSIX file system — applications expecting NFS semantics (file locking, directory traversal performance, POSIX permissions) won't work without rewriting. EBS (B) is block storage for a single EC2 instance (EBS Multi-Attach exists for io1/io2 but with clustering-filesystem caveats). FSx for Windows (D) speaks SMB, not NFS. The trap: candidates see 'shared file system' and pick S3 or EBS without matching the protocol.",
+      "pattern": "Storage-protocol map: Block (EBS, instance-attached). File — Linux/NFS (EFS). File — Windows/SMB + AD (FSx for Windows). File — HPC/Lustre (FSx for Lustre). File — multi-protocol hybrid (FSx for NetApp ONTAP, FSx for OpenZFS). Object (S3). Hybrid gateway (Storage Gateway). Match protocol before picking.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon Elastic File System",
+          "url": "https://aws.amazon.com/efs/"
+        }
+      ]
+    },
+    {
+      "id": "clfg074",
+      "domain": "D3",
+      "scenario": "A company runs EC2 instances and wants to reduce cost by using Spot Instances for 70% of the fleet while keeping 30% as On-Demand to guarantee baseline capacity. They want this handled automatically by a single Auto Scaling Group.",
+      "question": "Which feature enables this mixed purchasing strategy in ONE ASG?",
+      "choices": [
+        "EC2 Auto Scaling with mixed instances policy (combining On-Demand and Spot)",
+        "AWS Batch with managed compute environment",
+        "EC2 Fleet with target capacity of 100",
+        "Two separate ASGs behind the same ALB"
+      ],
+      "correct": 0,
+      "explanation": "EC2 Auto Scaling supports a 'mixed instances policy' that lets a single ASG contain both On-Demand and Spot Instances, with configurable percentages (e.g., 30% On-Demand base, 70% Spot for cost). You also specify multiple instance types for Spot diversification. Scaling events consider the mix.\n\nOption B (AWS Batch) is for batch jobs, not application ASGs. Option C (EC2 Fleet) is related — Fleet is a programmatic launch API that can launch mixed On-Demand/Spot capacity, but it's not the Auto Scaling Group pattern for long-running app tiers (ASG + mixed instances is the right answer for 'application behind a load balancer'). Option D (two ASGs) works but is MORE complex than a mixed-instances ASG. The trap: EC2 Fleet and ASG mixed-instances overlap conceptually; for 'single ASG' the answer is mixed-instances policy.",
+      "pattern": "EC2 purchasing strategies: Pure On-Demand = simple, most expensive. Pure Spot = cheap but interruptible. Mixed ASG = base On-Demand + burst Spot, best of both for stateless tiers. Savings Plans or RIs for the On-Demand portion. For batch jobs: AWS Batch with Spot. For HPC/ML: EC2 Fleet + Spot placement strategies.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Auto Scaling groups with multiple instance types",
+          "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-mixed-instances-groups.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg075",
+      "domain": "D3",
+      "scenario": "An application serves static content and dynamic API responses. The team wants low latency for global users, HTTPS termination at the edge, and protection from DDoS — via AWS's CDN.",
+      "question": "Which service provides all of these?",
+      "choices": [
+        "Amazon Route 53",
+        "Amazon CloudFront",
+        "AWS Global Accelerator",
+        "Amazon API Gateway"
+      ],
+      "correct": 1,
+      "explanation": "Amazon CloudFront is AWS's content delivery network (CDN). 600+ edge locations globally. It caches static content, accelerates dynamic origin requests, terminates HTTPS at the edge with ACM certificates, and benefits from AWS Shield Standard DDoS protection (included free). Integrates with WAF for app-layer security.\n\nRoute 53 (A) is DNS + health checks, not content delivery. Global Accelerator (C) provides static Anycast IPs and AWS-backbone routing for non-HTTP traffic or when you want 2 static IPs for fast failover — it's not a CDN (no caching). API Gateway (D) manages APIs but isn't a global CDN. The trap: Global Accelerator and CloudFront both 'improve global latency' but differently — CloudFront caches HTTP content at edges; Global Accelerator provides fast, stable entry points to regional backends for any protocol.",
+      "pattern": "Global edge services: CloudFront = CDN (HTTP/HTTPS caching, dynamic origin acceleration, WAF integration, Shield). Route 53 = DNS (latency/geo/weighted/failover routing, health checks). Global Accelerator = static Anycast IPs + AWS backbone routing (great for TCP/UDP apps, games, VoIP, fast failover across regions). Outposts/Local Zones/Wavelength = AWS compute close to specific physical locations. Shield Standard = DDoS protection (included).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon CloudFront",
+          "url": "https://aws.amazon.com/cloudfront/"
+        }
+      ]
+    },
+    {
+      "id": "clfg076",
+      "domain": "D3",
+      "scenario": "A company runs a Windows application that uses Active Directory for authentication. They want to move to AWS while keeping AD-based authentication for Windows servers, SQL Server, and Windows file shares.",
+      "question": "Which service provides managed Active Directory on AWS?",
+      "choices": [
+        "AWS IAM",
+        "AWS Directory Service (AWS Managed Microsoft AD)",
+        "AWS IAM Identity Center",
+        "Amazon Cognito"
+      ],
+      "correct": 1,
+      "explanation": "AWS Directory Service offers AWS Managed Microsoft AD — a fully managed Microsoft Active Directory running in AWS. Actual Microsoft AD (not a compatible alternative), so Windows servers, SQL Server, FSx for Windows, WorkSpaces, and other AD-dependent workloads work natively. AWS handles DC patching, multi-AZ, backups.\n\nIAM (A) is AWS's own identity system for AWS APIs — not Active Directory. IAM Identity Center (C) is AWS's SSO portal for human access to AWS accounts and some SaaS apps — NOT a replacement for Active Directory for Windows workloads. Cognito (D) is for consumer app authentication (user pools for mobile/web apps, OAuth/OIDC). The trap: IAM Identity Center and AD sound like they should be the same thing — they aren't. Managed AD is for your Windows infrastructure; Identity Center is for SSO access to AWS.",
+      "pattern": "Identity services on AWS: IAM = AWS API access (users, roles, policies). IAM Identity Center = human SSO to AWS accounts + SaaS apps. Directory Service (AWS Managed Microsoft AD) = real Active Directory for Windows workloads. AD Connector = proxy to on-prem AD (no DCs in AWS). Simple AD = basic, Samba-based (compatibility subset, cheap). Cognito User Pools = consumer app identity. Cognito Identity Pools = federated guest/user identity → AWS credentials.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Directory Service",
+          "url": "https://aws.amazon.com/directoryservice/"
+        }
+      ]
+    },
+    {
+      "id": "clfg077",
+      "domain": "D3",
+      "scenario": "A company needs to notify their engineers of production issues across phone, email, and SMS — fanning out one alert to many subscribers.",
+      "question": "Which service is the SIMPLEST fit?",
+      "choices": [
+        "Amazon SES",
+        "Amazon SNS",
+        "Amazon Pinpoint",
+        "AWS Chatbot"
+      ],
+      "correct": 1,
+      "explanation": "SNS (Simple Notification Service) is pub/sub — publish once, fan out to many subscribers over various protocols: email, SMS, HTTP/HTTPS endpoints, mobile push (APNS/FCM), SQS queues, Lambda, Kinesis Firehose. Textbook alerting use case. CloudWatch Alarms and many AWS services integrate directly with SNS.\n\nSES (A) is email-only (transactional email service). Pinpoint (C) is for customer marketing campaigns — overkill for internal alerting. Chatbot (D) integrates CloudWatch/SNS with Slack/Chime/MS Teams channels — useful alongside SNS but not a standalone fan-out messaging service. The trap: Pinpoint supports more channels but is a campaign product; for simple alert fan-out, SNS is the right simple answer.",
+      "pattern": "Notification service selection: SNS = simple pub/sub fan-out (email/SMS/push/HTTP/SQS/Lambda). SES = transactional email at scale. Pinpoint = marketing/engagement with segmentation. EventBridge = event routing with rules/filtering (more complex logic). Chatbot = SNS→Slack/Chime/Teams. For 'ops alert fan-out' ⇒ SNS.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon SNS",
+          "url": "https://aws.amazon.com/sns/"
+        }
+      ]
+    },
+    {
+      "id": "clfg078",
+      "domain": "D3",
+      "scenario": "A company wants to run the same workload in multiple AWS regions for disaster recovery. The RDS database in their primary region must be replicated to a secondary region with minimal lag, and they need to be able to promote the secondary to primary if the primary region fails.",
+      "question": "Which RDS feature provides this?",
+      "choices": [
+        "Multi-AZ deployment",
+        "Cross-region read replica",
+        "RDS snapshots copied to another region on a schedule",
+        "RDS Proxy"
+      ],
+      "correct": 1,
+      "explanation": "Cross-region read replicas for RDS (MySQL, MariaDB, PostgreSQL, Oracle, and all Aurora) asynchronously replicate from a primary to a secondary region. In a DR event, you can promote the cross-region replica to be the new primary (now a standalone database). Aurora Global Database is the even-lower-latency variant for Aurora specifically (<1 second cross-region lag, fast promotion).\n\nMulti-AZ (A) is within a SINGLE region (HA across AZs, not cross-region DR). Snapshots on a schedule (C) have high RPO (you lose any data between snapshots) and slow restore time (RTO) — valid backup, not the right DR primitive for 'minimal lag.' RDS Proxy (D) is a connection pooler for reducing failover time and pool exhaustion, not a cross-region replication mechanism. The trap: Multi-AZ and cross-region replicas both provide 'standby DB' but serve different failure modes — Multi-AZ for AZ-level failure, cross-region for region-level DR.",
+      "pattern": "RDS/Aurora HA + DR ladder: Multi-AZ (synchronous standby, same region, automatic failover — HA not DR). Read replicas same-region (scale reads, can promote in a pinch). Cross-region read replicas (async, DR + global reads). Aurora Global Database (Aurora-specific, <1 second lag, primary + up to 5 secondary regions). Automated backups/snapshots (RPO: 5 min for Point-in-Time Recovery; daily snapshots). AWS Backup for centralized backup management.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Working with Amazon RDS read replicas",
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg079",
+      "domain": "D3",
+      "scenario": "A company's on-prem environment has 40 TB of data they want to seed into AWS and then keep synchronized incrementally going forward. The network link is 1 Gbps and they want an AWS-managed service to handle file transfer with scheduling, verification, and incremental sync.",
+      "question": "Which service fits BEST?",
+      "choices": [
+        "AWS Snowball Edge (one-time shipment)",
+        "AWS DataSync",
+        "Amazon S3 Transfer Acceleration",
+        "AWS Storage Gateway (Volume Gateway)"
+      ],
+      "correct": 1,
+      "explanation": "AWS DataSync is a managed data-transfer service for online transfers between on-prem (NFS/SMB/HDFS/object stores) and AWS (S3/EFS/FSx). It handles scheduling, incremental sync, integrity verification, bandwidth throttling, and parallelism — at up to 10 Gbps per agent. Perfect for ongoing sync scenarios. At 1 Gbps, 40 TB seeds in roughly 4 days (theoretical), manageable.\n\nSnowball Edge (A) is a one-time physical shipment — great for the initial seed but no ongoing sync. Transfer Acceleration (C) speeds uploads to S3 via CloudFront edges — useful for interactive uploads but not a scheduled sync service. Storage Gateway Volume Gateway (D) presents iSCSI block storage backed by S3 — it's a storage gateway, not a sync tool. The trap: Snowball is tempting for 40 TB, but 'ongoing sync' rules it out; DataSync handles both initial + ongoing.",
+      "pattern": "Data-transfer service choice: Snow Family (Snowball Edge, Snowcone, Snowmobile-retired) = physical shipment for >10s of TB. DataSync = managed online sync (one-time + ongoing, NFS/SMB/HDFS → S3/EFS/FSx). Transfer Family (SFTP/FTPS/FTP managed endpoints to S3/EFS). Storage Gateway (hybrid gateway: File/Volume/Tape). S3 Transfer Acceleration = faster uploads via CloudFront. Direct Connect = dedicated network link. Database Migration Service (DMS) for databases specifically.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS DataSync",
+          "url": "https://aws.amazon.com/datasync/"
+        }
+      ]
+    },
+    {
+      "id": "clfg080",
+      "domain": "D3",
+      "scenario": "A development team wants to build a serverless REST API that processes requests, calls a Lambda function, and stores data in DynamoDB. They want API Gateway to handle authentication, throttling, and API versioning.",
+      "question": "Which API Gateway REST API feature provides THROTTLING to prevent abuse?",
+      "choices": [
+        "Usage plans with API keys and throttling limits",
+        "AWS WAF only — API Gateway has no native throttling",
+        "Lambda concurrency limits",
+        "Route 53 rate-based routing"
+      ],
+      "correct": 0,
+      "explanation": "API Gateway REST APIs support usage plans that define throttle limits (steady-state request rate + burst) and quotas (requests per day/week/month) associated with API keys. Clients include their API key in the request header; API Gateway enforces limits and returns 429 Too Many Requests when exceeded. There's also account-level and method-level throttling defaults.\n\nOption B is wrong — API Gateway has native throttling. Option C (Lambda concurrency) limits concurrent Lambda executions, which indirectly protects Lambda but doesn't give per-client API throttling. Option D (Route 53) has no rate-based routing feature. The trap: WAF can also rate-limit by IP, but it's additive — API Gateway's native usage plans are the primary per-client throttling mechanism.",
+      "pattern": "API Gateway features: authentication (IAM, Cognito, Lambda authorizer, JWT, API keys), throttling (usage plans + API keys, account/method defaults), caching (per-stage, GET responses), request/response transformation (mapping templates), stages (dev/test/prod) + canary deployments, CloudWatch metrics + access logging, WAF integration. REST API vs HTTP API vs WebSocket API — HTTP APIs are simpler/cheaper for basic proxy; REST has more features (usage plans, caching).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Throttling API requests",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-request-throttling.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg081",
+      "domain": "D4",
+      "scenario": "A company has three AWS accounts: a management (payer) account and two member accounts A and B. Account A has $1000 of EC2 Reserved Instance coverage. An identical EC2 instance runs in account B with no RI. The consolidated billing feature determines whether the RI benefit applies.",
+      "question": "What happens to the RI discount?",
+      "choices": [
+        "The RI discount stays in account A only; account B pays full On-Demand price",
+        "By default, RI discounts are shared across accounts in the Organization (if RI sharing is enabled), so account B can receive the benefit if a matching instance runs there",
+        "RI discounts never apply cross-account under any circumstances",
+        "RI discounts only apply to the management/payer account"
+      ],
+      "correct": 1,
+      "explanation": "Consolidated billing enables RI (and Savings Plan) sharing across the Organization by default. If account A has unused RI coverage (instance family, size, region, tenancy, OS match) and account B runs a matching instance, the RI discount is applied to account B's usage — 'unused' capacity in one account benefits another. RI sharing can be disabled per account if you want discounts strictly per account (e.g., for chargeback fairness).\n\nOption A describes the case only if sharing is disabled. Option C is flatly wrong — sharing is ON by default. Option D is wrong — the discount applies to the matching usage regardless of which account runs the instance. The trap: candidates don't know RI sharing is on by default; finance teams sometimes disable it to maintain clean per-team cost attribution.",
+      "pattern": "Consolidated billing benefits: (1) Single invoice across all accounts. (2) Volume discounts aggregate (S3, CloudFront, EC2 per-hour tiered pricing). (3) RI and Savings Plan discounts shared across accounts by default (can be toggled per account in Billing). (4) Free-tier limits also shared in some cases. RI sharing is common 'gotcha' in multi-account chargeback — disable if teams buy their own RIs and want their own discounts.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Reserved Instance discount sharing",
+          "url": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/ri-behavior.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg082",
+      "domain": "D4",
+      "scenario": "A startup CFO wants to set a hard upper limit on AWS spending. They want the account to STOP when spend reaches a threshold — so a runaway Lambda loop or forgotten GPU instance can't create a $100,000 surprise bill.",
+      "question": "Which statement CORRECTLY describes AWS's spending controls?",
+      "choices": [
+        "AWS Budgets automatically stops services when the budget threshold is exceeded",
+        "AWS Budgets sends alerts when thresholds are exceeded; there is no AWS-native automatic hard stop, but Budget Actions can trigger IAM policies, EC2/RDS stops, or SSM automations to reduce usage",
+        "AWS Organizations includes a hard spending cap feature",
+        "Cost Explorer automatically terminates resources that exceed spend forecasts"
+      ],
+      "correct": 1,
+      "explanation": "AWS does NOT have a simple 'stop at $X' kill switch — resources keep running regardless of spend. AWS Budgets sends alerts (via SNS) when thresholds are hit, and AWS Budget Actions can automate responses: attach a restrictive IAM policy to a user/group, stop EC2 or RDS instances, run an SSM automation document. Still not a hard instantaneous stop, but it's the closest native mechanism. Customers often implement stricter controls via Lambda + EventBridge.\n\nOption A is a common misconception — Budgets alerts, doesn't stop. Option C is wrong — Organizations governs accounts/SCPs/consolidated billing, not spending caps. Option D is wrong — Cost Explorer is analytics, nothing auto-terminates. The trap: candidates wish AWS had a kill switch and assume Budgets provides it.",
+      "pattern": "Cost-control toolkit: Cost Explorer (visual spend analytics, forecasts, anomaly detection). Budgets (alerts on cost/usage/RI/Savings Plan thresholds). Budget Actions (automate response: IAM restriction, stop EC2/RDS, SSM). Cost Anomaly Detection (ML-based surprise alerts). CUR (raw data feed for Athena/QuickSight). Service quotas to limit resource provisioning. SCPs to block expensive services/regions at Organization level. Tagging + allocation for chargeback.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Managing your costs with AWS Budgets",
+          "url": "https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg083",
+      "domain": "D4",
+      "scenario": "An engineering manager wants to get an automated recommendation of which EC2 instance types they should right-size TO, based on their actual CPU/memory/network usage patterns.",
+      "question": "Which service provides these recommendations?",
+      "choices": [
+        "AWS Trusted Advisor",
+        "AWS Compute Optimizer",
+        "Amazon CloudWatch",
+        "AWS Cost Explorer"
+      ],
+      "correct": 1,
+      "explanation": "AWS Compute Optimizer uses machine learning on CloudWatch metrics to recommend right-sized EC2, Auto Scaling Groups, EBS volumes, Lambda functions, and ECS services on Fargate. It delivers specific SKU recommendations (e.g., 'your m5.2xlarge is underutilized — downsize to m5.large for $X savings') with confidence ratings.\n\nTrusted Advisor (A) has a few fixed 'idle instance' and 'low utilization' checks — useful but less detailed than Compute Optimizer. CloudWatch (C) provides raw metrics but doesn't compute right-sizing recommendations. Cost Explorer (D) surfaces Savings Plan and RI recommendations but not instance right-sizing. The trap: Cost Explorer's RI recommendations and Trusted Advisor's low-utilization checks are related but Compute Optimizer is the purpose-built ML-recommendation service.",
+      "pattern": "Optimization recommenders: Compute Optimizer = ML-based right-sizing (EC2, ASG, EBS, Lambda, ECS Fargate). Trusted Advisor = broad best-practice checks (cost, security, fault tolerance, performance, service limits). Cost Explorer = RI + Savings Plan purchase recommendations. S3 Storage Lens = S3 usage analytics with recommendations. CloudWatch Logs Insights for log queries. Combine them: Compute Optimizer for right-sizing, Cost Explorer for commitment purchases, Trusted Advisor for broad health.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Compute Optimizer",
+          "url": "https://aws.amazon.com/compute-optimizer/"
+        }
+      ]
+    },
+    {
+      "id": "clfg084",
+      "domain": "D4",
+      "scenario": "A new AWS customer receives 12 months of 'AWS Free Tier' benefits. The CFO asks which of their expected usages are covered.",
+      "question": "Which pair CORRECTLY describes AWS Free Tier 12-month allocations?",
+      "choices": [
+        "5 GB S3 Standard storage + 750 hours/month of t2.micro EC2 (or t3.micro in Regions without t2.micro)",
+        "Unlimited EC2 + 1 TB S3 for 12 months",
+        "1 TB EBS storage + 1 million API Gateway requests per day",
+        "1 PB S3 Intelligent-Tiering + unlimited Lambda"
+      ],
+      "correct": 0,
+      "explanation": "The AWS 12-month Free Tier for new accounts includes (among other things): 5 GB S3 Standard storage + 20,000 GET + 2,000 PUT/POST/LIST requests per month, and 750 hours/month of t2.micro or t3.micro EC2 (Linux or Windows). Plus RDS 750 hours/month of db.t2.micro, CloudFront 1 TB data transfer out, and similar small allocations. Option A captures the classic two.\n\nOptions B, C, and D are vastly exaggerated. The trap: candidates who have never read the actual Free Tier terms may pick the 'generous' option. The real Free Tier is modest — intended for learning/experimentation, not production.",
+      "pattern": "AWS Free Tier flavors: (1) 12-month (new accounts, first year only — EC2 t2/t3.micro 750h, RDS 750h, S3 5 GB, EBS 30 GB). (2) Always Free (ongoing, capped — Lambda 1M requests + 400k GB-seconds/month, DynamoDB 25 GB storage + 25 RCU/WCU, CloudWatch 10 metrics + 5 GB logs, etc.). (3) Short-term trials (e.g., Inspector 15-day, Redshift 2 months). Free Tier is for learning, not production capacity.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Free Tier",
+          "url": "https://aws.amazon.com/free/"
+        }
+      ]
+    },
+    {
+      "id": "clfg085",
+      "domain": "D4",
+      "scenario": "A global engineering org wants to EDIT their AWS invoices to add internal project codes, re-group line items by business unit, and produce an internal bill that charges each business unit based on AWS usage plus an overhead markup.",
+      "question": "Which service is DESIGNED for this internal chargeback / bill customization?",
+      "choices": [
+        "AWS Cost Explorer",
+        "AWS Billing Conductor",
+        "AWS Cost and Usage Report",
+        "AWS Budgets"
+      ],
+      "correct": 1,
+      "explanation": "AWS Billing Conductor is purpose-built for internal chargeback — it lets finance teams create custom 'billing groups' with their own custom pricing rules (markups, discounts, flat fees) to produce 'proforma' invoices for internal business units, separate from the actual AWS invoice. Exactly the 'add overhead markup and rebill internally' use case.\n\nCost Explorer (A) is analytics/reporting, not invoice modification. CUR (C) is a raw data feed of usage — foundation for analysis but not a rebilling engine. Budgets (D) is threshold alerting. The trap: this is a lesser-known service; most candidates default to CUR + custom scripts.",
+      "pattern": "Financial-ops toolkit: Billing Conductor = internal rebilling with markups/discounts for chargeback. Cost Explorer = spend analytics. CUR = raw data feed. Budgets = threshold alerts. Cost Categories = virtual groupings of costs by business meaning. Cost Allocation Tags = per-resource attribution. Savings Plan / RI recommendations inside Cost Explorer.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Billing Conductor",
+          "url": "https://aws.amazon.com/aws-cost-management/aws-billing-conductor/"
+        }
+      ]
+    },
+    {
+      "id": "clfg086",
+      "domain": "D1",
+      "scenario": "A solutions architect must choose between a single large EC2 instance and multiple smaller EC2 instances for a stateless web tier. The goal is to handle variable load, survive instance failures, and keep costs tied to demand.",
+      "question": "Which architectural pattern is PREFERRED in the cloud?",
+      "choices": [
+        "Vertical scaling on one large instance",
+        "Horizontal scaling across multiple smaller instances behind a load balancer, with Auto Scaling",
+        "Single dedicated host for tenancy control",
+        "Cluster placement group for low latency"
+      ],
+      "correct": 1,
+      "explanation": "Horizontal scaling (adding more smaller instances behind a load balancer, managed by an Auto Scaling Group) is the textbook cloud pattern for stateless tiers. Benefits: elasticity (scale with demand), fault tolerance (failure of one instance only affects part of capacity), and cost matching. Failure blast radius is small.\n\nVertical scaling (A) means ONE big instance — single point of failure, scaling requires downtime or replacement, no demand matching. Dedicated host (C) is for license/compliance reasons (tenancy control), not architectural scaling. Cluster placement group (D) is for HPC/low-latency needs, orthogonal. The trap: candidates pick 'one bigger instance' from on-prem habits; cloud best practice is many small things over few big things.",
+      "pattern": "Scaling patterns: Horizontal = add more instances (scale out/in) — cloud-preferred for stateless tiers. Vertical = bigger instance (scale up/down) — on-prem legacy, use for stateful workloads that can't be distributed. Combine: ASG with mixed instance types, behind ALB/NLB. Store state in managed services (RDS, DynamoDB, ElastiCache, S3) not on the instances.",
+      "references": [
+        {
+          "type": "whitepaper",
+          "title": "AWS Well-Architected Framework — Reliability",
+          "url": "https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg087",
+      "domain": "D1",
+      "scenario": "A CTO is asked during a board meeting: 'If AWS has an outage in us-east-1, does that mean our business dies?'",
+      "question": "Which architecture decision MOST mitigates single-Region outage risk?",
+      "choices": [
+        "Deploying across multiple Availability Zones within us-east-1",
+        "Deploying to multiple Regions with Route 53 failover routing and cross-Region data replication",
+        "Using Reserved Instances with 3-year commitments",
+        "Enabling S3 Versioning on all buckets"
+      ],
+      "correct": 1,
+      "explanation": "Multi-Region deployment with Route 53 failover (active-passive or active-active) and cross-Region data replication (S3 Cross-Region Replication, DynamoDB Global Tables, Aurora Global Database, etc.) is the architectural defense against a Region-wide outage. Operationally expensive and complex, but the only answer that survives 'us-east-1 is down.'\n\nMulti-AZ (A) survives AZ-level failure (common) but not region-wide failure (rare but happens — us-east-1 has had several notable incidents). Reserved Instances (C) are a pricing mechanism, not availability. S3 Versioning (D) protects against object deletion/overwrites, not region outage. The trap: many candidates think multi-AZ = DR, but multi-AZ = HA for single-region; multi-Region = DR for region-wide events.",
+      "pattern": "Availability hierarchy: single instance (not HA). Multi-AZ single region (HA baseline). Multi-Region active-passive (DR, higher RTO). Multi-Region active-active (DR + global low latency, most complex). Choose based on RTO/RPO and cost. DR strategies (from cheapest, slowest to costliest, fastest): Backup & restore, Pilot light, Warm standby, Multi-site active-active. For CLF: 'region outage' ⇒ multi-Region.",
+      "references": [
+        {
+          "type": "whitepaper",
+          "title": "Disaster Recovery of Workloads on AWS",
+          "url": "https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-workloads-on-aws.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg088",
+      "domain": "D1",
+      "scenario": "A learning team is distinguishing the AWS documentation resources. They want to know which resource provides PRESCRIPTIVE, opinionated step-by-step guidance for common patterns — not a reference manual.",
+      "question": "Which AWS resource fits this description?",
+      "choices": [
+        "AWS Service Documentation (docs.aws.amazon.com)",
+        "AWS Prescriptive Guidance",
+        "AWS re:Post",
+        "AWS Support Center"
+      ],
+      "correct": 1,
+      "explanation": "AWS Prescriptive Guidance is a dedicated portal of opinionated, step-by-step guides and patterns for common tasks (migration patterns, landing-zone setup, cloud architecture patterns, migration strategy guides). It's curated by AWS solutions architects and partners. Distinct from the reference documentation.\n\nService Documentation (A) is reference-oriented — API reference, feature docs, developer guides. It's comprehensive but not prescriptive. re:Post (C) is AWS's community Q&A site (replaced AWS Forums). Support Center (D) is for case management with AWS Support. The trap: all four are legitimate AWS resources; the 'prescriptive, opinionated, step-by-step' phrasing points specifically at Prescriptive Guidance.",
+      "pattern": "AWS documentation ecosystem: Service Documentation (docs.aws.amazon.com — reference, feature docs, API). Prescriptive Guidance (step-by-step patterns, opinions). Whitepapers (deep-dives on architecture, security, migration). re:Invent session videos (conference talks). AWS Skill Builder (training courses). AWS Workshops (hands-on guided labs). re:Post (community Q&A). AWS Solutions Library (ready-to-deploy reference implementations).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Prescriptive Guidance",
+          "url": "https://aws.amazon.com/prescriptive-guidance/"
+        }
+      ]
+    },
+    {
+      "id": "clfg089",
+      "domain": "D2",
+      "scenario": "A company has employees and contractors. Employees need console access to AWS to do their jobs. Contractors need short-term access to a specific AWS account for a 3-month project. Security wants centralized control and easy deprovisioning.",
+      "question": "Which approach is BEST?",
+      "choices": [
+        "Create IAM users for all employees and contractors in each AWS account directly",
+        "Use AWS IAM Identity Center for employees (via federation from corporate IdP), and for contractors create time-bound permission sets or use IAM Identity Center with the contractor's account expiration managed centrally",
+        "Give contractors the root account credentials with a promise to delete them later",
+        "Share an IAM user's access keys across all contractors"
+      ],
+      "correct": 1,
+      "explanation": "IAM Identity Center supports federated access for both employees (via corporate IdP like Okta/Azure AD) and contractors (directly in Identity Center's internal directory OR federated from a contractor-specific IdP). Permission sets are time-bound where needed, and deprovisioning is a single action in Identity Center — revoke the user's assignments and they lose access across all accounts immediately.\n\nOption A (IAM users everywhere) = credential sprawl, hard to deprovision, no SSO. Option C is a catastrophic root-credential violation. Option D shares credentials — anti-pattern. The trap: candidates default to 'IAM users' because that's the primitive they know; Identity Center is the modern answer for human workforce access.",
+      "pattern": "Workforce access pattern: IAM Identity Center + corporate IdP for employees; Identity Center internal store or separate IdP for contractors/vendors. Permission sets = reusable role templates assigned to users/groups per account. Audit via CloudTrail. Deprovision = single action. For break-glass: dedicated IAM emergency-access users in protected accounts, rarely used, MFA + key custody.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS IAM Identity Center — multi-account permissions",
+          "url": "https://docs.aws.amazon.com/singlesignon/latest/userguide/multiaccountpermissions.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg090",
+      "domain": "D2",
+      "scenario": "A company wants to encrypt EBS volumes attached to EC2 instances with a customer-managed key, and ensure that any snapshot created from these volumes is ALSO encrypted with the same key automatically.",
+      "question": "Which statement is CORRECT about EBS encryption?",
+      "choices": [
+        "EBS encryption must be manually enabled on each snapshot; it is not inherited from the source volume",
+        "Snapshots of encrypted EBS volumes are automatically encrypted with the same KMS key, and any volume restored from those snapshots is encrypted; encryption can be enabled as a default in the Region via EC2 settings",
+        "EBS volumes cannot be encrypted with customer-managed KMS keys — only AWS-managed keys",
+        "Encryption applies only to io1/io2 volume types, not gp3 or standard"
+      ],
+      "correct": 1,
+      "explanation": "EBS encryption behavior: snapshots of encrypted volumes are automatically encrypted (same KMS key). Volumes restored from encrypted snapshots are encrypted. Copies of encrypted snapshots can be re-encrypted with a different KMS key (useful for cross-region/cross-account). EBS encryption by default can be enabled per Region in EC2 Account Settings — any new volume in that region is encrypted automatically. All volume types support encryption (gp2, gp3, io1, io2, st1, sc1).\n\nOption A is wrong — snapshot encryption is inherited. Option C is wrong — EBS supports customer-managed KMS keys. Option D is wrong — encryption works for all EBS types. The trap: candidates who haven't touched EBS encryption may think encryption is opt-in per snapshot or limited to certain volume types.",
+      "pattern": "EBS encryption rules: customer-managed or AWS-managed KMS keys supported, inheritance through snapshot → volume chain, re-encryption during snapshot copy to change key. 'Encryption by default' regional setting forces all new volumes encrypted. No measurable performance cost. Same for EFS (KMS keys), RDS (must enable at creation, not retroactive — workaround is snapshot + restore-with-encryption), S3 (SSE-S3/KMS/C), DynamoDB (encrypted at rest by default with AWS-owned key).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon EBS encryption",
+          "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html"
+        }
+      ]
     }
   ]
 }
