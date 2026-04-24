@@ -1,0 +1,606 @@
+{
+  "meta": {
+    "exam": "clf-c02",
+    "target": 90,
+    "difficulty": "gauntlet",
+    "description": "Gauntlet-tier CLF-C02 questions: edge cases, dense distractors, deliberate service-confusion traps. Sudden-death mode."
+  },
+  "questions": [
+    {
+      "id": "clfg001",
+      "domain": "D1",
+      "scenario": "A startup is running every workload on a single EC2 instance in us-east-1a. Leadership keeps hearing the words 'reliability' and 'availability' in board meetings and wants to know what's missing.",
+      "question": "Which AWS Well-Architected pillar MOST directly addresses the ability to recover from infrastructure failures with minimum disruption?",
+      "choices": [
+        "Performance Efficiency",
+        "Operational Excellence",
+        "Reliability",
+        "Security"
+      ],
+      "correct": 2,
+      "explanation": "The Reliability pillar is specifically about a workload's ability to perform its intended function correctly and consistently, including recovery from failures and scaling to meet demand. Multi-AZ design, fault isolation, and automated recovery all live here.\n\nPerformance Efficiency (A) is about using compute resources efficiently — right-sizing, selecting the right instance type, monitoring. Operational Excellence (B) covers running and monitoring systems, continuous improvement, and runbook quality — related but not the same as recovering from failure. Security (D) is confidentiality, integrity, and access controls. The trap: candidates often pick Operational Excellence because it sounds like 'keeping things running,' but recovery from infrastructure failure is squarely a Reliability concept.",
+      "pattern": "Six pillars of Well-Architected: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, Sustainability. Key distinctions — Reliability = recovery + availability; Operational Excellence = run/monitor/improve processes; Performance Efficiency = right-sized resources. If the question mentions 'recover from failure,' the answer is almost always Reliability.",
+      "references": [
+        {
+          "type": "whitepaper",
+          "title": "AWS Well-Architected Framework — Reliability Pillar",
+          "url": "https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html"
+        },
+        {
+          "type": "doc",
+          "title": "Well-Architected Framework Overview",
+          "url": "https://aws.amazon.com/architecture/well-architected/"
+        }
+      ]
+    },
+    {
+      "id": "clfg002",
+      "domain": "D2",
+      "scenario": "A security engineer is rotating a database password stored in AWS Secrets Manager. The application retrieves the secret at runtime using an IAM role. The engineer wants the rotation to happen automatically every 30 days without application downtime.",
+      "question": "Which AWS service integration enables automatic rotation of the secret?",
+      "choices": [
+        "AWS Systems Manager Parameter Store with a scheduled EventBridge rule",
+        "AWS Secrets Manager with a Lambda rotation function",
+        "AWS KMS with a custom key policy that expires every 30 days",
+        "AWS IAM with a credential report triggered monthly"
+      ],
+      "correct": 1,
+      "explanation": "Secrets Manager has native automatic rotation that invokes an AWS-managed or custom Lambda rotation function on a defined schedule. For supported databases (RDS, Redshift, DocumentDB), AWS provides prebuilt rotation Lambdas — you configure the schedule, Secrets Manager handles the rest.\n\nParameter Store (A) stores configuration and secrets but does NOT provide native rotation — you'd have to build the whole rotation pipeline yourself. KMS key policies (C) don't expire on a schedule, and KMS keys protect secrets but are not themselves rotated this way (KMS has its own annual key rotation that's unrelated). IAM credential reports (D) are audit artifacts, not rotation mechanisms. The trap: Parameter Store sounds like it should do rotation because it 'also stores secrets,' but only Secrets Manager has the rotation feature.",
+      "pattern": "Parameter Store vs. Secrets Manager: Parameter Store = config + secrets, free tier available, NO native rotation. Secrets Manager = secrets only, costs per secret + API call, HAS native rotation via Lambda. If the question mentions 'automatic rotation,' the answer is Secrets Manager.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Rotate AWS Secrets Manager secrets",
+          "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets.html"
+        },
+        {
+          "type": "doc",
+          "title": "Comparing Secrets Manager and Parameter Store",
+          "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg003",
+      "domain": "D2",
+      "scenario": "A company's security team wants a single, consolidated view of findings across GuardDuty, Inspector, Macie, and IAM Access Analyzer for all accounts in their AWS Organization. They do not want to build custom aggregation.",
+      "question": "Which service provides this consolidated view natively?",
+      "choices": [
+        "AWS Trusted Advisor",
+        "AWS Security Hub",
+        "AWS Config",
+        "Amazon CloudWatch"
+      ],
+      "correct": 1,
+      "explanation": "AWS Security Hub is the aggregation layer specifically designed to ingest findings from GuardDuty, Inspector, Macie, IAM Access Analyzer, Firewall Manager, and many third-party tools, normalizing them into the AWS Security Finding Format (ASFF) and presenting them in a single dashboard across accounts and regions.\n\nTrusted Advisor (A) gives best-practice recommendations across cost, performance, security, fault tolerance, and service limits — it is not a security-findings aggregator. Config (C) tracks resource configuration changes and compliance against rules, but does not centralize findings from GuardDuty/Inspector/Macie. CloudWatch (D) is metrics, logs, and alarms — not a security-finding aggregation service. The trap: Trusted Advisor has 'security' checks, but 'consolidated view of findings from GuardDuty/Inspector/Macie' is explicitly Security Hub's job.",
+      "pattern": "Security service map: GuardDuty = threat detection, Inspector = vulnerability scanning, Macie = S3 data classification/PII, IAM Access Analyzer = unintended access paths. Security Hub = aggregator for all of the above. Trusted Advisor = best-practice scorecard, not a security aggregator.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "What is AWS Security Hub?",
+          "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
+        },
+        {
+          "type": "doc",
+          "title": "Security Hub integrations",
+          "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-internal-providers.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg004",
+      "domain": "D2",
+      "scenario": "A developer is confused about the AWS Shared Responsibility Model while configuring an Amazon RDS instance. They want to know exactly which of these tasks is AWS's responsibility, not theirs.",
+      "question": "Under the Shared Responsibility Model, which task is AWS solely responsible for on an Amazon RDS database?",
+      "choices": [
+        "Applying OS-level patches to the underlying host",
+        "Choosing the database engine version to run",
+        "Configuring the database parameter group",
+        "Encrypting data at rest"
+      ],
+      "correct": 0,
+      "explanation": "For RDS (a managed service), AWS patches the underlying OS and hypervisor — the customer does not have OS access. This is a key distinction from EC2, where OS patching is the customer's responsibility.\n\nChoosing the engine version (B) is the customer's choice — AWS provides engines and versions, but the customer selects and (to some extent) controls upgrade timing. Parameter group configuration (C) is explicitly the customer's job — AWS provides defaults and the customer tunes. Encryption at rest (D) is enabled by the customer (AWS provides the mechanism via KMS, but the customer must choose to enable it at DB creation and manage keys). The trap: 'encrypting data at rest' sounds like AWS does it automatically, but the customer enables/configures it — AWS only supplies the tools.",
+      "pattern": "Shared Responsibility — AWS does 'security OF the cloud' (hardware, hypervisor, managed-service OS, physical security). Customer does 'security IN the cloud' (data, IAM, network config, guest OS on EC2, application security). For managed services (RDS, Lambda, DynamoDB), AWS handles more; for IaaS (EC2), customer handles more. Patching managed-service OS = AWS; patching EC2 guest OS = customer.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Shared Responsibility Model",
+          "url": "https://aws.amazon.com/compliance/shared-responsibility-model/"
+        },
+        {
+          "type": "doc",
+          "title": "Amazon RDS and the Shared Responsibility Model",
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg005",
+      "domain": "D3",
+      "scenario": "A batch processing job runs once per week for about 4 hours and is fault-tolerant — if an instance is interrupted, the job can restart from a checkpoint. The team wants the lowest possible EC2 cost.",
+      "question": "Which EC2 purchasing option provides the LOWEST cost for this workload?",
+      "choices": [
+        "On-Demand Instances",
+        "Reserved Instances (1-year, no upfront)",
+        "Spot Instances",
+        "Savings Plans (Compute, 3-year)"
+      ],
+      "correct": 2,
+      "explanation": "Spot Instances offer up to 90% discount off On-Demand pricing for interruptible, fault-tolerant workloads. A weekly 4-hour job with checkpointing is textbook Spot.\n\nOn-Demand (A) is the most expensive option — no commitment, no discount. Reserved Instances (B) require a 1- or 3-year commitment for a specific instance family in a specific region — but the workload only runs 4 hours per week, so you'd pay for 168 hours × 52 weeks = 8,736 hours/year of capacity while using only 208 hours. RIs are for steady-state workloads. Savings Plans (D) also require a committed hourly spend — same problem as RIs for bursty weekly workloads. Spot wins because you only pay when running, at a deep discount, and the workload tolerates interruption.",
+      "pattern": "EC2 purchasing-option decision tree: Fault-tolerant + interruptible → Spot (up to 90% off). Steady-state, predictable 24/7 → RI or Savings Plans (up to ~72%). Short-term, unpredictable, no interruption tolerance → On-Demand. Dedicated Hosts = licensing/compliance edge case. Trap: 'lowest cost' + 'fault-tolerant' = Spot almost every time.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon EC2 Spot Instances",
+          "url": "https://aws.amazon.com/ec2/spot/"
+        },
+        {
+          "type": "doc",
+          "title": "EC2 instance purchasing options",
+          "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-purchasing-options.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg006",
+      "domain": "D3",
+      "scenario": "A solutions architect needs to migrate 500 TB of data from an on-premises data center to Amazon S3. The available network link is 100 Mbps, and the migration must complete within 30 days.",
+      "question": "Which AWS service is MOST appropriate?",
+      "choices": [
+        "AWS DataSync over the existing network link",
+        "AWS Snowball Edge Storage Optimized",
+        "AWS Direct Connect with a 1 Gbps port",
+        "AWS Storage Gateway (File Gateway)"
+      ],
+      "correct": 1,
+      "explanation": "At 100 Mbps, transferring 500 TB takes roughly 500 × 1024 × 1024 × 8 / 100 seconds ≈ 485 days — well over the 30-day window. Snowball Edge is a physical appliance shipped to the customer, loaded with data, and returned to AWS; 500 TB fits within a few Snowball Edge devices and arrives within days.\n\nDataSync (A) is network-based — same 100 Mbps bottleneck, won't fit. Direct Connect at 1 Gbps (C) would take ~48 days of continuous transfer AND provisioning Direct Connect itself typically takes weeks — won't meet the deadline. Storage Gateway (D) is for ongoing hybrid access patterns, not bulk one-time migration. The trap: Direct Connect sounds faster, but provisioning time plus math makes it fail the 30-day constraint.",
+      "pattern": "Migration sizing rule of thumb: run the math. At 100 Mbps ≈ 1 TB/day (generous). At 1 Gbps ≈ 10 TB/day. If dataset ÷ throughput > deadline, you need Snow Family. Snowball Edge holds up to ~80 TB usable per device; Snowmobile (now discontinued for new orders) for exabyte-scale. DataSync = online transfer optimization; Snow = offline physical shipping.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Snow Family",
+          "url": "https://aws.amazon.com/snow/"
+        },
+        {
+          "type": "doc",
+          "title": "AWS DataSync",
+          "url": "https://aws.amazon.com/datasync/"
+        }
+      ]
+    },
+    {
+      "id": "clfg007",
+      "domain": "D3",
+      "scenario": "A developer needs to decouple a web front-end from a back-end processing tier. The front-end will send thousands of messages per second that must be processed in order per user session, with exactly-once processing semantics.",
+      "question": "Which service should they use?",
+      "choices": [
+        "Amazon SQS Standard Queue",
+        "Amazon SQS FIFO Queue",
+        "Amazon SNS Standard Topic",
+        "Amazon EventBridge"
+      ],
+      "correct": 1,
+      "explanation": "SQS FIFO queues provide ordered delivery within a message group (using MessageGroupId — perfect for 'in order per user session') and exactly-once processing (deduplication within a 5-minute window). FIFO queues support up to 3,000 messages/second with batching or 300 without — sufficient for 'thousands per second.'\n\nSQS Standard (A) provides at-least-once delivery and best-effort ordering only — messages can arrive out of order and be duplicated. SNS Standard (C) is pub/sub and is also at-least-once, not ordered, and not exactly-once. EventBridge (D) is an event bus for routing/filtering events between services — not optimized for per-session ordering with exactly-once semantics. The trap: SQS Standard scales to near-unlimited throughput, so it looks attractive, but it fails the 'in order' and 'exactly-once' requirements.",
+      "pattern": "Messaging triad — SQS = queue (point-to-point, pull), SNS = pub/sub (fan-out, push), EventBridge = event bus (rules + routing). Standard vs FIFO — FIFO gives ordering + exactly-once but lower throughput. Keywords: 'order' + 'exactly-once' ⇒ FIFO. 'Fan-out to multiple subscribers' ⇒ SNS. 'Route events between SaaS/AWS services with filtering' ⇒ EventBridge.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon SQS FIFO queues",
+          "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues.html"
+        },
+        {
+          "type": "doc",
+          "title": "SQS Standard vs FIFO",
+          "url": "https://aws.amazon.com/sqs/features/"
+        }
+      ]
+    },
+    {
+      "id": "clfg008",
+      "domain": "D3",
+      "scenario": "A company runs a legacy Windows file share on-premises and wants to migrate to a fully managed AWS service that preserves SMB protocol compatibility, NTFS permissions, and Active Directory integration.",
+      "question": "Which service BEST fits this use case?",
+      "choices": [
+        "Amazon EFS",
+        "Amazon FSx for Windows File Server",
+        "Amazon S3 with File Gateway",
+        "Amazon FSx for Lustre"
+      ],
+      "correct": 1,
+      "explanation": "FSx for Windows File Server is a managed Windows-native file system that natively speaks SMB, enforces NTFS ACLs, and integrates with AWS Managed Microsoft AD or self-managed AD. It is the drop-in replacement for Windows file shares.\n\nEFS (A) is NFS-only — works for Linux, but not Windows SMB clients or NTFS ACLs. S3 + File Gateway (C) presents SMB/NFS to clients but is a hybrid gateway backed by S3 object storage — it does not preserve NTFS ACLs the way a native Windows file system does, and has different performance characteristics. FSx for Lustre (D) is for high-performance computing workloads (ML training, genomics) — not for general-purpose Windows file shares. The trap: File Gateway speaks SMB, but 'fully managed file system with NTFS + AD' is FSx for Windows.",
+      "pattern": "Storage-service decision matrix — Block = EBS (single-AZ, attached to EC2) or EBS Multi-Attach. File = EFS (Linux/NFS), FSx for Windows (Windows/SMB + AD), FSx for Lustre (HPC), FSx for NetApp ONTAP (hybrid multi-protocol), FSx for OpenZFS. Object = S3. Hybrid = Storage Gateway (File/Volume/Tape). If the question says 'Windows + SMB + AD,' the answer is FSx for Windows File Server.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon FSx for Windows File Server",
+          "url": "https://aws.amazon.com/fsx/windows/"
+        },
+        {
+          "type": "doc",
+          "title": "AWS storage services comparison",
+          "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-storage-services-overview/welcome.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg009",
+      "domain": "D3",
+      "scenario": "A company needs to run a container-based microservice but does not want to manage any servers or clusters. They want per-second billing and automatic scaling based on request volume.",
+      "question": "Which compute option matches these requirements?",
+      "choices": [
+        "Amazon ECS on EC2",
+        "Amazon EKS on EC2",
+        "AWS Fargate",
+        "Amazon EC2 Auto Scaling Group"
+      ],
+      "correct": 2,
+      "explanation": "AWS Fargate is the serverless compute engine for containers — it works with both ECS and EKS. No EC2 instances to manage, no cluster capacity planning. Billing is per-second based on vCPU and memory allocated to the task. Fargate scales automatically as tasks are launched.\n\nECS on EC2 (A) and EKS on EC2 (B) both require the customer to manage the EC2 cluster — capacity, scaling, patching. That's explicitly what the question rules out. EC2 Auto Scaling (D) is for raw EC2 instances, not containers, and still requires server management. The trap: candidates confuse 'ECS' and 'Fargate' — ECS is the orchestrator, Fargate is a compute-launch-type for ECS/EKS. 'Container + no servers' = Fargate.",
+      "pattern": "Container options ladder — ECS on EC2 (you manage cluster), EKS on EC2 (Kubernetes, you manage cluster), Fargate (serverless, AWS manages everything). Trigger phrase: 'no servers to manage' or 'serverless containers' ⇒ Fargate. Kubernetes-specific features mentioned ⇒ EKS. Simpler orchestration ⇒ ECS.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Fargate",
+          "url": "https://aws.amazon.com/fargate/"
+        },
+        {
+          "type": "doc",
+          "title": "ECS launch types",
+          "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/launch_types.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg010",
+      "domain": "D4",
+      "scenario": "A company has 25 AWS accounts under an AWS Organization. The finance team wants a single consolidated bill, volume pricing discounts applied across all accounts, and the ability to move an account between organizational units without losing its billing history.",
+      "question": "Which feature combination is correct?",
+      "choices": [
+        "Consolidated billing only — it provides a single bill and volume discounts automatically across all accounts in an organization",
+        "Consolidated billing + AWS Cost Explorer — billing aggregates across accounts and Cost Explorer provides per-account breakdowns",
+        "AWS Organizations with all features enabled + SCPs — SCPs handle billing aggregation",
+        "AWS Control Tower — it is required to enable consolidated billing"
+      ],
+      "correct": 1,
+      "explanation": "Consolidated billing is an Organizations feature — one payer account receives a single bill that aggregates all member-account usage, which qualifies the whole organization for volume tiers (e.g., S3, CloudFront data transfer). Cost Explorer lets finance drill into spend by account, service, tag, etc.\n\nOption A says consolidated billing works 'only' — partially true, but omits Cost Explorer, which is the standard tool for per-account breakdowns. Option C conflates SCPs (access control) with billing — SCPs don't handle billing. Option D is wrong — Control Tower is a governance/landing-zone service, not a prerequisite for consolidated billing; any AWS Organization supports consolidated billing. The trap: many candidates assume Control Tower is required; it's not.",
+      "pattern": "Organizations feature map: consolidated billing (always on with Organizations), SCPs (access control, requires 'all features'), tag policies, backup policies, RCPs, AI service opt-out policies. Control Tower = opinionated multi-account setup on top of Organizations — optional. Cost Explorer = per-account/service spend breakdown. Volume discounts apply naturally across consolidated billing.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Organizations Consolidated Billing",
+          "url": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/consolidated-billing.html"
+        },
+        {
+          "type": "doc",
+          "title": "AWS Cost Explorer",
+          "url": "https://aws.amazon.com/aws-cost-management/aws-cost-explorer/"
+        }
+      ]
+    },
+    {
+      "id": "clfg011",
+      "domain": "D4",
+      "scenario": "A startup's engineering manager is reviewing AWS Support plans. They need 24/7 phone support, a Technical Account Manager (TAM), and guidance on well-architected reviews for production workloads.",
+      "question": "Which support plan meets ALL of these requirements?",
+      "choices": [
+        "AWS Basic Support",
+        "AWS Developer Support",
+        "AWS Business Support",
+        "AWS Enterprise Support"
+      ],
+      "correct": 3,
+      "explanation": "Only Enterprise Support (and Enterprise On-Ramp, to a limited degree) includes a dedicated TAM. Enterprise Support also includes 24/7 phone/chat/email, well-architected reviews, operational reviews, and concierge billing assistance.\n\nBasic (A) includes only documentation and community forums — no phone support, no TAM. Developer (B) is business-hours email access — no phone, no TAM. Business (C) includes 24/7 phone/chat/email but does NOT include a full TAM (Business has 'access to' some proactive guidance via the AWS Trusted Advisor API, but not a dedicated TAM). Enterprise On-Ramp includes a pool of TAMs (not dedicated). The trap: Business Support has 24/7 phone — tempting — but the TAM requirement eliminates everything below Enterprise.",
+      "pattern": "Support plan ladder (memorize features that appear on exam): Basic (free, docs/forums), Developer (business hours email, $29+), Business (24/7 phone, Trusted Advisor full, $100+), Enterprise On-Ramp (TAM pool, $5,500+), Enterprise (dedicated TAM, well-architected reviews, 15-min critical response, $15,000+). Trigger 'dedicated TAM' ⇒ Enterprise.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Compare AWS Support plans",
+          "url": "https://aws.amazon.com/premiumsupport/plans/"
+        }
+      ]
+    },
+    {
+      "id": "clfg012",
+      "domain": "D3",
+      "scenario": "An application serves static website assets (HTML, CSS, JS, images) to users globally. The team wants minimum latency, lowest possible cost, and protection against common web exploits like SQL injection.",
+      "question": "Which combination is MOST appropriate?",
+      "choices": [
+        "Amazon S3 + Amazon CloudFront + AWS WAF",
+        "Amazon EC2 behind an Application Load Balancer + AWS WAF",
+        "Amazon S3 + Amazon API Gateway + AWS Shield",
+        "Amazon Lightsail + Route 53"
+      ],
+      "correct": 0,
+      "explanation": "S3 hosts static assets cheaply. CloudFront caches at 600+ edge locations globally, reducing latency and origin load (and often costing less than serving from S3 directly due to lower data transfer pricing). WAF attaches to CloudFront and blocks SQL injection, XSS, and other OWASP-top-10 attacks at the edge.\n\nEC2 + ALB (B) is expensive and overkill for static content — you're paying for compute 24/7 to serve files S3 serves for cents. S3 + API Gateway (C) misuses API Gateway (which is for REST/HTTP APIs, not static asset delivery) — and Shield Standard is included free on all AWS accounts but does NOT protect against SQL injection (Shield = DDoS, WAF = application-layer attacks). Lightsail (D) is a simplified hosting bundle but no edge caching or WAF. The trap: Shield vs WAF — Shield = DDoS (network/transport), WAF = application-layer exploits (SQL injection, XSS).",
+      "pattern": "Static site pattern: S3 (origin) → CloudFront (edge cache + HTTPS) → WAF (app-layer filtering) → Shield (DDoS, included). Global DNS = Route 53. For dynamic APIs, swap S3 for API Gateway/Lambda or ALB+ECS. Shield Standard is automatic + free; Shield Advanced = $3,000/month for large-scale DDoS response team.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Hosting a static website on Amazon S3",
+          "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/WebsiteHosting.html"
+        },
+        {
+          "type": "doc",
+          "title": "AWS WAF and AWS Shield",
+          "url": "https://aws.amazon.com/security/dos-attacks/"
+        }
+      ]
+    },
+    {
+      "id": "clfg013",
+      "domain": "D2",
+      "scenario": "An IAM user needs to be granted temporary access to an S3 bucket in another AWS account. The access should expire after 1 hour and should NOT require creating a new IAM user in the target account.",
+      "question": "What is the MOST appropriate mechanism?",
+      "choices": [
+        "Create an IAM user in the target account with a 1-hour password expiration",
+        "Use AWS STS to assume an IAM role in the target account",
+        "Share the root user credentials of the target account",
+        "Generate a long-lived IAM access key and rotate manually after 1 hour"
+      ],
+      "correct": 1,
+      "explanation": "Cross-account access with temporary credentials is the textbook use case for IAM roles and AWS STS (Security Token Service). The target account creates a role with a trust policy allowing the source account to assume it; the source user calls sts:AssumeRole to receive temporary credentials (default 1 hour, configurable up to 12 hours).\n\nOption A creates a permanent user — violates 'no new user in target account' and uses long-lived credentials. Option C is a catastrophic security violation — root credentials should never be shared or even used routinely. Option D uses long-lived access keys with manual rotation — fragile, error-prone, and not temporary in the programmatic sense (STS issues credentials that actually expire). The trap: password expiration (option A) and manual rotation (option D) sound 'temporary,' but they're workarounds; STS assume-role is the native mechanism.",
+      "pattern": "Cross-account access pattern: role in target account with trust policy + sts:AssumeRole from source. Benefits: no long-lived keys, automatic expiration, auditable via CloudTrail. Related concept: IAM Identity Center (formerly SSO) for human users, resource-based policies (like S3 bucket policies) for resource-level sharing. Never share root credentials — ever.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "IAM roles for cross-account access",
+          "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_cross-account-with-roles.html"
+        },
+        {
+          "type": "doc",
+          "title": "AWS STS AssumeRole",
+          "url": "https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg014",
+      "domain": "D3",
+      "scenario": "A company runs a PostgreSQL database with unpredictable usage — some days it's idle, other days it's hit with sudden large workloads. They want a managed database that automatically scales capacity and pauses when idle to save cost.",
+      "question": "Which database service is the BEST fit?",
+      "choices": [
+        "Amazon RDS for PostgreSQL (single instance)",
+        "Amazon RDS for PostgreSQL with a read replica",
+        "Amazon Aurora Serverless v2 (PostgreSQL-compatible)",
+        "Amazon DynamoDB with on-demand capacity"
+      ],
+      "correct": 2,
+      "explanation": "Aurora Serverless v2 scales capacity up and down in fine-grained ACU (Aurora Capacity Unit) increments based on load, and can scale to zero when idle (when configured). It's PostgreSQL-compatible, so existing Postgres code works. This is precisely the bursty + idle pattern Aurora Serverless targets.\n\nRDS single instance (A) has fixed capacity — doesn't scale automatically, doesn't pause. RDS with a read replica (B) offloads reads but still has fixed primary capacity. DynamoDB on-demand (D) is a NoSQL key-value/document store — not PostgreSQL-compatible, and the application presumably uses relational SQL. The trap: DynamoDB has the right billing model (on-demand), but wrong data model (NoSQL, not PostgreSQL).",
+      "pattern": "Relational options on AWS — RDS (provisioned, MySQL/Postgres/MariaDB/Oracle/SQL Server/Db2), Aurora (provisioned, MySQL/Postgres compatible, AWS-engineered, faster + cheaper than RDS for same workload), Aurora Serverless v2 (auto-scale capacity). NoSQL — DynamoDB (key-value/document), DocumentDB (MongoDB-compatible), Keyspaces (Cassandra), Neptune (graph). 'Bursty Postgres' ⇒ Aurora Serverless v2.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon Aurora Serverless v2",
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.html"
+        },
+        {
+          "type": "doc",
+          "title": "Choosing an AWS database service",
+          "url": "https://aws.amazon.com/products/databases/"
+        }
+      ]
+    },
+    {
+      "id": "clfg015",
+      "domain": "D1",
+      "scenario": "A company's new workload has peaks of 10x normal traffic for a few hours each day, then drops back down. They used to provision for peak on-premises, leading to 80% idle hardware off-peak.",
+      "question": "Which cloud concept MOST directly resolves this inefficiency?",
+      "choices": [
+        "High availability",
+        "Elasticity",
+        "Fault tolerance",
+        "Global reach"
+      ],
+      "correct": 1,
+      "explanation": "Elasticity is the ability to scale resources out and in to match demand — the cloud capability that eliminates the need to provision for peak. You pay for what you use, scale up during peaks, scale down off-peak.\n\nHigh availability (A) is about uptime — keeping the system available despite failures. Fault tolerance (C) is about continuing to operate during component failure (a superset-ish concept). Global reach (D) is the ability to deploy in multiple regions worldwide. All are legitimate cloud benefits, but the specific 10x-then-drops pattern is answered by elasticity. The trap: 'scalability' and 'elasticity' are often used interchangeably in everyday speech, but on the exam 'elasticity' specifically means scale in both directions in response to demand.",
+      "pattern": "Cloud concepts vocabulary — Elasticity = scale out/in dynamically with demand. Scalability = ability to handle growth (could be vertical/horizontal, not necessarily automatic). High availability = uptime (typically via multi-AZ). Fault tolerance = continues operating despite failure (typically via redundancy + multi-region). Agility = speed of provisioning. Durability = data not lost (S3 = 11 nines).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Six Advantages of Cloud Computing",
+          "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-overview/six-advantages-of-cloud-computing.html"
+        },
+        {
+          "type": "doc",
+          "title": "AWS Cloud Adoption Framework",
+          "url": "https://aws.amazon.com/professional-services/CAF/"
+        }
+      ]
+    },
+    {
+      "id": "clfg016",
+      "domain": "D3",
+      "scenario": "An application must invoke custom business logic in response to every object upload to an S3 bucket. The logic runs in milliseconds and must scale automatically with upload volume. The team does not want to manage servers.",
+      "question": "Which service is MOST appropriate for the compute tier?",
+      "choices": [
+        "Amazon EC2 Auto Scaling behind an Application Load Balancer",
+        "AWS Lambda triggered by S3 event notifications",
+        "Amazon ECS on EC2 with step scaling",
+        "AWS Batch on a managed compute environment"
+      ],
+      "correct": 1,
+      "explanation": "Lambda is AWS's serverless compute — functions run in response to events, scale automatically from zero to thousands of concurrent executions, bill per millisecond, and require no server management. S3 has native event notifications that invoke Lambda on object creation.\n\nEC2 Auto Scaling + ALB (A) requires managing instances, scaling policies, and an ALB — overkill and not aligned with 'no servers.' ECS on EC2 (C) also requires managing a cluster. Batch (D) is for long-running batch jobs (hours to days) — not millisecond event processing. The trap: Batch sounds like the word 'batch processing' but AWS Batch is specifically for queued, long-running compute jobs, not per-event execution.",
+      "pattern": "Serverless compute triggers: S3 event → Lambda, DynamoDB Stream → Lambda, API Gateway request → Lambda, EventBridge rule → Lambda, SNS/SQS → Lambda. Lambda limits: 15-min max runtime, 10 GB memory max, ephemeral /tmp up to 10 GB. Longer workloads ⇒ Fargate tasks, ECS, or Batch.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Using Lambda with S3",
+          "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-s3.html"
+        },
+        {
+          "type": "doc",
+          "title": "AWS Lambda",
+          "url": "https://aws.amazon.com/lambda/"
+        }
+      ]
+    },
+    {
+      "id": "clfg017",
+      "domain": "D4",
+      "scenario": "A company's AWS bill jumped 40% unexpectedly last month. Finance wants to identify which service, account, and tag drove the increase, and to set up automated alerts when spend exceeds a threshold.",
+      "question": "Which two services together BEST address these needs? (Choose the option listing both.)",
+      "choices": [
+        "AWS Trusted Advisor and AWS CloudTrail",
+        "AWS Cost Explorer and AWS Budgets",
+        "AWS Config and Amazon CloudWatch",
+        "AWS Cost and Usage Report (CUR) and AWS Control Tower"
+      ],
+      "correct": 1,
+      "explanation": "Cost Explorer provides visual spend analysis with filters by service, account, tag, region, etc., including anomaly detection. AWS Budgets lets you define thresholds and send alerts (via SNS/email) when spend is forecast to exceed — or has exceeded — those thresholds. Together, they cover 'what drove the increase' and 'alert me next time.'\n\nTrusted Advisor (A) gives cost-optimization recommendations but does not produce per-service/tag spend analytics; CloudTrail is API audit logging. Config (C) tracks resource configuration compliance; CloudWatch is metrics/logs — neither is billing-specific. CUR (D) is a granular billing data export (useful for deep analysis in Athena/QuickSight) but doesn't alert on its own; Control Tower is for landing zones, not billing analysis. The trap: CUR is tempting because it's 'cost' in the name, but it's a raw data feed, not an analysis/alerting tool.",
+      "pattern": "Cost-management toolkit: Cost Explorer (visual analytics, forecasts, anomaly detection), AWS Budgets (threshold-based alerts: cost, usage, RI coverage), Cost & Usage Report (raw CSV/Parquet feed for BI tools), Savings Plans/RI recommendations (inside Cost Explorer), AWS Billing Conductor (chargeback to business units), Compute Optimizer (right-sizing recommendations).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Cost Explorer",
+          "url": "https://aws.amazon.com/aws-cost-management/aws-cost-explorer/"
+        },
+        {
+          "type": "doc",
+          "title": "AWS Budgets",
+          "url": "https://aws.amazon.com/aws-cost-management/aws-budgets/"
+        }
+      ]
+    },
+    {
+      "id": "clfg018",
+      "domain": "D2",
+      "scenario": "A developer finds an S3 bucket that accidentally allows public READ access. They need to prevent any future S3 bucket in the account from being made public, regardless of individual bucket policies.",
+      "question": "Which feature should they enable?",
+      "choices": [
+        "S3 Object Lock",
+        "S3 Block Public Access at the account level",
+        "AWS WAF rule blocking public IPs",
+        "S3 Versioning"
+      ],
+      "correct": 1,
+      "explanation": "S3 Block Public Access can be enabled at the account level (as well as per-bucket) and, when enabled, overrides any bucket policy or ACL that would grant public access. This is the account-wide guardrail for preventing accidental public exposure.\n\nObject Lock (A) prevents objects from being deleted or overwritten — compliance/WORM feature, unrelated to public access. WAF (C) filters HTTP requests to CloudFront/ALB/API Gateway — not S3 bucket-policy-level controls. Versioning (D) keeps object history — helps with recovery, not public access. The trap: candidates sometimes pick Object Lock because it sounds like 'locking down,' but it's about data immutability, not access.",
+      "pattern": "S3 security layers: bucket policy (resource policy), ACLs (legacy, mostly disabled), IAM policies (identity policies), Block Public Access (account-wide and per-bucket override), pre-signed URLs (time-limited access), VPC endpoints (private network access). Always enable Block Public Access at account level unless you have an explicit public-content use case.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Blocking public access to your Amazon S3 storage",
+          "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg019",
+      "domain": "D3",
+      "scenario": "A gaming company needs a database that handles millions of user profile reads per second with single-digit millisecond latency globally. The data model is simple key-value lookups.",
+      "question": "Which database service is the BEST fit?",
+      "choices": [
+        "Amazon RDS for MySQL with read replicas in multiple regions",
+        "Amazon DynamoDB with global tables",
+        "Amazon Redshift",
+        "Amazon Aurora MySQL with cross-region read replicas"
+      ],
+      "correct": 1,
+      "explanation": "DynamoDB is a NoSQL key-value store designed for millisecond latency at any scale. Global tables replicate data across regions with multi-active (read/write) semantics, so users worldwide get local-region latency. Perfectly matches 'millions of reads per second, globally, single-digit ms, key-value.'\n\nRDS MySQL (A) and Aurora MySQL (D) are relational — great for complex queries, but not optimized for millions of simple key-value reads per second; cross-region replicas introduce replication lag and read-only secondaries. Redshift (C) is a data warehouse for analytical OLAP queries, not low-latency OLTP key-value lookups — wildly wrong service for this workload.",
+      "pattern": "Database selection by access pattern: OLTP relational queries ⇒ RDS/Aurora. High-throughput simple key-value ⇒ DynamoDB. Analytical columnar queries ⇒ Redshift. In-memory caching ⇒ ElastiCache (Redis/Memcached) or DynamoDB Accelerator (DAX). Multi-region active-active ⇒ DynamoDB Global Tables or Aurora Global Database (for SQL). Gaming leaderboards / session state ⇒ DynamoDB or ElastiCache.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon DynamoDB global tables",
+          "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GlobalTables.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg020",
+      "domain": "D1",
+      "scenario": "A team is debating whether to deploy across multiple Availability Zones or multiple Regions. They want to understand the difference in disaster recovery capability.",
+      "question": "Which statement is TRUE about AZs and Regions?",
+      "choices": [
+        "AZs within a Region are in the same data center building, so multi-AZ protects against hardware failure but not disasters affecting the Region",
+        "AZs within a Region are physically separated data centers connected by low-latency links, and Regions are fully independent geographic areas providing protection against Region-wide disasters",
+        "All AWS services are automatically replicated across all Regions by default",
+        "Multi-Region deployment is required for high availability; multi-AZ alone is not considered highly available"
+      ],
+      "correct": 1,
+      "explanation": "AZs are distinct data centers (one or more) physically separated within a metropolitan area but interconnected by low-latency, high-bandwidth private fiber. Regions are independent geographic areas (typically 100+ miles apart) — a Region-wide disaster (rare) is mitigated by multi-Region.\n\nOption A is wrong — AZs are physically separated, not in the same building. Option C is wrong — services are NOT automatically multi-Region; replication is opt-in (e.g., S3 Cross-Region Replication, DynamoDB Global Tables, Aurora Global Database). Option D is wrong — multi-AZ is the standard baseline for high availability (RDS Multi-AZ, Multi-AZ Auto Scaling Groups are 'highly available' designations); multi-Region is for DR, not a requirement for HA. The trap: option D sounds rigorous, but AWS's own definitions consider multi-AZ to qualify as HA.",
+      "pattern": "AWS global structure: Region (geographic area, 100+ miles between regions) → AZ (distinct data centers within region, typically <100 km apart, <10 ms inter-AZ latency) → Edge Location (CloudFront, hundreds globally). Availability patterns: single AZ = not HA. Multi-AZ in one Region = HA baseline. Multi-Region = DR + global presence. Choose based on RTO/RPO and latency requirements.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Global Infrastructure",
+          "url": "https://aws.amazon.com/about-aws/global-infrastructure/"
+        },
+        {
+          "type": "doc",
+          "title": "Regions and Availability Zones",
+          "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg021",
+      "domain": "D2",
+      "scenario": "An auditor requests a complete record of every API call made by every user and service in an AWS account for the past 90 days, including parameters and source IP addresses.",
+      "question": "Which AWS service provides this?",
+      "choices": [
+        "Amazon CloudWatch Logs",
+        "AWS CloudTrail",
+        "AWS Config",
+        "VPC Flow Logs"
+      ],
+      "correct": 1,
+      "explanation": "CloudTrail records every AWS API call (who, when, what action, what parameters, source IP, success/failure) across management events and, optionally, data events. This is the audit trail for AWS activity and is the go-to answer for 'who did what in my AWS account.' CloudTrail keeps 90 days of management events free; longer retention requires an S3 trail.\n\nCloudWatch Logs (A) stores application and system logs (and can receive CloudTrail logs) but is not the native recorder of AWS API calls. Config (C) records resource configuration state changes over time (e.g., 'this security group was modified at this time') but not every API call — it's adjacent but not identical. VPC Flow Logs (D) captures network traffic metadata (src/dst IPs, ports, accept/reject), not API calls. The trap: Config vs CloudTrail — Config = resource state snapshots + changes, CloudTrail = API call audit log.",
+      "pattern": "Audit/observability triad: CloudTrail = WHO did WHAT via API (source IP, parameters). Config = resource CONFIGURATION STATE over time + compliance rules. CloudWatch = METRICS + LOGS + ALARMS + dashboards (health + performance). VPC Flow Logs = network traffic metadata. Guardrails on top: GuardDuty analyzes CloudTrail + VPC Flow Logs + DNS for threats.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "What is AWS CloudTrail?",
+          "url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg022",
+      "domain": "D3",
+      "scenario": "A company runs a web application on EC2 instances in a private subnet. The instances need to download OS patches and software updates from the internet without being exposed to inbound internet traffic.",
+      "question": "Which architecture is correct?",
+      "choices": [
+        "Attach a public Elastic IP to each EC2 instance and allow outbound-only in the security group",
+        "Route traffic through a NAT Gateway in a public subnet",
+        "Attach an Internet Gateway to the private subnet's route table",
+        "Use a VPN connection to a software-update server"
+      ],
+      "correct": 1,
+      "explanation": "A NAT Gateway sits in a public subnet and allows instances in private subnets to initiate outbound connections to the internet (for patches, updates, API calls) while blocking unsolicited inbound connections. This is the canonical 'private subnet with outbound internet' pattern.\n\nOption A would expose instances with public IPs — defeats the 'private subnet' goal. Option C is a misunderstanding — an Internet Gateway is attached to a VPC, not a subnet, and merely 'attaching IGW to a private subnet's route table' would make the subnet public (it would no longer be private by definition). Option D (VPN) is over-engineered for fetching public software updates. The trap: option A sounds plausible if you think 'outbound-only' equals private, but a public IP + IGW route means the instance can also be reached from the internet.",
+      "pattern": "VPC outbound patterns: public subnet = route 0.0.0.0/0 → IGW. Private subnet with internet = route 0.0.0.0/0 → NAT Gateway (in public subnet). NAT Gateway is managed/HA within an AZ (deploy one per AZ for AZ-level HA). NAT Instance is the self-managed legacy alternative. Egress-only Internet Gateway is the IPv6 equivalent of a NAT Gateway. For private access to AWS services without internet: VPC endpoints (Gateway for S3/DynamoDB, Interface for others).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "NAT gateways",
+          "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html"
+        }
+      ]
+    },
+    {
+      "id": "clfg023",
+      "domain": "D3",
+      "scenario": "An application stores user-uploaded images in S3. 95% of accesses happen in the first 30 days. After 90 days, data is accessed at most once a year but must be retrievable within minutes. After 3 years, data must be retained for compliance but can be retrieved within 12 hours.",
+      "question": "Which S3 lifecycle configuration minimizes cost while meeting retrieval-time requirements?",
+      "choices": [
+        "Standard → Standard-IA at day 30 → Glacier Instant Retrieval at day 90 → Glacier Deep Archive at day 1095",
+        "Standard → Glacier Flexible Retrieval at day 30 → Glacier Deep Archive at day 90",
+        "Standard → One Zone-IA at day 30 → Glacier Deep Archive at day 90",
+        "Standard → Intelligent-Tiering at day 30 — no further transitions needed"
+      ],
+      "correct": 0,
+      "explanation": "Option A aligns to the access pattern: Standard (0-30 days, hot reads), Standard-IA (30-90 days, lower cost for infrequent access with millisecond retrieval), Glacier Instant Retrieval (90 days-3 years, 'at most once a year, retrievable in minutes' = GIR's millisecond retrieval at archive prices), Glacier Deep Archive (3 years+, 12-hour retrieval tolerable).\n\nOption B skips to Glacier Flexible at day 30 — Flexible Retrieval needs minutes-to-hours for standard retrieval, so 'retrievable within minutes' for year-1 data would require expedited retrieval; also, the 30-90 day window still sees some access, and Standard-IA is cheaper than Glacier-tier for that pattern. Option C puts data in One Zone-IA (loss of AZ = loss of data) — bad for user uploads, and skips Glacier Instant Retrieval despite the 'retrievable in minutes' constraint. Option D uses Intelligent-Tiering but doesn't move to Deep Archive — Intelligent-Tiering has archive tiers, but the question specifies deterministic tiering over time. The trap: Glacier Flexible Retrieval vs Instant Retrieval — IR = millisecond, FR = minutes (expedited) / hours (standard), DA = hours.",
+      "pattern": "S3 storage classes by retrieval latency + cost: Standard (ms, highest $), Standard-IA (ms, lower $ + retrieval fee), Intelligent-Tiering (auto), One Zone-IA (ms, single AZ, cheapest non-archive), Glacier Instant Retrieval (ms, archive $), Glacier Flexible Retrieval (min-hours), Glacier Deep Archive (12-48 hours, cheapest). Rule: 'retrievable in minutes but accessed rarely' ⇒ Glacier Instant Retrieval.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon S3 storage classes",
+          "url": "https://aws.amazon.com/s3/storage-classes/"
+        },
+        {
+          "type": "doc",
+          "title": "Managing S3 storage lifecycle",
+          "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html"
+        }
+      ]
+    }
+  ]
+}
