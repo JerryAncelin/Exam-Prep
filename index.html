@@ -30,10 +30,12 @@
     --sans: 'Inter', system-ui, sans-serif;
   }
   body[data-exam="mla"] { --accent: #00c4b4; --accent-dim: #008577; }
+  body[data-exam="aif"] { --accent: #a855f7; --accent-dim: #7e22ce; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.55; min-height: 100vh; }
   body { background-image: radial-gradient(ellipse at top, rgba(255,153,0,0.04), transparent 60%); transition: background-image 0.4s; }
   body[data-exam="mla"] { background-image: radial-gradient(ellipse at top, rgba(0,196,180,0.04), transparent 60%); }
+  body[data-exam="aif"] { background-image: radial-gradient(ellipse at top, rgba(168,85,247,0.04), transparent 60%); }
 
   header { border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; background: var(--bg-elev); }
   .logo { font-family: var(--mono); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); cursor: pointer; user-select: none; }
@@ -59,11 +61,13 @@
   .exam-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; transform: scaleX(0); transform-origin: left; transition: transform 0.4s; }
   .exam-card[data-exam="sap"]::before { background: #ff9900; }
   .exam-card[data-exam="mla"]::before { background: #00c4b4; }
+  .exam-card[data-exam="aif"]::before { background: #a855f7; }
   .exam-card:hover { transform: translateY(-3px); border-color: var(--border-strong); }
   .exam-card:hover::before { transform: scaleX(1); }
   .exam-card .code { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 12px; }
   .exam-card[data-exam="sap"] .code { color: #ff9900; }
   .exam-card[data-exam="mla"] .code { color: #00c4b4; }
+  .exam-card[data-exam="aif"] .code { color: #a855f7; }
   .exam-card h2 { font-family: var(--serif); font-size: 26px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 8px; }
   .exam-card .tagline { color: var(--text-dim); font-size: 14px; margin-bottom: 20px; line-height: 1.5; min-height: 42px; }
   .exam-card .stats { display: flex; gap: 20px; font-family: var(--mono); font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; border-top: 1px solid var(--border); padding-top: 16px; flex-wrap: wrap; }
@@ -72,6 +76,7 @@
   .exam-card .weights div { height: 100%; opacity: 0.7; }
   .exam-card[data-exam="sap"] .weights div { background: #ff9900; }
   .exam-card[data-exam="mla"] .weights div { background: #00c4b4; }
+  .exam-card[data-exam="aif"] .weights div { background: #a855f7; }
   .exam-card .load-error { color: var(--danger); font-family: var(--mono); font-size: 11px; margin-top: 10px; }
 
   .hero { margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
@@ -125,6 +130,7 @@
   .choice:hover { border-color: var(--border-strong); background: var(--bg-elev-2); }
   .choice.selected { border-color: var(--accent); background: rgba(255,153,0,0.06); }
   body[data-exam="mla"] .choice.selected { background: rgba(0,196,180,0.06); }
+  body[data-exam="aif"] .choice.selected { background: rgba(168,85,247,0.06); }
   .choice.correct { border-color: var(--success); background: rgba(61,220,151,0.08); }
   .choice.incorrect { border-color: var(--danger); background: rgba(255,92,92,0.08); }
   .choice-letter { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--text-dim); min-width: 24px; padding-top: 2px; }
@@ -229,7 +235,7 @@
 <section class="screen active" id="screen-select">
   <div class="exam-hero">
     <h1>Practice <em>terminal.</em></h1>
-    <p>Select your exam. Original scenario-based questions, weighted to match the official domain distribution, with decision-pattern explanations and references to AWS documentation.</p>
+    <p>Select your exam. Original scenario-based questions for SAP-C02, MLA-C01, and AIF-C01 — weighted to match official domain distributions, with decision-pattern explanations and references to AWS documentation.</p>
   </div>
 
   <div class="exam-grid" id="exam-grid">
@@ -263,6 +269,22 @@
         <span>BANK: <b id="mla-count">checking…</b></span>
       </div>
       <div class="load-error" id="mla-error" style="display:none"></div>
+    </div>
+
+    <div class="exam-card" data-exam="aif" data-file="aif-c01.json">
+      <div class="code">AIF-C01</div>
+      <h2>AI Practitioner — Foundational</h2>
+      <div class="tagline">AI/ML fundamentals, generative AI concepts, foundation models, responsible AI, AWS AI services.</div>
+      <div class="weights" title="Domain weightings">
+        <div style="flex:20"></div><div style="flex:24"></div><div style="flex:28"></div><div style="flex:14"></div><div style="flex:14"></div>
+      </div>
+      <div class="stats">
+        <span>D1 <b>20%</b></span><span>D2 <b>24%</b></span><span>D3 <b>28%</b></span><span>D4 <b>14%</b></span><span>D5 <b>14%</b></span>
+      </div>
+      <div class="stats" style="margin-top:8px; border: none; padding-top: 0;">
+        <span>BANK: <b id="aif-count">checking…</b></span>
+      </div>
+      <div class="load-error" id="aif-error" style="display:none"></div>
     </div>
   </div>
 
@@ -431,6 +453,17 @@ const EXAMS = {
       D3: { label: 'D3 · Deployment & Orchestration', weight: 22 },
       D4: { label: 'D4 · Monitoring & Security', weight: 24 }
     }
+  },
+  aif: {
+    code: 'AIF-C01', name: 'AI Practitioner — Foundational', file: 'aif-c01.json',
+    fullLength: 65, durationMinutes: 90, passingScore: 700,
+    domains: {
+      D1: { label: 'D1 · Fundamentals of AI and ML', weight: 20 },
+      D2: { label: 'D2 · Fundamentals of Generative AI', weight: 24 },
+      D3: { label: 'D3 · Applications of Foundation Models', weight: 28 },
+      D4: { label: 'D4 · Responsible AI', weight: 14 },
+      D5: { label: 'D5 · Security, Compliance, and Governance', weight: 14 }
+    }
   }
 };
 
@@ -458,7 +491,14 @@ async function probeBanks() {
   for (const [key, exam] of Object.entries(EXAMS)) {
     try {
       const res = await fetch(exam.file);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        // 404 means bank file doesn't exist yet — show "coming soon" instead of error
+        if (res.status === 404) {
+          $(`#${key}-count`).textContent = 'coming soon';
+          continue;
+        }
+        throw new Error(`HTTP ${res.status}`);
+      }
       const data = await res.json();
       const count = Array.isArray(data) ? data.length : (data.questions || []).length;
       $(`#${key}-count`).textContent = `${count} questions`;
@@ -476,7 +516,13 @@ async function selectExam(examKey) {
   if (!exam) return;
   try {
     const res = await fetch(exam.file);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      if (res.status === 404) {
+        alert(`${exam.code} question bank is coming soon.\n\nThe exam is listed but no questions have been added yet. Check back in a future update.`);
+        return;
+      }
+      throw new Error(`HTTP ${res.status}`);
+    }
     const data = await res.json();
     state.questions = Array.isArray(data) ? data : (data.questions || []);
     if (state.questions.length === 0) throw new Error('Bank is empty');
@@ -489,9 +535,12 @@ async function selectExam(examKey) {
   document.body.setAttribute('data-exam', examKey);
   $('#logo-text').textContent = exam.code;
   $('#home-title').innerHTML = exam.name.replace(/—/g, '<br><em>—') + '</em>';
-  $('#home-desc').textContent = examKey === 'sap'
-    ? 'Scenario-based questions on the decision patterns that bite experienced architects: multi-account governance, hybrid networking, DR tiering, migration strategy.'
-    : 'Scenario-based questions on SageMaker deep-dives, data pipeline choices, model evaluation, MLOps sequencing, and ML security patterns.';
+  const descriptions = {
+    sap: 'Scenario-based questions on the decision patterns that bite experienced architects: multi-account governance, hybrid networking, DR tiering, migration strategy.',
+    mla: 'Scenario-based questions on SageMaker deep-dives, data pipeline choices, model evaluation, MLOps sequencing, and ML security patterns.',
+    aif: 'Foundational questions on AI/ML concepts, generative AI, foundation models, prompt engineering, and responsible AI practices.'
+  };
+  $('#home-desc').textContent = descriptions[examKey] || descriptions.sap;
   $('#home-meta').innerHTML = `
     <span>BANK SIZE: <b>${state.questions.length}</b> questions</span>
     <span>FULL EXAM: <b>${exam.fullLength}</b> questions · <b>${exam.durationMinutes}</b> min</span>
