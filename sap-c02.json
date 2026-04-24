@@ -1,0 +1,811 @@
+{
+  "meta": {
+    "exam": "SAP-C02",
+    "name": "AWS Certified Solutions Architect - Professional",
+    "version": "2.0",
+    "domain_weights": { "D1": 26, "D2": 29, "D3": 25, "D4": 20 },
+    "question_distribution": { "D1": 10, "D2": 12, "D3": 10, "D4": 8 }
+  },
+  "questions": [
+    {
+      "id": "sap001",
+      "domain": "D1",
+      "scenario": "A global enterprise operates 60 AWS accounts under a single AWS Organization with all features enabled. Each business unit manages its own accounts but must connect to three shared VPCs (production, pre-production, and shared-services containing AD and centralized logging) in a dedicated networking account. The security team requires auditable cross-account connectivity, that subnet-level NACLs remain under networking-team control, and that workload teams cannot modify shared routing. New business units onboard roughly monthly.",
+      "question": "Which approach MOST efficiently meets these requirements with the LOWEST long-term operational overhead?",
+      "choices": [
+        "VPC peering from each workload account to each shared VPC, with CIDR allocations documented in a shared wiki.",
+        "A Transit Gateway in each workload account peered to a Transit Gateway in the networking account, with route tables in each workload account.",
+        "A Transit Gateway in the networking account shared with the Organization via AWS RAM. Workload VPCs attach and routing is managed centrally.",
+        "PrivateLink endpoints from every workload account for each shared resource, creating an endpoint service per resource."
+      ],
+      "correct": 2,
+      "explanation": "A central TGW shared via RAM is the AWS-canonical pattern for multi-account networking at scale. Networking keeps control of the TGW, route tables, and attachments; workload teams just attach their VPCs. Onboarding a new account becomes a single attachment.\n\nPeering (A) creates an O(n²) mesh and has no transitive routing. Per-account TGWs (B) add cost with no benefit. PrivateLink (D) is for service-level exposure, not general VPC connectivity.",
+      "pattern": "Shared networking across an Organization → TGW + RAM. If the scenario mentions shared VPC, centralized networking, or Organization-wide connectivity, RAM is almost always part of the right answer even though many real teams still reach for peering.",
+      "references": [
+        { "type": "doc", "title": "AWS Transit Gateway — Sharing your transit gateway", "url": "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-transit-gateways.html" },
+        { "type": "whitepaper", "title": "Building a Scalable and Secure Multi-VPC AWS Network Infrastructure", "url": "https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/welcome.html" },
+        { "type": "blog", "title": "AWS Blog: Using AWS Transit Gateway with AWS RAM", "url": "https://aws.amazon.com/blogs/networking-and-content-delivery/" }
+      ]
+    },
+    {
+      "id": "sap002",
+      "domain": "D2",
+      "scenario": "A financial services firm runs a latency-sensitive trading app in us-east-1. RTO is 2 minutes, RPO is 30 seconds. The workload consists of EC2 behind an ALB, an Aurora cluster, and S3 objects. The CFO approved a DR budget of approximately 70% of primary-region monthly spend. Regulators require quarterly DR testing with full failover.",
+      "question": "Which disaster recovery strategy BEST satisfies the RTO, RPO, budget, and testing requirements?",
+      "choices": [
+        "Backup and restore: AWS Backup for Aurora snapshots and S3 objects replicated to us-west-2, with CloudFormation to provision on failover.",
+        "Pilot light: minimal EC2 in us-west-2, Aurora Global Database for continuous replication, and S3 Cross-Region Replication.",
+        "Warm standby: a scaled-down but fully functional copy in us-west-2 with Aurora Global Database and S3 CRR. Scale up on failover.",
+        "Multi-site active/active: full production in both regions with Route 53 latency routing and Aurora Global Database write forwarding."
+      ],
+      "correct": 2,
+      "explanation": "Warm standby matches the numbers. A 2-minute RTO is achievable by scaling up a running environment but not by provisioning from cold. A 30-second RPO requires continuous replication (Aurora Global Database is sub-second). The 70% budget is too much for pilot light, too little for active/active.\n\nBackup/restore (A) cannot meet 2-minute RTO. Pilot light (B) typically has RTO of 10+ minutes. Active/active (D) technically meets everything but costs ~100% of primary spend.",
+      "pattern": "DR tier selection is arithmetic. When the scenario gives you RTO, RPO, AND a budget percentage, the answer is nearly always uniquely determined. Memorize the four-tier envelope.",
+      "references": [
+        { "type": "whitepaper", "title": "AWS Well-Architected — Reliability Pillar (DR strategies)", "url": "https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html" },
+        { "type": "whitepaper", "title": "Disaster Recovery of Workloads on AWS: Recovery in the Cloud", "url": "https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-workloads-on-aws.html" },
+        { "type": "doc", "title": "Amazon Aurora Global Database", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database.html" }
+      ]
+    },
+    {
+      "id": "sap003",
+      "domain": "D1",
+      "scenario": "A security team needs to prevent IAM principals in any of 200 accounts from disabling CloudTrail, modifying GuardDuty detectors, or deleting KMS customer-managed keys. Accounts are organized into OUs by business unit. Several accounts have break-glass admin roles that must retain full access during security incidents. The solution must be preventive, not detective.",
+      "question": "Which combination of controls MOST effectively meets these requirements?",
+      "choices": [
+        "IAM permission boundaries on every role in every account that deny the restricted actions, with Config rules for drift detection.",
+        "An SCP at the root OU denying the restricted actions, with a condition excluding ARNs matching the break-glass role naming pattern.",
+        "Security Hub automated response rules to revert changes to CloudTrail, GuardDuty, or KMS within 60 seconds of detection.",
+        "Explicit Deny IAM policies in each account, enforced by CI/CD pipelines for consistency."
+      ],
+      "correct": 1,
+      "explanation": "SCPs are the only mechanism that preventively restricts actions across accounts — even the root user cannot exceed an SCP. Condition blocks excluding break-glass roles by ARN pattern is the standard approach.\n\nPermission boundaries (A) only apply to principals that have them attached and don't cover new principals or root. Security Hub (C) is detective, not preventive. Per-account IAM policies (D) cannot be enforced consistently across 200 accounts.",
+      "pattern": "Preventive + multi-account + cannot-be-bypassed → SCPs. Break-glass or emergency access → Condition block with aws:PrincipalArn exclusions. Permission boundaries are for delegated admin within an account, not Org-wide enforcement.",
+      "references": [
+        { "type": "doc", "title": "Service Control Policies (SCPs)", "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html" },
+        { "type": "whitepaper", "title": "Organizing Your AWS Environment Using Multiple Accounts", "url": "https://docs.aws.amazon.com/whitepapers/latest/organizing-your-aws-environment/organizing-your-aws-environment.html" },
+        { "type": "blog", "title": "AWS Blog: Example SCPs for AWS Organizations", "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples.html" }
+      ]
+    },
+    {
+      "id": "sap004",
+      "domain": "D4",
+      "scenario": "A company is migrating 400 on-premises applications to AWS over 18 months. The portfolio includes Java monoliths on VMware, Windows Server 2012 apps tied to specific hardware, commercial ISV apps with complex licensing, mainframe workloads, and roughly 150 small utility apps. The CIO wants to minimize refactoring cost while capturing cloud benefits where feasible. Six engineers are available.",
+      "question": "Which migration approach MOST effectively fits this portfolio?",
+      "choices": [
+        "Refactor all 400 applications to containers on Amazon ECS to maximize cloud-native benefits.",
+        "Use AWS Application Discovery Service to inventory the portfolio, then apply the 7 Rs per application: Rehost Java monoliths and utilities via MGN, Replatform Windows where possible, Repurchase ISVs via Marketplace, and separately assess the mainframe.",
+        "Rehost all 400 applications via AWS MGN to meet the 18-month timeline, then refactor post-migration.",
+        "Retire the utility apps, then refactor the remainder to serverless using Lambda and API Gateway."
+      ],
+      "correct": 1,
+      "explanation": "The 7 Rs framework exists because heterogeneous portfolios need different strategies per app. Application Discovery feeds Migration Hub to build the inventory and dependency map for rational sequencing. With six engineers and 400 apps in 18 months, blanket strategies are infeasible.\n\nRefactor-all (A) is unaffordable in the timeframe. Rehost-all (C) locks in debt from unsupported Windows and ISV complexity. Retire-and-refactor (D) skips the inventory step.",
+      "pattern": "Large heterogeneous portfolios → Discovery → 7 Rs → Migration Hub. The exam rewards 'assess first, apply the right R per workload' over single-strategy answers. Diverse application types = blanket-approach options are distractors.",
+      "references": [
+        { "type": "whitepaper", "title": "An E-Book of Cloud Best Practices for Your Enterprise (7 Rs)", "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-retiring-applications/apg-gloss.html" },
+        { "type": "doc", "title": "AWS Application Discovery Service", "url": "https://docs.aws.amazon.com/application-discovery/latest/userguide/what-is-appdiscovery.html" },
+        { "type": "whitepaper", "title": "AWS Prescriptive Guidance — Migration Strategy", "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/large-migration-guide/welcome.html" }
+      ]
+    },
+    {
+      "id": "sap005",
+      "domain": "D3",
+      "scenario": "A company runs stable production on EC2 and RDS with predictable 24/7 usage. Monthly compute spend averages $180,000 with variance under 8%. The workload has run two years and will continue for at least three more. Finance wants a commitment-based pricing model but is concerned about instance-family flexibility, since the workload may shift between M-family and C-family during future optimization work.",
+      "question": "Which purchasing strategy provides the GREATEST savings while preserving flexibility?",
+      "choices": [
+        "Standard Reserved Instances for current instance families for a 3-year all-upfront term.",
+        "Convertible Reserved Instances for a 3-year all-upfront term.",
+        "Compute Savings Plans for a 3-year all-upfront term covering the baseline EC2 spend.",
+        "EC2 Instance Savings Plans for the M-family at current baseline for a 3-year all-upfront term."
+      ],
+      "correct": 2,
+      "explanation": "Compute Savings Plans provide up to ~66% savings on a 3-year all-upfront and apply automatically across EC2 instance families, sizes, regions, OS, tenancy, plus Fargate and Lambda. Perfect flexibility fit.\n\nStandard RIs (A) offer max discount but lock family. Convertible RIs (B) allow changes but at lower discount than Compute SPs and require manual exchanges. EC2 Instance SPs (D) offer higher discounts but lock to a family in a region.",
+      "pattern": "Compute SP = max flexibility, slightly lower discount. EC2 Instance SP = family-locked, higher discount. Standard RI = family-locked, Marketplace-sellable. Convertible RI = exchangeable, lowest RI discount. Flexibility emphasis → Compute SP.",
+      "references": [
+        { "type": "doc", "title": "AWS Savings Plans User Guide", "url": "https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html" },
+        { "type": "whitepaper", "title": "AWS Well-Architected — Cost Optimization Pillar", "url": "https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html" },
+        { "type": "doc", "title": "Compare Savings Plans and Reserved Instances", "url": "https://docs.aws.amazon.com/savingsplans/latest/userguide/sp-overview.html" }
+      ]
+    },
+    {
+      "id": "sap006",
+      "domain": "D2",
+      "scenario": "A healthcare company must store 50 TB of patient imaging data actively accessed the first 90 days, then rarely accessed afterward. Regulatory requirements mandate 7-year retention with immutability — no deletion or modification during retention, even by account administrators. Post-90-day access patterns are unpredictable. Retrieval latency for older objects is not critical but must not exceed 12 hours.",
+      "question": "Which storage strategy MOST cost-effectively meets these requirements?",
+      "choices": [
+        "S3 Standard with Object Lock Compliance mode for 7 years. Intelligent-Tiering for automatic movement.",
+        "S3 Standard for 90 days, then Lifecycle transition to Glacier Flexible Retrieval. Object Lock Compliance mode for 7 years.",
+        "S3 Intelligent-Tiering with Archive Access and Deep Archive Access tiers enabled. Object Lock Governance mode for 7 years.",
+        "S3 Standard for 90 days, Lifecycle transition to Glacier Deep Archive. Versioning with MFA delete for immutability."
+      ],
+      "correct": 1,
+      "explanation": "Option C is the distractor: Governance mode allows privileged users to bypass the lock, violating 'even administrators.' You need Compliance mode. Given Compliance is required, B is best: 90 days in Standard matches the known hot period, Glacier Flexible Retrieval under 12 hours, Compliance mode provides true immutability.\n\nOption A keeps all data in Standard, which is wasteful. Option D's MFA delete isn't regulatory-grade immutability.",
+      "pattern": "Object Lock: 'even administrators cannot bypass' = Compliance mode. 'Authorized users can bypass' = Governance mode. MFA delete protects versioning, not regulatory immutability. Read the lock mode carefully — it's a common trap.",
+      "references": [
+        { "type": "doc", "title": "Using S3 Object Lock", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html" },
+        { "type": "doc", "title": "S3 Lifecycle configuration", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html" },
+        { "type": "doc", "title": "S3 Storage Classes", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html" }
+      ]
+    },
+    {
+      "id": "sap007",
+      "domain": "D1",
+      "scenario": "A company operates 25 AWS accounts and wants centralized logging. CloudTrail, VPC Flow Logs, and application logs from all accounts must flow to a dedicated Log Archive account. The security team in a separate Security account needs read access for analysis but must not modify or delete logs. Logs retain for 7 years. The solution must automatically work for new accounts added to the Organization.",
+      "question": "Which architecture BEST meets these requirements?",
+      "choices": [
+        "Organization trail to an S3 bucket in Log Archive. Kinesis Data Firehose in each account for VPC Flow Logs and app logs to the same bucket. Cross-account IAM role for Security account read.",
+        "Organization trail with bucket policy denying deletes. Centralized VPC Flow Logs via delegated admin. Firehose streams for app logs. Security account cross-account read via bucket policy.",
+        "AWS Control Tower auto-configures Organization-wide CloudTrail and Config to a Log Archive account. Centralized VPC Flow Logs via delegated admin. Security account read via Control Tower guardrails.",
+        "S3 bucket per account replicated to Log Archive via CRR. AWS Backup for retention. Security account access via bucket ACLs."
+      ],
+      "correct": 2,
+      "explanation": "Control Tower is the AWS-canonical answer for greenfield-ish multi-account logging. It configures Log Archive and Audit accounts with Organization-wide CloudTrail delivery, Config aggregation, and appropriate cross-account access. New accounts enrolled inherit these automatically.\n\nOption B is technically correct but requires significant manual configuration. Option A misses delegated admin and uses weaker access. Option D uses deprecated bucket ACLs and unnecessary replication.",
+      "pattern": "Multi-account governance from greenfield + centralized logging + automatic new-account onboarding → Control Tower. Even if most real teams build this themselves with Organizations and custom IaC, the exam prefers Control Tower.",
+      "references": [
+        { "type": "doc", "title": "AWS Control Tower User Guide", "url": "https://docs.aws.amazon.com/controltower/latest/userguide/what-is-control-tower.html" },
+        { "type": "doc", "title": "Centralized logging with Control Tower", "url": "https://docs.aws.amazon.com/controltower/latest/userguide/logging-and-monitoring.html" },
+        { "type": "whitepaper", "title": "Organizing Your AWS Environment Using Multiple Accounts", "url": "https://docs.aws.amazon.com/whitepapers/latest/organizing-your-aws-environment/organizing-your-aws-environment.html" }
+      ]
+    },
+    {
+      "id": "sap008",
+      "domain": "D3",
+      "scenario": "A SaaS API runs on EC2 behind an ALB. Traffic is quiet most of the day with sudden 20x spikes during customer batch jobs. Current auto-scaling takes 4-6 minutes to respond, causing elevated latency during scale-out. The app is a Java Spring Boot monolith with 90-second JVM warmup. Traffic is unpredictable and cannot be scheduled. The team wants to reduce latency during spikes without significantly increasing baseline cost.",
+      "question": "Which architectural change MOST effectively addresses the spike latency problem?",
+      "choices": [
+        "Migrate to Lambda behind API Gateway. Provisioned concurrency to eliminate cold starts.",
+        "Predictive scaling with EC2 Auto Scaling based on 14 days of historical traffic.",
+        "Keep EC2 but add warm pools in the Auto Scaling group, so scale-out uses pre-initialized instances with the JVM already warmed.",
+        "Replace the ALB with an NLB and increase EC2 instance size to handle spikes from baseline capacity."
+      ],
+      "correct": 2,
+      "explanation": "EC2 Auto Scaling warm pools maintain pre-initialized instances in Stopped or Hibernated state. On scale-out, instances start (not launch) and JVM warmup is already done, cutting scale-out latency from minutes to ~30 seconds. Baseline cost barely moves — stopped instances incur only EBS charges.\n\nLambda migration (A) is a major refactor. Predictive scaling (B) fails because traffic is unpredictable. Oversized baseline (D) contradicts the cost requirement.",
+      "pattern": "Scale-out latency with long-warmup apps → warm pools. When the scenario mentions JVM warmup, app initialization, or long boot sequences combined with scaling latency, warm pools is the targeted answer.",
+      "references": [
+        { "type": "doc", "title": "EC2 Auto Scaling — Warm pools", "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-warm-pools.html" },
+        { "type": "blog", "title": "Scaling your applications faster with EC2 Auto Scaling Warm Pools", "url": "https://aws.amazon.com/blogs/compute/scaling-your-applications-faster-with-ec2-auto-scaling-warm-pools/" },
+        { "type": "doc", "title": "EC2 Auto Scaling — Lifecycle hooks", "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/lifecycle-hooks.html" }
+      ]
+    },
+    {
+      "id": "sap009",
+      "domain": "D2",
+      "scenario": "An enterprise has an on-premises data center connected to AWS via a single 10 Gbps Direct Connect. Regulatory requirements mandate that if DX fails, hybrid workloads continue with reduced capacity rather than fail completely. Cross-region AWS workloads must remain accessible from on-premises during any single point of failure. The solution must be tested monthly without disrupting production.",
+      "question": "Which network architecture BEST meets the resilience requirements?",
+      "choices": [
+        "A second DX connection at the same DX location terminating on a different AWS device, with BGP ECMP.",
+        "A second DX connection at a different DX location plus a Site-to-Site VPN over the internet. BGP path preferences route via DX primary, VPN fallback.",
+        "A Site-to-Site VPN that activates only on DX failure. Global Accelerator for AWS-to-on-premises direction.",
+        "Two DX connections at two different DX locations connected to separate customer routers. No VPN to avoid complexity."
+      ],
+      "correct": 1,
+      "explanation": "The AWS-recommended maximum-resilience hybrid pattern is redundant DX at different locations (facility-level failure protection) plus a VPN as tertiary backup. 'Reduced capacity' on failure matches VPN throughput. Monthly VPN failover testing is non-disruptive because traffic stays on DX normally.\n\nOption A protects only against device failure, not location. Option C has single-DX which is insufficient. Option D is good but has no tertiary protection.",
+      "pattern": "Hybrid resilience hierarchy: 1x DX = dev, 2x DX same location = device resilience, 2x DX different locations = high resilience, 2x DX different locations + VPN = maximum resilience. Regulatory/continuity scenarios want the top tier.",
+      "references": [
+        { "type": "whitepaper", "title": "AWS Direct Connect Resiliency Recommendations", "url": "https://aws.amazon.com/directconnect/resiliency-recommendation/" },
+        { "type": "doc", "title": "AWS Direct Connect — Resiliency toolkit", "url": "https://docs.aws.amazon.com/directconnect/latest/UserGuide/resilency_toolkit.html" },
+        { "type": "doc", "title": "AWS Site-to-Site VPN as backup to Direct Connect", "url": "https://docs.aws.amazon.com/vpn/latest/s2svpn/vpn-redundant-connection.html" }
+      ]
+    },
+    {
+      "id": "sap010",
+      "domain": "D3",
+      "scenario": "A company has accumulated AWS technical debt over 4 years. Monthly bill is $1.2M and growing. Leadership mandated 25% cost reduction in 6 months without degrading performance or availability. Investigation shows significant EC2 over-provisioning, low RI/SP coverage (31%), orphaned EBS volumes, outdated instance generations, unused Elastic IPs, and idle Redshift clusters. Two engineers are available for optimization.",
+      "question": "Which approach MOST efficiently achieves the cost reduction target?",
+      "choices": [
+        "Manually audit every EC2 instance, terminate low-utilization ones, then purchase RIs for remainders.",
+        "Enable Compute Optimizer and Cost Explorer Rightsizing. Sequence: eliminate waste (orphans, idle clusters), then rightsize, then commit to Savings Plans at the new lower baseline. Trusted Advisor and Cost Anomaly Detection for ongoing monitoring.",
+        "Immediately purchase 3-year all-upfront Compute Savings Plans to lock in max discount, then optimize within the commitment.",
+        "Migrate all EC2 to Spot and Lambda, deleting unused resources as discovered."
+      ],
+      "correct": 1,
+      "explanation": "Cost optimization sequencing is always: eliminate waste first, then rightsize, then commit. Committing before optimizing (C) locks in spend on resources about to be deleted. Compute Optimizer and Cost Explorer Rightsizing are the native tools for this workflow.\n\nOption C is the classic trap. Option D is reckless — not all workloads are Spot-tolerant. Option A doesn't scale with two engineers.",
+      "pattern": "Cost optimization sequencing is ALWAYS: (1) Delete unused, (2) Rightsize, (3) Commit. Any answer that reverses the order is wrong. The Well-Architected Cost Optimization pillar lays this out explicitly.",
+      "references": [
+        { "type": "whitepaper", "title": "AWS Well-Architected — Cost Optimization Pillar", "url": "https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html" },
+        { "type": "doc", "title": "AWS Compute Optimizer", "url": "https://docs.aws.amazon.com/compute-optimizer/latest/ug/what-is-compute-optimizer.html" },
+        { "type": "doc", "title": "AWS Cost Explorer — Rightsizing recommendations", "url": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/ce-rightsizing.html" }
+      ]
+    },
+    {
+      "id": "sap011",
+      "domain": "D1",
+      "scenario": "A company operates a central data lake in a dedicated Data Lake account with 200 TB of curated datasets in S3. Business units in 15 different accounts need query access to specific datasets. Current approach uses bucket policies listing principal account IDs — unmaintainable with frequent permission changes. Governance needs fine-grained access at table and column level, audit logging of all queries, and temporary access that expires automatically.",
+      "question": "Which solution BEST addresses these requirements?",
+      "choices": [
+        "AWS Lake Formation in the Data Lake account for table/column permissions. Share via Lake Formation cross-account sharing (RAM under the hood). Tag-based access control for scalable permissions.",
+        "Athena workgroups in each consumer account with IAM policies restricting access to S3 prefixes. Athena query result encryption and CloudTrail for auditing.",
+        "IAM roles in the Data Lake account for each consumer with sts:AssumeRole and session tags. CloudTrail for query logging.",
+        "Redshift Spectrum in the Data Lake account with database users and GRANT statements. Share Redshift snapshots with consumers."
+      ],
+      "correct": 0,
+      "explanation": "Lake Formation is the managed service designed for this: fine-grained access (table, column, row, tag-based) for data lakes, with cross-account sharing on RAM. Tag-based access control (LF-TBAC) cuts permission management overhead dramatically. Queries through integrated services (Athena, EMR, Redshift Spectrum, Glue) are audited via CloudTrail.\n\nAthena + S3 prefix IAM (B) cannot do column-level. Cross-account IAM roles (C) don't provide table/column governance. Redshift (D) is a different architecture.",
+      "pattern": "'Fine-grained access' + 'data lake' + 'multiple consumer accounts' → Lake Formation. Another service underused in practice but heavily tested. It's AWS's answer to 'bucket policies don't scale.'",
+      "references": [
+        { "type": "doc", "title": "AWS Lake Formation Developer Guide", "url": "https://docs.aws.amazon.com/lake-formation/latest/dg/what-is-lake-formation.html" },
+        { "type": "doc", "title": "Cross-account data sharing in Lake Formation", "url": "https://docs.aws.amazon.com/lake-formation/latest/dg/cross-account-permissions.html" },
+        { "type": "doc", "title": "Lake Formation tag-based access control (LF-TBAC)", "url": "https://docs.aws.amazon.com/lake-formation/latest/dg/tag-based-access-control.html" }
+      ]
+    },
+    {
+      "id": "sap012",
+      "domain": "D4",
+      "scenario": "A company is migrating a 40 TB on-premises Oracle database to AWS. The database supports a critical e-commerce app. Downtime must be under 15 minutes. Source handles ~800 TPS during business hours. Target is Aurora PostgreSQL, which requires schema conversion. Available network: 1 Gbps internet, 10 Gbps Direct Connect.",
+      "question": "Which migration approach MOST effectively meets the downtime requirement with schema conversion?",
+      "choices": [
+        "AWS SCT to convert schema, Snowball Edge for initial load, then DMS full-load-and-CDC to synchronize, then cut over during a 15-minute window.",
+        "DMS full-load mode over Direct Connect, accepting the resulting downtime window.",
+        "AWS SCT to convert schema, then DMS full-load-and-CDC over Direct Connect. Cut over during a 15-minute window after briefly stopping writes.",
+        "Oracle GoldenGate replication to an EC2-hosted Oracle, then native Oracle tools to Aurora PostgreSQL."
+      ],
+      "correct": 2,
+      "explanation": "For heterogeneous migrations with tight downtime, the canonical pattern is SCT for schema + DMS full-load-and-CDC for data. 10 Gbps DX is plenty of bandwidth for 40 TB in roughly 10-12 hours while business operates. CDC captures changes during load and until cutover, minimizing cutover to minutes.\n\nSnowball (A) is unnecessary given 10 Gbps DX. Full-load only (B) violates the 15-minute target. GoldenGate-then-native (D) is multi-hop complexity.",
+      "pattern": "Heterogeneous DB migration → SCT + DMS. Downtime constraint → CDC. Snowball is for bandwidth-constrained scenarios — if DX is available, skip Snowball. The exam loves Snowball as a distractor when the math actually works fine over the wire.",
+      "references": [
+        { "type": "doc", "title": "AWS Database Migration Service", "url": "https://docs.aws.amazon.com/dms/latest/userguide/Welcome.html" },
+        { "type": "doc", "title": "AWS Schema Conversion Tool", "url": "https://docs.aws.amazon.com/SchemaConversionTool/latest/userguide/CHAP_Welcome.html" },
+        { "type": "whitepaper", "title": "Migrating Oracle to Amazon Aurora PostgreSQL", "url": "https://docs.aws.amazon.com/dms/latest/sbs/chap-oracle2aurora.html" }
+      ]
+    },
+    {
+      "id": "sap013",
+      "domain": "D2",
+      "scenario": "An app processes public-facing API requests and an async settlement pipeline. The API has RTO 1 hour. The async pipeline (financial files) has RTO 24 hours but CANNOT reprocess files already processed — duplicate processing causes financial discrepancies. Files arrive via SFTP from external partners. Current architecture: API Gateway + Lambda for API, EC2 workers pulling from SQS for pipeline.",
+      "question": "Which cross-region DR design BEST satisfies both workloads' requirements?",
+      "choices": [
+        "Active/passive API with Route 53 failover. For the pipeline: replicate SQS messages to the second region via EventBridge and run workers in both regions with message deduplication.",
+        "Active/passive API. For the pipeline: S3 CRR for incoming files, run workers in the second region only on failover after verifying processing state via a globally-replicated DynamoDB table.",
+        "Multi-region active/active with DynamoDB global tables for all state and Route 53 latency routing for SFTP.",
+        "Only the API cross-region. For the pipeline, rely on SQS durability and accept longer RTO with same-region backups."
+      ],
+      "correct": 1,
+      "explanation": "The critical constraint is 'cannot reprocess files already processed' — state tracking is the architectural centerpiece. Globally-replicated DynamoDB state lets failover-region workers check what's already processed before resuming. S3 CRR ensures files are available in both regions.\n\nOption A runs workers in both regions, risking duplicate processing if replication lag causes races. Option C has the same duplicate risk. Option D violates the API's 1-hour RTO.",
+      "pattern": "'Cannot reprocess' or exactly-once semantics + DR → global state tracking (DynamoDB global tables or similar). Active/active is NOT always the most resilient choice — if the workload has idempotency constraints, active/passive with careful state handoff is better.",
+      "references": [
+        { "type": "doc", "title": "Amazon DynamoDB Global Tables", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GlobalTables.html" },
+        { "type": "whitepaper", "title": "Disaster Recovery of Workloads on AWS", "url": "https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-workloads-on-aws.html" },
+        { "type": "doc", "title": "S3 Cross-Region Replication", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html" }
+      ]
+    },
+    {
+      "id": "sap014",
+      "domain": "D1",
+      "scenario": "A regulated financial services company requires every EC2 instance in 80 accounts to have SSM Agent installed, be registered with a specific SSM patch baseline, and have the CloudWatch agent shipping logs to a central account. The solution must enforce preventively where possible and detectively where not, work for existing and future accounts, and require no per-account manual configuration.",
+      "question": "Which approach MOST effectively meets these requirements?",
+      "choices": [
+        "Config organizational conformance packs for detection, SCPs preventing launches of non-SSM-enabled AMIs, and Systems Manager Quick Setup for Organizations to auto-configure SSM and CloudWatch agent across all accounts.",
+        "A Lambda in a central account running hourly, listing EC2 in all accounts via cross-account roles, remediating non-compliant instances.",
+        "AWS OpsWorks for Chef Automate to manage configuration across all EC2 in the Organization.",
+        "A CloudFormation StackSet from the management account that installs and configures agents on every EC2."
+      ],
+      "correct": 0,
+      "explanation": "Systems Manager Quick Setup for Organizations deploys SSM agent configuration, patch baselines, and CloudWatch agent configuration across Org accounts with automatic rollout to new accounts. Config organizational conformance packs provide detection. SCPs prevent launches at the boundary.\n\nLambda (B) creates maintenance burden. OpsWorks Chef (C) is legacy. StackSets (D) deploy stacks to accounts but don't configure running EC2 instances.",
+      "pattern": "'Configure SSM/CloudWatch agent across an Organization' → Systems Manager Quick Setup for Organizations. A 2022+ feature experienced architects often miss — it collapses what used to be custom Lambda + StackSet into a managed capability.",
+      "references": [
+        { "type": "doc", "title": "AWS Systems Manager Quick Setup", "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-quick-setup.html" },
+        { "type": "doc", "title": "Quick Setup host management", "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/quick-setup-host-management.html" },
+        { "type": "doc", "title": "AWS Config Organizational Rules", "url": "https://docs.aws.amazon.com/config/latest/developerguide/config-rule-multi-account-deployment.html" }
+      ]
+    },
+    {
+      "id": "sap015",
+      "domain": "D2",
+      "scenario": "A gaming company is launching a new multiplayer game globally. The architecture requires very low latency (<50ms) between players and game servers. Player distribution is global but concentrated in North America, Europe, and East Asia. Sessions last 20-40 minutes. Matchmaking creates sessions by skill and latency. Launch-day traffic will be extremely spiky — potentially 500,000 concurrent sessions within the first 24 hours, dropping to steady-state ~100,000.",
+      "question": "Which architecture BEST meets the latency and scaling requirements?",
+      "choices": [
+        "Deploy game servers on EC2 in three regions (us-east-1, eu-west-1, ap-northeast-1). Global Accelerator for connection routing by latency. Auto-scale EC2 by session count.",
+        "Amazon GameLift fleets across multiple regions with latency and skill matchmaking. GameLift handles server lifecycle, spot/on-demand mixed fleets, and cross-region placement. GameLift FleetIQ for cost.",
+        "AWS Fargate with ALB and Route 53 latency-based routing.",
+        "AWS Lambda behind API Gateway WebSocket APIs for automatic scaling."
+      ],
+      "correct": 1,
+      "explanation": "GameLift is AWS's managed service for multiplayer game session hosting, with built-in latency-based matchmaking, cross-region fleet management, and Spot+On-Demand mixed fleets via FleetIQ. Purpose-built for this scenario.\n\nRaw EC2 + Global Accelerator (A) works but requires building matchmaking, session placement, and lifecycle yourself. Fargate (C) is stateless; game sessions are stateful. Lambda (D) is fundamentally wrong for long-running stateful sessions.",
+      "pattern": "'Multiplayer game servers' → GameLift. Domain-specific managed services (GameLift, IoT Core, Elemental MediaLive, Ground Station) often appear — the right answer is usually the purpose-built service even if you can roll your own.",
+      "references": [
+        { "type": "doc", "title": "Amazon GameLift Developer Guide", "url": "https://docs.aws.amazon.com/gamelift/latest/developerguide/gamelift-intro.html" },
+        { "type": "doc", "title": "GameLift FleetIQ", "url": "https://docs.aws.amazon.com/gamelift/latest/fleetiqguide/gsg-intro.html" },
+        { "type": "blog", "title": "AWS GameTech Blog", "url": "https://aws.amazon.com/blogs/gametech/" }
+      ]
+    },
+    {
+      "id": "sap016",
+      "domain": "D3",
+      "scenario": "A media company runs a video transcoding pipeline on EC2 GPU instances. Workload is highly variable — sometimes idle for hours, sometimes thousands of jobs. Jobs range 2 minutes to 6 hours. Interruption is tolerable (checkpoint restart) but frequent interruptions increase processing time and customer latency. Monthly on-demand spend is $45,000.",
+      "question": "Which compute purchasing strategy MOST effectively reduces cost while managing interruption risk?",
+      "choices": [
+        "All Spot, relying on checkpoint restart for all interruptions.",
+        "Mixed instances policy: small on-demand baseline for latency-sensitive jobs, Spot with many instance types/AZs (capacity-optimized allocation) for bulk capacity, checkpoint-based resumption.",
+        "1-year Compute Savings Plans covering full current baseline, on-demand for bursts.",
+        "Migrate to AWS Batch with Fargate, removing GPU instances and using CPU-only transcoding."
+      ],
+      "correct": 1,
+      "explanation": "Mixed instances policy with capacity-optimized Spot across many instance types and AZs minimizes interruption while capturing Spot's ~70% discount. On-demand baseline handles latency-critical work. Checkpoint restart handles remaining interruptions.\n\nAll Spot (A) maximizes savings but high interruption hurts customer latency. Full-baseline SPs (C) over-commit for highly variable load. Removing GPUs (D) is a performance downgrade.",
+      "pattern": "Variable GPU/compute with checkpoint tolerance → Mixed instances policy (on-demand baseline + Spot bulk + capacity-optimized allocation across many types). Allocation knob: capacity-optimized minimizes interruption, lowest-price maximizes savings but interrupts more.",
+      "references": [
+        { "type": "doc", "title": "EC2 Auto Scaling — Mixed instances policy", "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-mixed-instances-groups.html" },
+        { "type": "doc", "title": "EC2 Spot Instances", "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html" },
+        { "type": "doc", "title": "Spot allocation strategies", "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-mixed-instances-groups-instance-weighting.html" }
+      ]
+    },
+    {
+      "id": "sap017",
+      "domain": "D1",
+      "scenario": "A company's dev teams create AWS resources ad-hoc, producing inconsistent tagging, security posture, and cost allocation. The platform team wants standardized self-service provisioning: devs launch pre-approved architectures (web app, data pipeline, ML workspace) without filing tickets, with automatic enforcement of tagging, networking placement, and security controls. Must work across multiple accounts and OUs.",
+      "question": "Which AWS service BEST addresses this requirement?",
+      "choices": [
+        "CloudFormation StackSets with a shared template library in S3, IAM policy restricting devs to specific templates.",
+        "AWS Service Catalog with portfolios shared across the Organization via RAM. Products for each approved architecture with launch constraints enforcing tagging, networking, and security.",
+        "AWS Proton with platform-managed templates deployed by devs via the console.",
+        "Terraform Enterprise on EC2 with platform-provided modules."
+      ],
+      "correct": 1,
+      "explanation": "Service Catalog is the AWS-native self-service provisioning product built for this: curated product catalog, launch constraints (tagging, network, IAM), portfolios sharable across accounts via RAM, governance controls. Devs launch approved products without seeing underlying CFN.\n\nStackSets (A) doesn't provide product-catalog experience. Proton (C) is focused on CI/CD and container workloads. Terraform Enterprise (D) is non-AWS.",
+      "pattern": "'Self-service provisioning' + 'standardized architectures' + 'governance' → Service Catalog. Another underused-but-heavily-tested service. If the scenario mentions curated templates, product catalog, or 'devs launching without tickets,' Service Catalog is almost always the answer.",
+      "references": [
+        { "type": "doc", "title": "AWS Service Catalog", "url": "https://docs.aws.amazon.com/servicecatalog/latest/adminguide/introduction.html" },
+        { "type": "doc", "title": "Service Catalog cross-account sharing", "url": "https://docs.aws.amazon.com/servicecatalog/latest/adminguide/catalogs_portfolios_sharing.html" },
+        { "type": "doc", "title": "Service Catalog launch constraints", "url": "https://docs.aws.amazon.com/servicecatalog/latest/adminguide/constraints-launch.html" }
+      ]
+    },
+    {
+      "id": "sap018",
+      "domain": "D4",
+      "scenario": "A company needs to migrate 500 TB of archival data from an on-premises NAS appliance to S3 for long-term retention. The on-premises site has a 500 Mbps internet connection shared with production traffic. Business operations must not be impacted. Data must be encrypted in transit and at rest. Integrity must be verifiable post-migration. The migration must complete within 90 days.",
+      "question": "Which migration tool or approach BEST fits these requirements?",
+      "choices": [
+        "AWS DataSync over the existing internet connection, scheduling transfers during off-hours.",
+        "AWS Snowball Edge Storage Optimized devices. Transfer on-premises, ship to AWS for ingestion. Multiple devices in parallel to meet the timeline.",
+        "AWS Storage Gateway in File Gateway mode, copy to gateway which uploads to S3.",
+        "S3 Transfer Acceleration with multi-part uploads from on-premises servers."
+      ],
+      "correct": 1,
+      "explanation": "Bandwidth math: 500 Mbps over 90 days at 100% utilization = ~485 TB theoretical max, but you can't use 100% of a shared production line. Realistic transfer takes far longer than 90 days. Snowball Edge devices (80 TB usable each) shipped in parallel complete 500 TB within weeks. Snowball provides encryption in transit and at rest, with checksums for integrity.\n\nDataSync (A) cannot meet the timeline with this bandwidth. Storage Gateway (C) uses the same bandwidth. Transfer Acceleration (D) doesn't overcome the fundamental bandwidth ceiling.",
+      "pattern": "Large data migration rule: if the math says 'transfer takes longer than the deadline' → Snowball family. If bandwidth is sufficient → DataSync. Always do the bandwidth arithmetic. The exam includes the data size and bandwidth specifically so you do the calculation.",
+      "references": [
+        { "type": "doc", "title": "AWS Snow Family", "url": "https://docs.aws.amazon.com/snowball/latest/developer-guide/whatissnowball.html" },
+        { "type": "doc", "title": "AWS DataSync", "url": "https://docs.aws.amazon.com/datasync/latest/userguide/what-is-datasync.html" },
+        { "type": "blog", "title": "Choosing a Snow Family device", "url": "https://aws.amazon.com/snow/" }
+      ]
+    },
+    {
+      "id": "sap019",
+      "domain": "D3",
+      "scenario": "A company requires all S3 buckets across 100 AWS accounts have server-side encryption enabled with customer-managed KMS keys from a specific central Security account. The solution must prevent creation of non-compliant buckets, remediate existing non-compliant buckets automatically, produce compliance reports for auditors, and work for new accounts added to the Organization.",
+      "question": "Which combination of services BEST meets these requirements?",
+      "choices": [
+        "S3 Block Public Access at the account level for all accounts. Central KMS key policies. Lambda for remediation.",
+        "Organization-level SCP denying s3:CreateBucket without required KMS encryption parameters. AWS Config organizational rules with auto-remediation via SSM Automation documents. Config aggregator in a central account for reporting. Control Tower enrollment for new account coverage.",
+        "AWS Firewall Manager policies for S3 encryption enforced Organization-wide.",
+        "IAM permission boundaries on all bucket-creating roles restricting creation to encrypted configurations."
+      ],
+      "correct": 1,
+      "explanation": "This requires the full stack: SCP for prevention (can't be bypassed), Config rules for detection, Config auto-remediation for fix, Config aggregator for reporting, Control Tower for automatic new-account coverage. Each component addresses a specific requirement.\n\nOption A is incomplete — Block Public Access isn't encryption. Firewall Manager (C) is for security groups and WAF, not S3 encryption. Permission boundaries (D) are per-role and miss root.",
+      "pattern": "Multi-account compliance often requires a combination of services: SCPs for prevention, Config for detection/remediation/reporting, Control Tower for onboarding. Single-service answers for complex governance are usually wrong.",
+      "references": [
+        { "type": "doc", "title": "AWS Config — Organizational rules", "url": "https://docs.aws.amazon.com/config/latest/developerguide/config-rule-multi-account-deployment.html" },
+        { "type": "doc", "title": "AWS Config — Remediating noncompliant resources", "url": "https://docs.aws.amazon.com/config/latest/developerguide/remediation.html" },
+        { "type": "doc", "title": "AWS Config Aggregator", "url": "https://docs.aws.amazon.com/config/latest/developerguide/aggregate-data.html" }
+      ]
+    },
+    {
+      "id": "sap020",
+      "domain": "D3",
+      "scenario": "A global media company wants to serve video content with very low latency to viewers in 40 countries. The catalog is 500 TB of video segments. Currently CloudFront + S3 origin. Viewers in some regions experience higher latency and occasional buffering during peak events. Origin requests spike during new releases, occasionally causing 5xx errors from S3.",
+      "question": "Which enhancements BEST improve global performance and origin protection?",
+      "choices": [
+        "CloudFront Origin Shield near the S3 bucket to consolidate origin requests. Lambda@Edge for request manipulation. Multi-region S3 origins with CloudFront origin failover.",
+        "Replace CloudFront with Global Accelerator for video traffic on the AWS backbone.",
+        "Replace CloudFront with a third-party CDN and S3 Transfer Acceleration for origin fetches.",
+        "Increase S3 bucket request rate limits and add more S3 buckets as origins in round-robin."
+      ],
+      "correct": 0,
+      "explanation": "Origin Shield adds a caching layer between edges and origin, consolidating requests from many edges into fewer origin requests — directly addressing the origin 5xx issue during spikes. Lambda@Edge enables request manipulation. Multi-region origins with origin failover provide resilience.\n\nGlobal Accelerator (B) is for connection-oriented TCP/UDP, not HTTP content delivery. Third-party CDN (C) isn't AWS-canonical. S3 rate limits (D) are per-prefix; the fix is caching consolidation, not more buckets.",
+      "pattern": "'Origin overload' + 'CloudFront' → Origin Shield. Global Accelerator vs CloudFront: GA for TCP/UDP and non-HTTP, CloudFront for HTTP/S content delivery. Picking GA for video streaming is a classic trap.",
+      "references": [
+        { "type": "doc", "title": "CloudFront Origin Shield", "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/origin-shield.html" },
+        { "type": "doc", "title": "CloudFront origin failover", "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/high_availability_origin_failover.html" },
+        { "type": "doc", "title": "CloudFront vs Global Accelerator", "url": "https://aws.amazon.com/global-accelerator/faqs/" }
+      ]
+    },
+    {
+      "id": "sap021",
+      "domain": "D3",
+      "scenario": "A company runs a data analytics platform processing petabytes in S3. All data is currently S3 Standard. Analysis shows 15% of objects accessed daily, 25% weekly, 30% monthly, 30% rarely but occasionally needed for compliance queries (retrieval latency up to 24 hours acceptable). Storage costs are $480,000/month and growing. Access patterns shift over time as datasets age.",
+      "question": "Which storage configuration MOST effectively reduces cost while meeting access requirements?",
+      "choices": [
+        "All objects to S3 Intelligent-Tiering with Archive Access and Deep Archive Access tiers enabled. Let Intelligent-Tiering manage placement based on actual access.",
+        "Lifecycle policies Standard → Standard-IA after 30 days → Glacier Flexible Retrieval after 90 days → Glacier Deep Archive after 180 days.",
+        "Move all to Glacier Instant Retrieval for lower storage while maintaining retrieval performance.",
+        "Analyze access patterns quarterly and manually move objects between classes."
+      ],
+      "correct": 0,
+      "explanation": "With access patterns that 'shift over time' and aren't strictly time-based, Intelligent-Tiering is ideal. It automatically moves objects between tiers based on actual access, including Archive (90+ days) and Deep Archive (180+ days) tiers. Monitoring fee is minimal vs storage savings. No retrieval fees between frequent/infrequent tiers.\n\nLifecycle policies (B) work when access is strictly age-correlated, which this scenario doesn't support. Glacier Instant Retrieval (C) has high retrieval costs and isn't optimal for frequent data. Manual analysis (D) is toil Intelligent-Tiering automates.",
+      "pattern": "Intelligent-Tiering vs Lifecycle: Intelligent-Tiering for unpredictable/shifting access patterns. Lifecycle for clear age-correlation (logs, backups). 'Shifting,' 'unpredictable,' 'varying' access → Intelligent-Tiering.",
+      "references": [
+        { "type": "doc", "title": "S3 Intelligent-Tiering", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/intelligent-tiering.html" },
+        { "type": "doc", "title": "S3 Storage Classes comparison", "url": "https://aws.amazon.com/s3/storage-classes/" },
+        { "type": "blog", "title": "Using S3 Intelligent-Tiering", "url": "https://aws.amazon.com/s3/storage-classes/intelligent-tiering/" }
+      ]
+    },
+    {
+      "id": "sap022",
+      "domain": "D4",
+      "scenario": "A company has 60 Windows Server 2012 R2 VMs running legacy applications on VMware on-premises. Extended support ends in 6 months. Applications cannot be modified in the migration timeframe. Move to AWS with minimal changes. Network: 1 Gbps Direct Connect. Some VMs have specific hardware dependencies (USB license dongles for ISV software).",
+      "question": "Which migration approach BEST fits this scenario?",
+      "choices": [
+        "AWS Application Migration Service (MGN) to rehost all 60 VMs as EC2. For VMs with USB dongle dependencies, replace with software-based licensing or AWS License Manager where possible; evaluate VMware Cloud on AWS only for unresolvable hardware dependencies.",
+        "AWS Server Migration Service to replicate and migrate all VMs regardless of hardware dependencies.",
+        "Refactor all applications to Windows Server 2022 on EC2 within 6 months.",
+        "VMware Cloud on AWS for all 60 VMs, maintaining the existing VMware environment unchanged in AWS."
+      ],
+      "correct": 0,
+      "explanation": "AWS-preferred rehost tool is now MGN, which replaced SMS (deprecated). MGN uses block-level replication for efficient cutover. For USB dongles, software licensing replacement or License Manager first. VMware Cloud on AWS only for unresolvable hardware dependencies — expensive and not the default.\n\nSMS (B) is deprecated. Refactoring (C) is infeasible. VMware Cloud for everything (D) is expensive overkill.",
+      "pattern": "Rehost (lift-and-shift) → MGN, NOT SMS. VMware Cloud on AWS is a targeted tool for specific scenarios (hardware dependencies, licensing, speed-to-cloud), not a default migration strategy. If you still think 'SMS,' update your mental model.",
+      "references": [
+        { "type": "doc", "title": "AWS Application Migration Service (MGN)", "url": "https://docs.aws.amazon.com/mgn/latest/ug/what-is-application-migration-service.html" },
+        { "type": "doc", "title": "VMware Cloud on AWS", "url": "https://aws.amazon.com/vmware/" },
+        { "type": "blog", "title": "MGN vs SMS migration guidance", "url": "https://aws.amazon.com/application-migration-service/" }
+      ]
+    },
+    {
+      "id": "sap023",
+      "domain": "D1",
+      "scenario": "A company must process European Union customer data. Regulatory requirements mandate that EU customer data never leaves the EU region (eu-west-1 or eu-central-1), including during cross-region replication, backups, and DR. Developers in a US account build the application and deploy infrastructure to EU accounts. The solution must prevent accidental data transfer to non-EU regions by any mechanism.",
+      "question": "Which combination of controls BEST enforces the data residency requirement?",
+      "choices": [
+        "IAM policies in EU accounts restricting non-EU region API calls. CloudTrail for monitoring.",
+        "SCP at the OU containing EU accounts using aws:RequestedRegion to deny non-EU region API calls (excluding global services like IAM, Route 53, CloudFront). AWS Backup region restrictions. S3 bucket policies denying non-EU replication. SCP denying DynamoDB global table creation.",
+        "AWS Config rules detecting resources in non-EU regions, auto-remediating by deletion.",
+        "Deploy only in eu-west-1; single-region deployment prevents cross-region data movement."
+      ],
+      "correct": 1,
+      "explanation": "Data residency needs preventive, multi-layered controls: SCPs are the only Org-wide mechanism that can't be bypassed. aws:RequestedRegion is the standard condition key. Global services (IAM, CloudFront, Route 53, Support) must be excluded. Additional service-specific controls plug gaps.\n\nIAM policies (A) can be bypassed by root. Config auto-remediation (C) is detective — data may already be transferred. Single-region (D) doesn't prevent cross-region backups/snapshots.",
+      "pattern": "Data residency → aws:RequestedRegion SCPs with exceptions for global services. Memorize global services: IAM, STS (regional caveat), Route 53, CloudFront, WAF, Organizations, Support, Billing, Artifact. The exam tests whether you exclude them.",
+      "references": [
+        { "type": "doc", "title": "SCP condition keys — aws:RequestedRegion", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-requestedregion" },
+        { "type": "whitepaper", "title": "AWS Privacy Features — Data Residency", "url": "https://aws.amazon.com/compliance/data-residency/" },
+        { "type": "doc", "title": "AWS global services list", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html" }
+      ]
+    },
+    {
+      "id": "sap024",
+      "domain": "D2",
+      "scenario": "A SaaS platform provides APIs to thousands of customer applications. Some customers abuse rate limits causing noisy-neighbor issues. Current: API Gateway + Lambda with a single usage plan. Business wants per-customer rate limits, tiered pricing (free/pro/enterprise) with different limits, automatic throttling or blocking of abusive customers, and DDoS protection. Enterprise customers require private connectivity with no internet exposure.",
+      "question": "Which architecture BEST addresses these requirements?",
+      "choices": [
+        "API Gateway REST APIs with usage plans and API keys for tiered limits. AWS WAF rate-based rules for additional protection. Private API Gateway endpoints with VPC endpoints and PrivateLink for private connectivity. Shield Advanced for DDoS.",
+        "ALB with WAF for rate limiting. Separate ALBs per customer tier.",
+        "AWS AppSync for tiered API access with Shield Standard for DDoS.",
+        "Lambda behind CloudFront using CloudFront Functions for rate limiting and tier identification."
+      ],
+      "correct": 0,
+      "explanation": "API Gateway usage plans with API keys are the native mechanism for tiered customer rate limiting. WAF rate-based rules add per-IP protection. Private API Gateway with PrivateLink provides no-internet-exposure option. Shield Advanced adds DDoS protection and cost protection.\n\nALB (B) doesn't have native per-customer rate limiting — WAF rate rules are per-IP. AppSync (C) is for GraphQL. CloudFront Functions (D) have limited capabilities.",
+      "pattern": "'Tiered API with per-customer rate limits' → API Gateway usage plans + API keys. 'Private API' → Private API Gateway + PrivateLink + VPC endpoints. 'DDoS with cost protection' → Shield Advanced (Standard is free/auto but no cost protection).",
+      "references": [
+        { "type": "doc", "title": "API Gateway usage plans and API keys", "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-usage-plans.html" },
+        { "type": "doc", "title": "Private API Gateway endpoints", "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-private-apis.html" },
+        { "type": "doc", "title": "AWS Shield Advanced", "url": "https://docs.aws.amazon.com/waf/latest/developerguide/shield-chapter.html" }
+      ]
+    },
+    {
+      "id": "sap025",
+      "domain": "D1",
+      "scenario": "A multinational with 40 accounts in an Organization must centralize security findings. Each account generates findings from GuardDuty, Security Hub, Inspector, and Macie. The security team in a dedicated Security Tooling account needs one consolidated view across all accounts and regions. New accounts joining the Organization must automatically enroll. The solution must minimize operational overhead.",
+      "question": "Which design BEST meets these requirements?",
+      "choices": [
+        "Enable each service individually in each account; a Lambda aggregates findings hourly to the Security Tooling account via cross-account roles.",
+        "Designate the Security Tooling account as delegated administrator for GuardDuty, Security Hub, Inspector, and Macie in the Organization. Enable each service with auto-enable for new accounts.",
+        "Forward all findings to a central CloudWatch Logs group in the Security Tooling account via subscription filters in each account.",
+        "Use third-party SIEM with agents in each account, consolidating findings outside AWS."
+      ],
+      "correct": 1,
+      "explanation": "Delegated administrator is the AWS-native pattern for centralizing Organization-wide security services. Each service supports delegating admin to a non-management account, with auto-enable ensuring new accounts join automatically. Security Hub can then aggregate findings from the other services in the delegated admin account.\n\nLambda aggregation (A) is custom code and maintenance burden. CloudWatch Logs forwarding (C) loses the structured finding format. Third-party SIEM (D) isn't the AWS-canonical answer and adds cost.",
+      "pattern": "'Organization-wide security service centralization' → delegated administrator pattern. Applies to GuardDuty, Security Hub, Inspector, Macie, Config, IAM Access Analyzer, and more. Auto-enable-for-new-accounts is the standard checkbox; the exam expects you to know it exists.",
+      "references": [
+        { "type": "doc", "title": "AWS Security Hub — Multi-account management", "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/accounts.html" },
+        { "type": "doc", "title": "GuardDuty delegated administrator", "url": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_organizations.html" },
+        { "type": "doc", "title": "Organizations delegated administrator", "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_services_list.html" }
+      ]
+    },
+    {
+      "id": "sap026",
+      "domain": "D3",
+      "scenario": "A retail platform runs on ECS Fargate behind an ALB. During peak sales, requests to the database tier cause cascading failures as the database becomes a bottleneck. The team wants to shed load gracefully, prevent retries from overwhelming recovering services, and give non-critical features back to the database first as it recovers. Business leadership wants clear service-level degradation rather than full outages.",
+      "question": "Which architectural pattern MOST effectively addresses this?",
+      "choices": [
+        "Increase RDS instance size and add read replicas to handle peak load.",
+        "Implement the circuit breaker pattern with AWS App Mesh or application-level libraries. Add exponential backoff with jitter for retries. Use feature flags via AWS AppConfig to toggle non-critical features during degradation. Implement graceful degradation with cached data and queued writes.",
+        "Move to DynamoDB with on-demand capacity to auto-scale for peaks.",
+        "Add more ECS tasks to handle the load and increase ALB target group size."
+      ],
+      "correct": 1,
+      "explanation": "Circuit breakers prevent retry storms from killing recovering services. Exponential backoff with jitter is the standard retry discipline. AppConfig feature flags let ops toggle features during incidents without redeploys. Cached data and queued writes enable graceful degradation.\n\nScaling the DB (A) may help but doesn't address cascading failures. DynamoDB migration (C) is a major refactor not aimed at resilience patterns. More ECS tasks (D) doesn't fix the DB bottleneck and makes retry storms worse.",
+      "pattern": "Cascading failure + graceful degradation → circuit breaker + backoff/jitter + feature flags + graceful degradation. The exam tests reliability patterns, not just service choices. Scaling-up answers are usually distractors when the scenario emphasizes cascading failure or service dependencies.",
+      "references": [
+        { "type": "whitepaper", "title": "AWS Well-Architected — Reliability Pillar", "url": "https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html" },
+        { "type": "doc", "title": "AWS AppConfig", "url": "https://docs.aws.amazon.com/appconfig/latest/userguide/what-is-appconfig.html" },
+        { "type": "blog", "title": "Amazon Builders' Library — Timeouts, retries, and backoff with jitter", "url": "https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/" }
+      ]
+    },
+    {
+      "id": "sap027",
+      "domain": "D3",
+      "scenario": "A company operates 30 microservices on EKS, each team owning its own services. The platform team wants consistent observability: distributed tracing across services, centralized metrics, log aggregation, and the ability to correlate a single request across service hops. Teams must not need to instrument manually for basic traces and metrics. Cost must be considered given the scale.",
+      "question": "Which approach BEST meets these requirements?",
+      "choices": [
+        "Deploy AWS Distro for OpenTelemetry (ADOT) as a DaemonSet to collect traces, metrics, and logs. Send traces to AWS X-Ray, metrics to CloudWatch / Amazon Managed Prometheus, logs to CloudWatch Logs. Use Amazon Managed Grafana for unified dashboards.",
+        "Each team instruments their services with their preferred SDK (Jaeger, Prometheus client, etc.), shipping data to a central Elasticsearch cluster.",
+        "Use only CloudWatch Container Insights for everything — traces, metrics, logs.",
+        "Deploy Datadog agents cluster-wide; disable AWS-native observability to reduce cost."
+      ],
+      "correct": 0,
+      "explanation": "ADOT is AWS's OpenTelemetry-based collector that auto-instruments and ships to AWS-native observability services. X-Ray for traces, Managed Prometheus for metrics, CloudWatch Logs for logs, Managed Grafana for dashboards. Auto-instrumentation reduces team burden. This is AWS's current canonical observability stack.\n\nPer-team SDKs (B) creates inconsistency. Container Insights alone (C) lacks full tracing. Datadog (D) isn't AWS-canonical.",
+      "pattern": "'Unified observability across microservices' → ADOT + X-Ray + Managed Prometheus + Managed Grafana + CloudWatch Logs. OpenTelemetry is AWS's preferred open standard. The exam will test whether you know AMP and Managed Grafana exist as managed services.",
+      "references": [
+        { "type": "doc", "title": "AWS Distro for OpenTelemetry (ADOT)", "url": "https://aws-otel.github.io/" },
+        { "type": "doc", "title": "Amazon Managed Service for Prometheus", "url": "https://docs.aws.amazon.com/prometheus/latest/userguide/what-is-Amazon-Managed-Service-Prometheus.html" },
+        { "type": "doc", "title": "Amazon Managed Grafana", "url": "https://docs.aws.amazon.com/grafana/latest/userguide/what-is-Amazon-Managed-Service-Grafana.html" }
+      ]
+    },
+    {
+      "id": "sap028",
+      "domain": "D3",
+      "scenario": "A company uses Organizations with OUs for dev, staging, and production. Developers in dev accounts frequently need to experiment with AWS services not yet approved by the security team. The security team wants developers to have a self-service way to request new services, with an approval workflow, audit trail, and automatic SCP updates upon approval. The current manual process takes 2-3 weeks per request.",
+      "question": "Which solution BEST addresses this?",
+      "choices": [
+        "Build a custom portal with Step Functions orchestrating approvals, Systems Manager Change Manager for the workflow, and Lambda updating SCPs via the Organizations API after approval.",
+        "Create a permissive SCP in dev that allows all services; rely on detective controls only.",
+        "Use AWS Service Catalog to list approved services; reject requests for anything not listed.",
+        "Allow developers to create IAM policies in their dev accounts without restriction; the dev OU has no SCP."
+      ],
+      "correct": 0,
+      "explanation": "This is a governance workflow problem. Systems Manager Change Manager provides the approval workflow with audit trail. Step Functions orchestrates steps. Lambda programmatically updates SCPs via the Organizations API after approval. This creates a self-service pattern with the security team retaining approval authority.\n\nPermissive dev SCP (B) violates the security posture. Service Catalog (C) answers a different question (provisioning, not service approval). Unrestricted dev (D) is reckless.",
+      "pattern": "Governance workflows often combine Change Manager (approval) + Step Functions (orchestration) + Lambda (API actions) + CloudTrail (audit). The exam sometimes tests whether you can assemble custom workflows when no single managed service fits the described pattern exactly.",
+      "references": [
+        { "type": "doc", "title": "AWS Systems Manager Change Manager", "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/change-manager.html" },
+        { "type": "doc", "title": "AWS Organizations API", "url": "https://docs.aws.amazon.com/organizations/latest/APIReference/Welcome.html" },
+        { "type": "doc", "title": "AWS Step Functions", "url": "https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html" }
+      ]
+    },
+    {
+      "id": "sap029",
+      "domain": "D2",
+      "scenario": "A company processes uploaded documents with an event-driven workflow: S3 upload triggers Lambda for text extraction, which triggers Step Functions for classification (via SageMaker endpoint) and human review (via Amazon A2I) for low-confidence predictions. Volume is highly variable — 100 docs/day average, occasional bursts of 50,000/day. The SageMaker endpoint is expensive to keep always-on at burst capacity.",
+      "question": "Which architecture MOST cost-effectively handles the workload?",
+      "choices": [
+        "SageMaker real-time endpoint sized for burst capacity, always on.",
+        "SageMaker Asynchronous Inference endpoint: scales to zero when idle, queues requests during bursts, automatically scales up. Step Functions orchestrates retries and human review via A2I for low-confidence results.",
+        "SageMaker Serverless Inference with maximum concurrency set for burst.",
+        "Batch Transform jobs kicked off every 15 minutes regardless of volume."
+      ],
+      "correct": 1,
+      "explanation": "SageMaker Asynchronous Inference is purpose-built for variable workloads with tolerable latency: scales to zero when idle (no cost during quiet periods), queues requests and auto-scales up during bursts. Step Functions handles orchestration. A2I handles the human-in-the-loop for low-confidence results.\n\nReal-time always-on (A) is expensive at burst-capacity sizing. Serverless Inference (C) has a 60-second max timeout and cold start penalty — document processing may exceed this. Batch (D) adds 15-minute latency which may be unacceptable.",
+      "pattern": "SageMaker inference options: Real-time (always-on, low latency, high cost), Serverless (auto-scale but 60s max), Asynchronous (queue-based, scales to zero, long-running OK), Batch (scheduled). Variable load with tolerable latency → Async. Always-on burst load → Real-time. Periodic bulk → Batch.",
+      "references": [
+        { "type": "doc", "title": "SageMaker Asynchronous Inference", "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/async-inference.html" },
+        { "type": "doc", "title": "SageMaker inference option comparison", "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/deploy-model.html" },
+        { "type": "doc", "title": "Amazon Augmented AI (A2I)", "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/a2i-use-augmented-ai-a2i-human-review-loops.html" }
+      ]
+    },
+    {
+      "id": "sap030",
+      "domain": "D4",
+      "scenario": "A healthcare organization runs on-premises Oracle RAC databases with stringent performance requirements. Licensing costs are prohibitive and Oracle support contracts end in 14 months. They want to migrate away from Oracle while maintaining performance and minimizing application changes. Current DB footprint: 15 TB, 5000 TPS peak, 99.95% availability requirement, complex PL/SQL stored procedures.",
+      "question": "Which migration path BEST balances the requirements?",
+      "choices": [
+        "Migrate to RDS for Oracle to escape on-prem Oracle licensing while keeping Oracle compatibility. Defer further migration.",
+        "Use AWS Schema Conversion Tool to assess PL/SQL compatibility with Aurora PostgreSQL, convert the schema and stored procedures, migrate with DMS. For unconvertible PL/SQL, rewrite in application code or PostgreSQL PL/pgSQL. Use Aurora PostgreSQL with performance tuning.",
+        "Migrate to DynamoDB to eliminate relational database licensing entirely; refactor applications as needed.",
+        "Migrate to RDS for PostgreSQL without schema conversion assistance; developers rewrite stored procedures manually."
+      ],
+      "correct": 1,
+      "explanation": "SCT includes an assessment report that identifies PL/SQL conversion complexity before committing. For the convertible portion, SCT + DMS handle it. For unconvertible PL/SQL, the choice is app-code rewrite or PostgreSQL procedural code. Aurora PostgreSQL provides Oracle-comparable performance for most workloads with replicas for availability.\n\nRDS for Oracle (A) doesn't solve the licensing problem. DynamoDB (C) is a massive refactor for a relational workload. Manual rewrite without SCT (D) wastes weeks of assessment effort.",
+      "pattern": "Oracle-exit migrations → SCT assessment first → Aurora PostgreSQL with DMS. The exam often gives you Oracle-to-somewhere scenarios; the answer almost always involves SCT to assess and Aurora PostgreSQL (not RDS for Oracle, which doesn't solve licensing).",
+      "references": [
+        { "type": "doc", "title": "AWS Schema Conversion Tool (SCT)", "url": "https://docs.aws.amazon.com/SchemaConversionTool/latest/userguide/CHAP_Welcome.html" },
+        { "type": "whitepaper", "title": "Migrating Oracle to Amazon Aurora PostgreSQL", "url": "https://docs.aws.amazon.com/dms/latest/sbs/chap-oracle2aurora.html" },
+        { "type": "doc", "title": "Amazon Aurora PostgreSQL", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.AuroraPostgreSQL.html" }
+      ]
+    },
+    {
+      "id": "sap031",
+      "domain": "D2",
+      "scenario": "A logistics company processes IoT data from 200,000 delivery vehicles. Each vehicle emits location, engine telemetry, and route data every 10 seconds. Peak ingestion is 20,000 messages/second. Requirements: real-time dashboard for fleet managers (sub-5-second latency), historical analytics for route optimization (daily reports), and anomaly detection for maintenance alerts. Data must be retained 7 years.",
+      "question": "Which architecture BEST fits these requirements?",
+      "choices": [
+        "AWS IoT Core for ingestion. Kinesis Data Streams for real-time pipeline. Kinesis Data Analytics (Managed Flink) for real-time dashboards and anomaly detection. Kinesis Data Firehose to S3 (with Parquet conversion) for analytics via Athena. Glacier for long-term retention via Lifecycle.",
+        "All IoT devices write directly to DynamoDB for dashboards, S3 for analytics. Lambda aggregates hourly.",
+        "SQS for message buffering, Lambda for processing, RDS for dashboards and analytics.",
+        "IoT Core to Timestream for everything — dashboards, analytics, and long-term retention."
+      ],
+      "correct": 0,
+      "explanation": "IoT at this scale uses the canonical streaming data architecture: IoT Core (device-optimized ingestion) → Kinesis Data Streams (durable stream) → Flink (real-time analytics/anomaly detection) → Firehose to S3 (historical). S3 with Parquet is queryable via Athena. Lifecycle manages 7-year retention.\n\nDirect DynamoDB writes (B) don't scale to 20k/sec without careful key design and are expensive. SQS + Lambda + RDS (C) doesn't handle real-time analytics well. Timestream (D) is good for time-series but not suited for 7-year retention of raw data; S3 is cheaper for long-term.",
+      "pattern": "IoT at scale: IoT Core → Kinesis Data Streams → parallel branches (Flink for real-time, Firehose → S3 for analytics). Don't conflate Timestream (time-series analytics) with S3 (archival analytics). Retention of 7+ years almost always → S3 with Lifecycle.",
+      "references": [
+        { "type": "doc", "title": "AWS IoT Core", "url": "https://docs.aws.amazon.com/iot/latest/developerguide/what-is-aws-iot.html" },
+        { "type": "doc", "title": "Amazon Kinesis Data Streams", "url": "https://docs.aws.amazon.com/streams/latest/dev/introduction.html" },
+        { "type": "doc", "title": "Amazon Managed Service for Apache Flink", "url": "https://docs.aws.amazon.com/managed-flink/latest/java/what-is.html" }
+      ]
+    },
+    {
+      "id": "sap032",
+      "domain": "D3",
+      "scenario": "A company's CI/CD pipelines run on self-managed Jenkins on EC2. The platform team wants to reduce operational burden, improve scaling during peak build hours, enable ephemeral build environments, and better integrate with AWS services (Secrets Manager, ECR, CloudWatch). They have 15 application teams with heterogeneous build requirements.",
+      "question": "Which migration path BEST reduces operational burden and meets these requirements?",
+      "choices": [
+        "Migrate Jenkins to an Auto Scaling group of EC2 with spot instances for build agents.",
+        "Migrate to AWS CodePipeline for orchestration, CodeBuild for build execution (serverless, ephemeral by default), CodeArtifact for dependency caching, and ECR for container images. Per-team pipelines defined as code via CodePipeline + CDK or CloudFormation.",
+        "Migrate to GitHub Actions self-hosted runners on EKS.",
+        "Migrate to AWS CodeDeploy only; keep Jenkins for builds."
+      ],
+      "correct": 1,
+      "explanation": "CodeBuild is serverless and ephemeral by default — no build agent management. CodePipeline orchestrates. CodeArtifact caches dependencies. ECR for containers. Native integration with Secrets Manager, IAM, CloudWatch. Pipelines as code via CDK or CFN gives teams self-service while maintaining governance.\n\nJenkins on ASG (A) reduces some operational burden but keeps Jenkins maintenance. GitHub Actions (C) is non-AWS. CodeDeploy-only (D) keeps Jenkins and misses the operational win.",
+      "pattern": "'Reduce CI/CD operational burden' + 'AWS-native' → CodePipeline + CodeBuild + CodeArtifact + ECR. CodeBuild specifically is the Jenkins replacement — serverless, ephemeral, per-build isolation. The exam favors AWS-native CI/CD over bringing your own Jenkins into AWS.",
+      "references": [
+        { "type": "doc", "title": "AWS CodeBuild", "url": "https://docs.aws.amazon.com/codebuild/latest/userguide/welcome.html" },
+        { "type": "doc", "title": "AWS CodePipeline", "url": "https://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html" },
+        { "type": "doc", "title": "AWS CodeArtifact", "url": "https://docs.aws.amazon.com/codeartifact/latest/ug/welcome.html" }
+      ]
+    },
+    {
+      "id": "sap033",
+      "domain": "D1",
+      "scenario": "A company acquired a subsidiary with its own AWS Organization (20 accounts). The acquirer has its own Organization (60 accounts). Legal requires maintaining separate billing for 18 months during integration. Eventually everything must merge into the acquirer's Organization. During integration, some workloads need to communicate across the two Organizations.",
+      "question": "Which integration approach BEST handles both the interim and long-term requirements?",
+      "choices": [
+        "Immediately invite all 20 subsidiary accounts to the acquirer's Organization; they'll be billed together from day one.",
+        "Keep the subsidiary Organization separate for 18 months, use RAM to share networking resources across Organizations via AWS Resource Access Manager (cross-Organization sharing), use Transit Gateway peering for connectivity. After 18 months, use the account move process: remove accounts from subsidiary Org, invite to acquirer Org.",
+        "Delete the subsidiary Organization and recreate all accounts in the acquirer's Organization.",
+        "Use only VPC peering between Organizations and maintain separation indefinitely."
+      ],
+      "correct": 1,
+      "explanation": "AWS supports cross-Organization RAM sharing for specific resources. TGW peering connects TGWs in different Organizations without merging. After 18 months, accounts can be removed from the source Org (becoming standalone) and invited to the target Org, preserving resources. This matches the interim separation + eventual merge requirement.\n\nImmediate merge (A) violates the 18-month billing requirement. Deleting and recreating (C) destroys data. Indefinite separation (D) violates the merge requirement.",
+      "pattern": "Cross-Organization scenarios: RAM supports some cross-Org sharing, TGW peering works cross-Org, but account movement is a deliberate process (remove from source → standalone → invite to target). The exam tests whether you know this is possible without account recreation.",
+      "references": [
+        { "type": "doc", "title": "Moving an account between Organizations", "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html" },
+        { "type": "doc", "title": "AWS RAM sharing resources with Organizations", "url": "https://docs.aws.amazon.com/ram/latest/userguide/shareable.html" },
+        { "type": "doc", "title": "Transit Gateway peering", "url": "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering.html" }
+      ]
+    },
+    {
+      "id": "sap034",
+      "domain": "D2",
+      "scenario": "A financial services company needs a write-once-read-many (WORM) storage solution for trade records. SEC Rule 17a-4 requires non-erasable, non-modifiable storage with 7-year retention, tamper-evident audit trail, and legal hold capability. The solution must be certified/accepted for SEC compliance. Records must be retrievable within milliseconds for audit queries.",
+      "question": "Which storage solution MEETS these requirements?",
+      "choices": [
+        "S3 with versioning and MFA delete, with a Lambda to prevent programmatic deletion.",
+        "S3 with Object Lock in Compliance mode for the 7-year retention. S3 can be configured per SEC 17a-4(f) with a Cohasset Associates assessment letter that AWS provides. Legal hold via Object Lock legal hold. S3 Glacier Instant Retrieval for cost optimization with millisecond access.",
+        "Amazon EFS with access point restrictions and CloudTrail logging.",
+        "Amazon QLDB for ledger-style immutability."
+      ],
+      "correct": 1,
+      "explanation": "S3 Object Lock Compliance mode is the AWS solution accepted for SEC 17a-4(f) compliance, with AWS providing a Cohasset Associates assessment letter documenting SEC acceptance. Legal holds are independent of retention. Glacier Instant Retrieval provides millisecond retrieval at lower cost than Standard.\n\nVersioning + MFA delete (A) isn't SEC-accepted — it's not truly immutable. EFS (C) isn't WORM. QLDB (D) is immutable but isn't SEC 17a-4 certified and isn't designed for the large record volumes SEC compliance typically involves.",
+      "pattern": "SEC 17a-4 / FINRA WORM compliance → S3 Object Lock Compliance mode + Cohasset letter. AWS-specific regulatory compliance questions (SEC, HIPAA, PCI-DSS, FedRAMP) have canonical answers. For SEC records retention, S3 Object Lock is the canonical answer.",
+      "references": [
+        { "type": "doc", "title": "S3 Object Lock for regulatory compliance", "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html" },
+        { "type": "whitepaper", "title": "AWS and SEC Rule 17a-4 compliance", "url": "https://aws.amazon.com/compliance/sec-rule-17a-4/" },
+        { "type": "doc", "title": "S3 Glacier Instant Retrieval", "url": "https://aws.amazon.com/s3/storage-classes/glacier/instant-retrieval/" }
+      ]
+    },
+    {
+      "id": "sap035",
+      "domain": "D4",
+      "scenario": "A company acquired 5 smaller companies over 18 months. Each came with its own AWS accounts, different IaC tools (Terraform, CloudFormation, Pulumi, manual), different tagging standards, and different security baselines. The CTO wants to bring them all into a consistent governance posture within 6 months without disrupting running workloads.",
+      "question": "Which integration sequence BEST achieves this?",
+      "choices": [
+        "Force all acquired accounts to immediately migrate to a single IaC tool and reprovision all resources from scratch.",
+        "Use AWS Config aggregator to inventory resources across all accounts. Apply SCPs incrementally starting with the most permissive baseline, tightening over time. Use AWS Systems Manager for tag remediation. Migrate to a common IaC tool only for net-new resources; leave existing resources as-is. Enroll accounts in Control Tower for ongoing governance.",
+        "Ignore existing state and apply strict SCPs immediately; any resulting breakage is the acquired teams' problem.",
+        "Wait for all acquired teams to manually migrate to the standard tooling before applying governance."
+      ],
+      "correct": 1,
+      "explanation": "Inventory-before-action is the key insight for messy M&A integration. Config aggregator shows you what you actually have across accounts. Incremental SCPs prevent breaking things. Tag remediation via SSM fixes standards without redeployment. IaC standardization for net-new only avoids rewriting working infrastructure. Control Tower provides ongoing governance.\n\nImmediate IaC migration (A) is expensive and risky. Strict SCPs immediately (C) causes outages. Wait-for-manual (D) doesn't meet the 6-month timeline.",
+      "pattern": "M&A integration pattern: inventory first, incremental policy tightening, tag remediation, IaC for net-new only, Control Tower for ongoing. The exam tests whether you pick a pragmatic staged approach over aggressive-rebuild approaches.",
+      "references": [
+        { "type": "doc", "title": "AWS Config Aggregator", "url": "https://docs.aws.amazon.com/config/latest/developerguide/aggregate-data.html" },
+        { "type": "doc", "title": "AWS Control Tower account enrollment", "url": "https://docs.aws.amazon.com/controltower/latest/userguide/account-factory.html" },
+        { "type": "whitepaper", "title": "Migration readiness assessment", "url": "https://aws.amazon.com/cloud-migration/how-to-migrate/" }
+      ]
+    },
+    {
+      "id": "sap036",
+      "domain": "D2",
+      "scenario": "A company runs a globally distributed e-commerce platform. Customers complain about checkout latency for cart operations and inventory checks. The cart service is stateful — customer state must be read and written with low latency from anywhere in the world. Inventory is managed centrally to avoid overselling. Traffic is concentrated in the US, Europe, and Asia-Pacific.",
+      "question": "Which data architecture BEST balances latency and consistency?",
+      "choices": [
+        "DynamoDB Global Tables for cart state (multi-region read/write, last-writer-wins conflict resolution acceptable). Central DynamoDB for inventory with DAX caching and conditional writes for atomic decrements. CloudFront for static content, with cart operations routed via Global Accelerator to regional API Gateway endpoints.",
+        "A single RDS Multi-AZ database in us-east-1 for everything, with read replicas globally.",
+        "DynamoDB Global Tables for everything including inventory.",
+        "ElastiCache Redis globally for everything."
+      ],
+      "correct": 0,
+      "explanation": "Cart state tolerates last-writer-wins (a user is writing from one location), so Global Tables give sub-second global writes/reads. Inventory needs strict consistency to prevent overselling, so a single DynamoDB table with DAX caching and conditional writes is correct. Global Accelerator provides low-latency regional entry points.\n\nSingle RDS (B) has write latency from distant regions. Global Tables for inventory (C) causes overselling due to eventual consistency. ElastiCache (D) is non-durable for cart persistence.",
+      "pattern": "Multi-region data patterns require per-dataset consistency analysis. Session/cart = eventual consistency OK → Global Tables. Inventory/financial = strict consistency → central with caching. Never apply one pattern to both.",
+      "references": [
+        { "type": "doc", "title": "DynamoDB Global Tables", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GlobalTables.html" },
+        { "type": "doc", "title": "DynamoDB Accelerator (DAX)", "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAX.html" },
+        { "type": "doc", "title": "AWS Global Accelerator", "url": "https://docs.aws.amazon.com/global-accelerator/latest/dg/what-is-global-accelerator.html" }
+      ]
+    },
+    {
+      "id": "sap037",
+      "domain": "D3",
+      "scenario": "A company discovers that a production RDS PostgreSQL database has grown to 45 TB with a 30% annual growth rate. Backup windows are exceeding maintenance windows. Performance during backup is degraded. Cross-region DR replication is consuming significant bandwidth and cost. The team wants to reduce operational burden and scaling ceiling.",
+      "question": "Which evolution BEST addresses these issues?",
+      "choices": [
+        "Increase RDS instance size and move to storage autoscaling; keep the architecture.",
+        "Migrate to Aurora PostgreSQL, which has continuous backup (no backup windows), decoupled storage that scales to 128 TiB, Aurora Global Database for sub-second cross-region DR with lower bandwidth cost, and shared storage enabling 15 read replicas without replication lag.",
+        "Shard the PostgreSQL database across multiple RDS instances by customer ID.",
+        "Migrate to DynamoDB for scalability."
+      ],
+      "correct": 1,
+      "explanation": "Aurora PostgreSQL addresses every symptom: continuous backup eliminates backup windows, decoupled storage (up to 128 TiB) provides headroom, Aurora Global Database uses dedicated infrastructure for replication at lower bandwidth cost and sub-second RPO, and the storage layer supports 15 in-region replicas without traditional replication lag.\n\nRDS storage autoscaling (A) doesn't fix backup windows or DR bandwidth. Sharding (C) is massive complexity. DynamoDB (D) is a full data model change.",
+      "pattern": "'RDS hitting operational ceilings' → Aurora. Aurora is AWS's preferred evolution for RDS workloads at scale. Specific Aurora features the exam tests: continuous backup, decoupled storage (128 TiB), Global Database (different from read replicas), 15 replicas in-region, Backtrack (PostgreSQL supports it now).",
+      "references": [
+        { "type": "doc", "title": "Amazon Aurora PostgreSQL", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.AuroraPostgreSQL.html" },
+        { "type": "doc", "title": "Aurora Global Database", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database.html" },
+        { "type": "doc", "title": "Aurora storage and reliability", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Overview.StorageReliability.html" }
+      ]
+    },
+    {
+      "id": "sap038",
+      "domain": "D1",
+      "scenario": "A financial regulator is auditing a bank's AWS environment. The auditor requires evidence that: no changes were made to production resources outside approved change windows, all API calls in production accounts are logged with tamper-evidence, IAM access reviews happen quarterly, and privileged access requires MFA. The bank must produce evidence within 48 hours of each audit request.",
+      "question": "Which combination BEST supports the audit requirements?",
+      "choices": [
+        "CloudTrail Lake for tamper-evident query, IAM Access Analyzer for access reviews, MFA enforced via IAM policy, Config for change tracking during windows, Security Hub + Audit Manager for evidence packaging.",
+        "CloudTrail to S3 with object versioning; manually compile evidence on request.",
+        "Third-party audit tool with API access to AWS accounts.",
+        "Rely on the standard AWS compliance program reports without additional configuration."
+      ],
+      "correct": 0,
+      "explanation": "CloudTrail Lake provides SQL queryable, tamper-evident audit log with retention up to 7 years. IAM Access Analyzer automates access review. MFA enforcement via IAM conditions. Config with timestamps supports change-window analysis. Audit Manager packages evidence against framework requirements (SOC, PCI, etc.) automatically — specifically addresses the 48-hour evidence turnaround.\n\nManual compilation (B) fails the 48-hour requirement. Third-party (C) isn't AWS-canonical. Standard compliance reports (D) don't cover the bank's specific activities.",
+      "pattern": "'Audit evidence' + 'regulatory compliance' + 'fast turnaround' → Audit Manager specifically, plus the usual suspects (CloudTrail Lake for queries, Access Analyzer for access reviews, Config for change tracking). Audit Manager is underused in practice but tested on SAP-C02 as the evidence-packaging answer.",
+      "references": [
+        { "type": "doc", "title": "AWS Audit Manager", "url": "https://docs.aws.amazon.com/audit-manager/latest/userguide/what-is.html" },
+        { "type": "doc", "title": "CloudTrail Lake", "url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-lake.html" },
+        { "type": "doc", "title": "IAM Access Analyzer", "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html" }
+      ]
+    },
+    {
+      "id": "sap039",
+      "domain": "D2",
+      "scenario": "A company runs a SaaS platform with 500 tenants. They're moving to a 'silo' deployment model for enterprise tenants (dedicated infrastructure per tenant) while keeping a 'pooled' model for smaller tenants (shared infrastructure with logical isolation). They need consistent operations (deployment, monitoring, incident response) across both models, and need to deploy new features to enterprise silos in a rolling manner.",
+      "question": "Which architecture BEST supports this multi-tenant model?",
+      "choices": [
+        "AWS SaaS Boost or a custom tenant-aware architecture with CodePipeline per tenant tier, AWS Systems Manager for centralized operations, centralized observability via CloudWatch cross-account, and tenant isolation via separate accounts (silo) or separate VPCs/IAM (pooled).",
+        "Single deployment for all tenants; use application-layer feature flags for differentiation.",
+        "Separate AWS accounts for every tenant including small ones.",
+        "One Kubernetes cluster with namespaces per tenant for everything."
+      ],
+      "correct": 0,
+      "explanation": "Multi-tenant SaaS at this scale follows AWS SaaS Lens / SaaS Boost patterns: silo for high-paying enterprise tenants (often dedicated accounts), pool for smaller tenants. CodePipeline per tier enables rolling deployment for silos. Centralized ops (Systems Manager, CloudWatch cross-account) maintains consistent operations across both models.\n\nSingle deployment (B) violates silo isolation. Account-per-small-tenant (C) doesn't scale operationally to 500 accounts. Single K8s cluster (D) is pooled-only — doesn't satisfy silo.",
+      "pattern": "SaaS multi-tenancy: Silo (dedicated infrastructure per tenant, often account-per-tenant) for high-value. Pool (shared infrastructure with logical isolation) for volume. Bridge (shared + dedicated hybrid) is a middle ground. The exam tests whether you know these terms from the AWS SaaS Lens.",
+      "references": [
+        { "type": "whitepaper", "title": "AWS Well-Architected SaaS Lens", "url": "https://docs.aws.amazon.com/wellarchitected/latest/saas-lens/saas-lens.html" },
+        { "type": "doc", "title": "AWS SaaS Boost", "url": "https://aws.amazon.com/partners/programs/saas-factory/saas-boost/" },
+        { "type": "blog", "title": "AWS SaaS Factory", "url": "https://aws.amazon.com/partners/programs/saas-factory/" }
+      ]
+    },
+    {
+      "id": "sap040",
+      "domain": "D4",
+      "scenario": "A company is migrating a large SQL Server database (20 TB) to AWS. Business requirements: continue using SQL Server for compatibility with existing reporting tools, reduce licensing costs, maintain Always On availability group semantics, minimize cross-AZ replication costs, and have read replicas for reporting. Downtime tolerance: 4 hours.",
+      "question": "Which target architecture BEST meets these requirements?",
+      "choices": [
+        "EC2 Windows with SQL Server Enterprise Edition and self-managed Always On Availability Groups.",
+        "RDS for SQL Server Standard Edition with Multi-AZ using Database Mirroring. Read replicas via SQL Server transactional replication.",
+        "RDS for SQL Server with Multi-AZ deployment using Always On Availability Groups (available on SQL Server Standard and Enterprise), which provides readable secondaries. Use License Included for SQL Server to simplify licensing or BYOL if existing EA licenses apply.",
+        "Amazon Aurora SQL Server (Babelfish) for maximum cost reduction."
+      ],
+      "correct": 2,
+      "explanation": "RDS for SQL Server now supports Multi-AZ with Always On Availability Groups (not just legacy Database Mirroring), providing readable secondaries natively. License Included handles simple licensing; BYOL works for existing EAs. This covers all requirements: SQL Server compatibility, managed HA, readable secondaries, reduced operational burden.\n\nEC2 self-managed (A) maintains full control but high operational burden. RDS Mirroring (B) is the older Multi-AZ technology without readable secondaries. Babelfish (D) is Aurora PostgreSQL with a SQL Server protocol layer — compatibility is partial and may not support all reporting tools.",
+      "pattern": "SQL Server on AWS has three tiers: EC2 (full control, full operational burden), RDS (managed), Babelfish (PostgreSQL-compatible translation). For SQL Server compatibility requirements → RDS with Multi-AZ AGs is the current canonical answer. Babelfish is a newer option with compatibility caveats.",
+      "references": [
+        { "type": "doc", "title": "RDS for SQL Server Multi-AZ with Always On", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_SQLServerMultiAZ.html" },
+        { "type": "doc", "title": "RDS for SQL Server licensing", "url": "https://aws.amazon.com/rds/sqlserver/pricing/" },
+        { "type": "doc", "title": "Babelfish for Aurora PostgreSQL", "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/babelfish.html" }
+      ]
+    }
+  ]
+}

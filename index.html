@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS Certification Practice Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1014;
+    --bg-elev: #161a21;
+    --bg-elev-2: #1d222c;
+    --border: #2a3039;
+    --border-strong: #3a424f;
+    --text: #e6e8ec;
+    --text-dim: #9097a3;
+    --text-faint: #5a6270;
+    --accent: #ff9900;
+    --accent-dim: #c47500;
+    --success: #3ddc97;
+    --danger: #ff5c5c;
+    --warn: #ffc857;
+    --flag: #c77dff;
+    --ref: #6eb3ff;
+    --radius: 4px;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Inter', system-ui, sans-serif;
+  }
+  body[data-exam="mla"] { --accent: #00c4b4; --accent-dim: #008577; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.55; min-height: 100vh; }
+  body { background-image: radial-gradient(ellipse at top, rgba(255,153,0,0.04), transparent 60%); transition: background-image 0.4s; }
+  body[data-exam="mla"] { background-image: radial-gradient(ellipse at top, rgba(0,196,180,0.04), transparent 60%); }
+
+  header { border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; background: var(--bg-elev); }
+  .logo { font-family: var(--mono); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); cursor: pointer; user-select: none; }
+  .logo b { color: var(--accent); font-weight: 700; transition: color 0.3s; }
+  .header-right { display: flex; gap: 18px; align-items: center; font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+  .timer { color: var(--text); font-weight: 500; }
+  .timer.warn { color: var(--warn); }
+  .timer.danger { color: var(--danger); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: 0.6; } }
+
+  main { max-width: 1080px; margin: 0 auto; padding: 32px; }
+  .screen { display: none; animation: fade 0.3s ease; }
+  .screen.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .exam-hero { text-align: center; margin-bottom: 60px; padding: 40px 0 24px; }
+  .exam-hero h1 { font-family: var(--serif); font-size: 56px; line-height: 1; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 16px; }
+  .exam-hero h1 em { font-style: italic; color: #ff9900; font-weight: 600; }
+  .exam-hero p { color: var(--text-dim); font-size: 17px; max-width: 520px; margin: 0 auto; }
+
+  .exam-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; max-width: 820px; margin: 0 auto; }
+  .exam-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+  .exam-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; transform: scaleX(0); transform-origin: left; transition: transform 0.4s; }
+  .exam-card[data-exam="sap"]::before { background: #ff9900; }
+  .exam-card[data-exam="mla"]::before { background: #00c4b4; }
+  .exam-card:hover { transform: translateY(-3px); border-color: var(--border-strong); }
+  .exam-card:hover::before { transform: scaleX(1); }
+  .exam-card .code { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 12px; }
+  .exam-card[data-exam="sap"] .code { color: #ff9900; }
+  .exam-card[data-exam="mla"] .code { color: #00c4b4; }
+  .exam-card h2 { font-family: var(--serif); font-size: 26px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 8px; }
+  .exam-card .tagline { color: var(--text-dim); font-size: 14px; margin-bottom: 20px; line-height: 1.5; min-height: 42px; }
+  .exam-card .stats { display: flex; gap: 20px; font-family: var(--mono); font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; border-top: 1px solid var(--border); padding-top: 16px; flex-wrap: wrap; }
+  .exam-card .stats b { color: var(--text); }
+  .exam-card .weights { margin-top: 14px; display: flex; gap: 4px; height: 4px; border-radius: 2px; overflow: hidden; }
+  .exam-card .weights div { height: 100%; opacity: 0.7; }
+  .exam-card[data-exam="sap"] .weights div { background: #ff9900; }
+  .exam-card[data-exam="mla"] .weights div { background: #00c4b4; }
+  .exam-card .load-error { color: var(--danger); font-family: var(--mono); font-size: 11px; margin-top: 10px; }
+
+  .hero { margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .hero .back-link { font-family: var(--mono); font-size: 11px; color: var(--text-faint); cursor: pointer; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 20px; display: inline-block; }
+  .hero .back-link:hover { color: var(--accent); }
+  .hero h1 { font-family: var(--serif); font-size: 38px; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; }
+  .hero h1 em { font-style: italic; color: var(--accent); font-weight: 600; }
+  .hero p { color: var(--text-dim); max-width: 620px; font-size: 16px; }
+  .hero .meta { margin-top: 20px; display: flex; gap: 28px; flex-wrap: wrap; font-family: var(--mono); font-size: 12px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; }
+  .hero .meta span b { color: var(--text); font-weight: 500; }
+
+  .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .mode-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+  .mode-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .mode-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform 0.3s; }
+  .mode-card:hover::before { transform: scaleX(1); }
+  .mode-card h3 { font-family: var(--serif); font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .mode-card p { color: var(--text-dim); font-size: 13px; line-height: 1.5; }
+  .mode-card .mode-tag { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 12px; }
+
+  .config { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 24px; }
+  .config h2 { font-family: var(--serif); font-size: 20px; margin-bottom: 6px; font-weight: 600; }
+  .config .config-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 20px; }
+  .config-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+  .config-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); min-width: 120px; }
+  .chip { padding: 6px 14px; background: var(--bg-elev-2); border: 1px solid var(--border); border-radius: var(--radius); font-family: var(--mono); font-size: 12px; cursor: pointer; transition: all 0.15s; user-select: none; display: inline-flex; align-items: center; gap: 6px; }
+  .chip:hover { border-color: var(--border-strong); }
+  .chip.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 500; }
+  .chip .weight { font-size: 10px; opacity: 0.6; }
+  .chip.active .weight { opacity: 0.75; }
+
+  button { font-family: var(--mono); font-size: 13px; padding: 10px 22px; background: var(--bg-elev-2); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 500; }
+  button.primary:hover { background: var(--accent-dim); border-color: var(--accent-dim); }
+  button.ghost { background: transparent; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; }
+  .q-counter { font-family: var(--mono); font-size: 13px; color: var(--text-dim); }
+  .q-counter b { color: var(--text); font-size: 18px; }
+  .domain-tag { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); padding: 4px 10px; border: 1px solid var(--accent); border-radius: var(--radius); }
+
+  .scenario { background: var(--bg-elev); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 24px 28px; margin-bottom: 24px; font-size: 15px; line-height: 1.7; }
+  .scenario p + p { margin-top: 12px; }
+  .scenario strong { color: var(--text); font-weight: 600; }
+  .question-text { font-size: 16px; margin-bottom: 20px; font-weight: 500; line-height: 1.5; }
+
+  .choices { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .choice { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; cursor: pointer; transition: all 0.15s; display: flex; gap: 16px; align-items: flex-start; }
+  .choice:hover { border-color: var(--border-strong); background: var(--bg-elev-2); }
+  .choice.selected { border-color: var(--accent); background: rgba(255,153,0,0.06); }
+  body[data-exam="mla"] .choice.selected { background: rgba(0,196,180,0.06); }
+  .choice.correct { border-color: var(--success); background: rgba(61,220,151,0.08); }
+  .choice.incorrect { border-color: var(--danger); background: rgba(255,92,92,0.08); }
+  .choice-letter { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--text-dim); min-width: 24px; padding-top: 2px; }
+  .choice.selected .choice-letter { color: var(--accent); }
+  .choice.correct .choice-letter { color: var(--success); }
+  .choice.incorrect .choice-letter { color: var(--danger); }
+  .choice-text { flex: 1; line-height: 1.5; }
+
+  .exam-controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 20px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .exam-controls-right { display: flex; gap: 10px; flex-wrap: wrap; }
+  .confidence { display: flex; gap: 8px; align-items: center; font-family: var(--mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+  .confidence-btn { width: 28px; height: 28px; border: 1px solid var(--border); background: var(--bg-elev); border-radius: var(--radius); cursor: pointer; font-family: var(--mono); font-size: 11px; color: var(--text-dim); transition: all 0.15s; padding: 0; }
+  .confidence-btn:hover { border-color: var(--border-strong); }
+  .confidence-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+  .flag-btn.flagged { color: var(--flag); border-color: var(--flag); }
+
+  .explanation { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-top: 20px; animation: slideIn 0.3s ease; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .explanation h4 { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 12px; }
+  .explanation p + p { margin-top: 12px; }
+  .explanation .pattern { background: var(--bg-elev-2); padding: 14px 16px; border-radius: var(--radius); margin-top: 16px; border-left: 2px solid var(--flag); }
+  .explanation .pattern h5 { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--flag); margin-bottom: 8px; }
+  .explanation .pattern p { font-size: 13px; color: var(--text-dim); }
+
+  /* REFERENCES */
+  .references { margin-top: 16px; padding: 14px 16px; background: var(--bg-elev-2); border-radius: var(--radius); border-left: 2px solid var(--ref); }
+  .references.muted { opacity: 0.55; border-left-color: var(--border-strong); }
+  .references.muted:hover { opacity: 1; transition: opacity 0.2s; }
+  .references h5 { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ref); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .references.muted h5 { color: var(--text-faint); }
+  .references .ref-list { display: flex; flex-direction: column; gap: 6px; }
+  .references .ref-item { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; }
+  .references .ref-type { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; padding: 2px 6px; border-radius: 2px; margin-top: 2px; flex-shrink: 0; min-width: 70px; text-align: center; }
+  .ref-type.doc { background: rgba(110,179,255,0.12); color: #6eb3ff; }
+  .ref-type.whitepaper { background: rgba(199,125,255,0.12); color: #c77dff; }
+  .ref-type.blog { background: rgba(61,220,151,0.12); color: #3ddc97; }
+  .ref-type.video { background: rgba(255,200,87,0.12); color: #ffc857; }
+  .references a { color: var(--text); text-decoration: none; border-bottom: 1px dotted var(--text-faint); line-height: 1.4; transition: color 0.15s; }
+  .references a:hover { color: var(--ref); border-bottom-color: var(--ref); }
+  .references .ref-note { font-size: 11px; color: var(--text-faint); margin-top: 10px; font-style: italic; }
+
+  .progress-bar { height: 2px; background: var(--border); margin-bottom: 24px; border-radius: 1px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
+
+  .nav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 6px; margin-bottom: 20px; }
+  .nav-cell { aspect-ratio: 1; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; cursor: pointer; transition: all 0.1s; }
+  .nav-cell:hover { border-color: var(--accent); }
+  .nav-cell.answered { background: var(--bg-elev-2); border-color: var(--border-strong); }
+  .nav-cell.flagged { border-color: var(--flag); }
+  .nav-cell.current { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+
+  .results-header { text-align: center; margin-bottom: 40px; padding: 32px 0; border-bottom: 1px solid var(--border); }
+  .score { font-family: var(--serif); font-size: 96px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+  .score.pass { color: var(--success); }
+  .score.fail { color: var(--danger); }
+  .score-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--text-dim); margin-top: 12px; }
+  .results-meta { display: flex; justify-content: center; gap: 40px; margin-top: 20px; font-family: var(--mono); font-size: 13px; color: var(--text-dim); flex-wrap: wrap; }
+  .results-meta b { color: var(--text); }
+
+  .domain-breakdown { margin-bottom: 32px; }
+  .domain-breakdown h3 { font-family: var(--serif); font-size: 22px; margin-bottom: 16px; font-weight: 600; }
+  .domain-row { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .domain-name { flex: 1; min-width: 200px; font-size: 14px; }
+  .domain-name small { display: block; font-family: var(--mono); font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+  .domain-bar { flex: 0 0 200px; height: 6px; background: var(--bg-elev-2); border-radius: 3px; overflow: hidden; }
+  .domain-bar-fill { height: 100%; background: var(--accent); transition: width 0.6s ease; }
+  .domain-bar-fill.good { background: var(--success); }
+  .domain-bar-fill.bad { background: var(--danger); }
+  .domain-score { font-family: var(--mono); font-size: 13px; min-width: 60px; text-align: right; }
+
+  .review-list { display: flex; flex-direction: column; gap: 12px; }
+  .review-item { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; cursor: pointer; transition: all 0.15s; }
+  .review-item:hover { border-color: var(--border-strong); }
+  .review-item.wrong { border-left: 3px solid var(--danger); }
+  .review-item.right { border-left: 3px solid var(--success); }
+  .review-item.flagged { border-left: 3px solid var(--flag); }
+  .review-meta { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .review-meta .status.wrong { color: var(--danger); }
+  .review-meta .status.right { color: var(--success); }
+  .review-preview { font-size: 14px; color: var(--text-dim); line-height: 1.4; }
+
+  kbd { font-family: var(--mono); font-size: 10px; background: var(--bg-elev-2); padding: 2px 6px; border-radius: 3px; border: 1px solid var(--border); color: var(--text-dim); }
+  footer { text-align: center; padding: 32px; font-family: var(--mono); font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.12em; border-top: 1px solid var(--border); margin-top: 60px; }
+
+  /* Review modal */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(14,16,20,0.85); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+  .modal-backdrop.active { display: flex; animation: fade 0.2s ease; }
+  .modal { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); max-width: 880px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 32px; }
+  .modal h3 { font-family: var(--serif); font-size: 24px; margin-bottom: 16px; }
+  .modal .modal-close { float: right; cursor: pointer; color: var(--text-dim); font-size: 20px; background: none; border: none; padding: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" id="logo-link"><b id="logo-text">AWS CERT</b> / PRACTICE TERMINAL</div>
+  <div class="header-right" id="header-meta"></div>
+</header>
+
+<main>
+
+<section class="screen active" id="screen-select">
+  <div class="exam-hero">
+    <h1>Practice <em>terminal.</em></h1>
+    <p>Select your exam. Original scenario-based questions, weighted to match the official domain distribution, with decision-pattern explanations and references to AWS documentation.</p>
+  </div>
+
+  <div class="exam-grid" id="exam-grid">
+    <div class="exam-card" data-exam="sap" data-file="sap-c02.json">
+      <div class="code">SAP-C02</div>
+      <h2>Solutions Architect — Professional</h2>
+      <div class="tagline">Multi-account, hybrid networking, migration strategy, cost optimization at organizational scale.</div>
+      <div class="weights" title="Domain weightings">
+        <div style="flex:26"></div><div style="flex:29"></div><div style="flex:25"></div><div style="flex:20"></div>
+      </div>
+      <div class="stats">
+        <span>D1 <b>26%</b></span><span>D2 <b>29%</b></span><span>D3 <b>25%</b></span><span>D4 <b>20%</b></span>
+      </div>
+      <div class="stats" style="margin-top:8px; border: none; padding-top: 0;">
+        <span>BANK: <b id="sap-count">checking…</b></span>
+      </div>
+      <div class="load-error" id="sap-error" style="display:none"></div>
+    </div>
+
+    <div class="exam-card" data-exam="mla" data-file="mla-c01.json">
+      <div class="code">MLA-C01</div>
+      <h2>Machine Learning Engineer — Associate</h2>
+      <div class="tagline">Data preparation, model development, deployment orchestration, monitoring and security.</div>
+      <div class="weights" title="Domain weightings">
+        <div style="flex:28"></div><div style="flex:26"></div><div style="flex:22"></div><div style="flex:24"></div>
+      </div>
+      <div class="stats">
+        <span>D1 <b>28%</b></span><span>D2 <b>26%</b></span><span>D3 <b>22%</b></span><span>D4 <b>24%</b></span>
+      </div>
+      <div class="stats" style="margin-top:8px; border: none; padding-top: 0;">
+        <span>BANK: <b id="mla-count">checking…</b></span>
+      </div>
+      <div class="load-error" id="mla-error" style="display:none"></div>
+    </div>
+  </div>
+
+  <div style="max-width: 820px; margin: 40px auto 0; font-family: var(--mono); font-size: 11px; color: var(--text-faint); text-align: center; line-height: 1.8;">
+    QUESTION BANKS LOAD FROM EXTERNAL JSON FILES<br>
+    IF YOU OPENED THIS FILE DIRECTLY AND SEE LOAD ERRORS, RUN <code style="background:var(--bg-elev);padding:2px 6px;border-radius:3px;color:var(--text)">python3 -m http.server 8000</code> IN THIS FOLDER AND OPEN <code style="background:var(--bg-elev);padding:2px 6px;border-radius:3px;color:var(--text)">http://localhost:8000</code>
+  </div>
+</section>
+
+<section class="screen" id="screen-home">
+  <div class="hero">
+    <span class="back-link" onclick="goToExamSelect()">← Change exam</span>
+    <h1 id="home-title">Solutions Architect <em>Professional</em><br>practice terminal.</h1>
+    <p id="home-desc">Original scenario-based questions focused on the decision patterns that bite experienced architects.</p>
+    <div class="meta" id="home-meta"></div>
+  </div>
+
+  <div class="modes">
+    <div class="mode-card" onclick="startMode('timed')">
+      <div class="mode-tag">Mode 01</div>
+      <h3>Timed Exam</h3>
+      <p>Full-length simulation with weighted domain sampling. No feedback until the end. Fatigue-test your pattern recognition.</p>
+    </div>
+    <div class="mode-card" onclick="startMode('drill')">
+      <div class="mode-tag">Mode 02</div>
+      <h3>Drill Mode</h3>
+      <p>Immediate feedback with explanations, decision patterns, and AWS references after each question.</p>
+    </div>
+    <div class="mode-card" onclick="startMode('review')">
+      <div class="mode-tag">Mode 03</div>
+      <h3>Review Incorrect</h3>
+      <p>Re-drill only questions you've previously missed or flagged on this exam. Highest-leverage mode once you have history.</p>
+    </div>
+  </div>
+
+  <div class="config">
+    <h2>Session configuration</h2>
+    <p class="config-sub">When "All Domains" is selected, questions are sampled proportionally to the official exam weights. When a specific domain is selected, only that domain is drawn from.</p>
+    <div class="config-row">
+      <span class="config-label">Domains</span>
+      <div id="domain-chips"></div>
+    </div>
+    <div class="config-row">
+      <span class="config-label">Count</span>
+      <div class="chip" data-count="10">10</div>
+      <div class="chip active" data-count="25">25</div>
+      <div class="chip" data-count="40">40 (full bank)</div>
+    </div>
+    <div class="config-row">
+      <span class="config-label">Shuffle</span>
+      <div class="chip active" data-shuffle="yes">Randomize order</div>
+      <div class="chip" data-shuffle="no">Sequential</div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 24px; font-family: var(--mono); font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; flex-wrap: wrap;">
+    <span><kbd>1</kbd>–<kbd>5</kbd> select</span>
+    <span><kbd>F</kbd> flag</span>
+    <span><kbd>N</kbd> next</span>
+    <span><kbd>P</kbd> previous</span>
+  </div>
+</section>
+
+<section class="screen" id="screen-exam">
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  <div class="exam-header">
+    <div class="q-counter">QUESTION <b id="q-current">1</b> / <span id="q-total">25</span></div>
+    <div class="domain-tag" id="q-domain">—</div>
+  </div>
+
+  <div class="scenario" id="q-scenario"></div>
+  <div class="question-text" id="q-text"></div>
+  <div class="choices" id="q-choices"></div>
+
+  <div class="exam-controls">
+    <div class="confidence">
+      CONFIDENCE:
+      <button class="confidence-btn" data-conf="1" title="Guessing">1</button>
+      <button class="confidence-btn" data-conf="2" title="Uncertain">2</button>
+      <button class="confidence-btn" data-conf="3" title="Fairly sure">3</button>
+      <button class="confidence-btn" data-conf="4" title="Confident">4</button>
+    </div>
+    <div class="exam-controls-right">
+      <button class="ghost flag-btn" id="btn-flag">⚑ Flag</button>
+      <button class="ghost" id="btn-prev">← Prev</button>
+      <button class="primary" id="btn-next">Next →</button>
+    </div>
+  </div>
+
+  <div id="explanation-container"></div>
+
+  <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border);">
+    <div style="font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 12px;">Navigator</div>
+    <div class="nav-grid" id="nav-grid"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <button class="ghost" onclick="exitToHome()">← Exit session</button>
+      <button class="primary" id="btn-submit">Submit exam</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="screen-results">
+  <div class="results-header">
+    <div class="score" id="score-number">—</div>
+    <div class="score-label" id="score-label">SCALED SCORE</div>
+    <div class="results-meta">
+      <span><b id="correct-count">0</b> correct</span>
+      <span><b id="incorrect-count">0</b> incorrect</span>
+      <span><b id="time-taken">00:00</b> elapsed</span>
+    </div>
+  </div>
+
+  <div class="domain-breakdown">
+    <h3>Performance by domain</h3>
+    <div id="domain-results"></div>
+  </div>
+
+  <div class="domain-breakdown">
+    <h3>Confidence calibration</h3>
+    <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 16px;">Where you felt confident but were wrong, or guessed but were right. Highest-leverage questions to review.</p>
+    <div id="calibration-results"></div>
+  </div>
+
+  <div class="domain-breakdown">
+    <h3>Question review</h3>
+    <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 16px;">Click any question to see the full scenario, explanation, decision pattern, and reference links.</p>
+    <div class="review-list" id="review-list"></div>
+  </div>
+
+  <div style="display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap;">
+    <button class="primary" onclick="exitToHome()">New session</button>
+    <button class="ghost" onclick="goToExamSelect()">Change exam</button>
+    <button class="ghost" onclick="exportSession()">Export results JSON</button>
+  </div>
+</section>
+
+</main>
+
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<footer>LOCAL BUILD · NO TELEMETRY · OFFLINE-CAPABLE · JSON-EXTENSIBLE</footer>
+
+<script>
+const EXAMS = {
+  sap: {
+    code: 'SAP-C02', name: 'Solutions Architect — Professional', file: 'sap-c02.json',
+    fullLength: 75, durationMinutes: 180, passingScore: 750,
+    domains: {
+      D1: { label: 'D1 · Organizational Complexity', weight: 26 },
+      D2: { label: 'D2 · Design for New Solutions', weight: 29 },
+      D3: { label: 'D3 · Continuous Improvement', weight: 25 },
+      D4: { label: 'D4 · Migration & Modernization', weight: 20 }
+    }
+  },
+  mla: {
+    code: 'MLA-C01', name: 'Machine Learning Engineer — Associate', file: 'mla-c01.json',
+    fullLength: 65, durationMinutes: 130, passingScore: 720,
+    domains: {
+      D1: { label: 'D1 · Data Preparation', weight: 28 },
+      D2: { label: 'D2 · Model Development', weight: 26 },
+      D3: { label: 'D3 · Deployment & Orchestration', weight: 22 },
+      D4: { label: 'D4 · Monitoring & Security', weight: 24 }
+    }
+  }
+};
+
+const state = {
+  exam: null, questions: [],
+  session: { mode: null, questions: [], answers: {}, currentIdx: 0, startTime: null, timerInterval: null, config: { domain: 'all', count: 25, shuffle: true } },
+  history: {}
+};
+
+let useStorage = true;
+try { localStorage.setItem('__test__', '1'); localStorage.removeItem('__test__'); } catch (e) { useStorage = false; }
+if (useStorage) { try { state.history = JSON.parse(localStorage.getItem('aws_cert_history') || '{}'); } catch(e) { state.history = {}; } }
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+document.addEventListener('DOMContentLoaded', () => {
+  probeBanks();
+  $('#logo-link').addEventListener('click', goToExamSelect);
+  document.querySelectorAll('.exam-card').forEach(card => card.addEventListener('click', () => selectExam(card.dataset.exam)));
+  setupKeyboard();
+});
+
+async function probeBanks() {
+  for (const [key, exam] of Object.entries(EXAMS)) {
+    try {
+      const res = await fetch(exam.file);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const count = Array.isArray(data) ? data.length : (data.questions || []).length;
+      $(`#${key}-count`).textContent = `${count} questions`;
+    } catch (err) {
+      $(`#${key}-count`).textContent = 'not found';
+      const errEl = $(`#${key}-error`);
+      errEl.style.display = 'block';
+      errEl.textContent = `⚠ ${exam.file} could not load — serve via local HTTP server`;
+    }
+  }
+}
+
+async function selectExam(examKey) {
+  const exam = EXAMS[examKey];
+  if (!exam) return;
+  try {
+    const res = await fetch(exam.file);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    state.questions = Array.isArray(data) ? data : (data.questions || []);
+    if (state.questions.length === 0) throw new Error('Bank is empty');
+  } catch (err) {
+    alert(`Could not load ${exam.file}.\n\nIf you opened index.html directly, browsers block JSON loading (CORS). Fix:\n\npython3 -m http.server 8000\n\nThen open http://localhost:8000`);
+    return;
+  }
+
+  state.exam = examKey;
+  document.body.setAttribute('data-exam', examKey);
+  $('#logo-text').textContent = exam.code;
+  $('#home-title').innerHTML = exam.name.replace(/—/g, '<br><em>—') + '</em>';
+  $('#home-desc').textContent = examKey === 'sap'
+    ? 'Scenario-based questions on the decision patterns that bite experienced architects: multi-account governance, hybrid networking, DR tiering, migration strategy.'
+    : 'Scenario-based questions on SageMaker deep-dives, data pipeline choices, model evaluation, MLOps sequencing, and ML security patterns.';
+  $('#home-meta').innerHTML = `
+    <span>BANK SIZE: <b>${state.questions.length}</b> questions</span>
+    <span>FULL EXAM: <b>${exam.fullLength}</b> questions · <b>${exam.durationMinutes}</b> min</span>
+    <span>PASSING: <b>${exam.passingScore}</b> / 1000</span>
+  `;
+  buildDomainChips(examKey);
+  showScreen('home');
+}
+
+function buildDomainChips(examKey) {
+  const exam = EXAMS[examKey];
+  const container = $('#domain-chips');
+  container.innerHTML = '';
+  const allChip = document.createElement('div');
+  allChip.className = 'chip active';
+  allChip.dataset.domain = 'all';
+  allChip.innerHTML = 'All <span class="weight">(weighted)</span>';
+  container.appendChild(allChip);
+  Object.entries(exam.domains).forEach(([key, d]) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.dataset.domain = key;
+    const count = state.questions.filter(q => q.domain === key).length;
+    chip.innerHTML = `${d.label.split('·')[0].trim()} <span class="weight">${d.weight}% · ${count}q</span>`;
+    container.appendChild(chip);
+  });
+  $$('#domain-chips .chip, .config-row .chip').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      const group = chip.parentElement;
+      if (chip.dataset.domain) {
+        group.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        state.session.config.domain = chip.dataset.domain;
+      } else if (chip.dataset.count) {
+        group.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        state.session.config.count = parseInt(chip.dataset.count);
+      } else if (chip.dataset.shuffle) {
+        group.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        state.session.config.shuffle = chip.dataset.shuffle === 'yes';
+      }
+    });
+  });
+}
+
+function setupKeyboard() {
+  document.addEventListener('keydown', (e) => {
+    if (!$('#screen-exam').classList.contains('active')) return;
+    if (['1','2','3','4','5'].includes(e.key)) {
+      const idx = parseInt(e.key) - 1;
+      const q = state.session.questions[state.session.currentIdx];
+      if (q && q.choices[idx]) selectChoice(idx);
+    }
+    if (e.key.toLowerCase() === 'n') nextQuestion();
+    if (e.key.toLowerCase() === 'p') prevQuestion();
+    if (e.key.toLowerCase() === 'f') toggleFlag();
+    if (e.key === 'Escape') closeModal();
+  });
+}
+
+function goToExamSelect() {
+  if (state.session.timerInterval) clearInterval(state.session.timerInterval);
+  state.exam = null; state.questions = [];
+  document.body.removeAttribute('data-exam');
+  $('#logo-text').textContent = 'AWS CERT';
+  showScreen('select');
+  probeBanks();
+}
+
+function startMode(mode) {
+  state.session.mode = mode;
+  let pool = state.questions.slice();
+  if (mode === 'review') {
+    const examHistory = state.history[state.exam] || [];
+    if (examHistory.length === 0) { alert('No history yet. Complete a session first.'); return; }
+    const missedOrFlagged = new Set();
+    examHistory.forEach(session => {
+      Object.entries(session.answers).forEach(([id, a]) => {
+        if (!a.correct || a.flagged) missedOrFlagged.add(id);
+      });
+    });
+    pool = pool.filter(q => missedOrFlagged.has(q.id));
+    if (pool.length === 0) { alert('No incorrect or flagged questions — you\'re crushing it.'); return; }
+  }
+  const { domain, count, shuffle: doShuffle } = state.session.config;
+  let selected;
+  if (domain === 'all' && mode !== 'review') {
+    selected = weightedSample(pool, count, state.exam);
+  } else if (domain !== 'all') {
+    pool = pool.filter(q => q.domain === domain);
+    if (doShuffle) shuffle(pool);
+    selected = pool.slice(0, Math.min(count, pool.length));
+  } else {
+    if (doShuffle) shuffle(pool);
+    selected = pool.slice(0, Math.min(count, pool.length));
+  }
+  if (selected.length === 0) { alert('No questions match your filter.'); return; }
+  if (doShuffle) shuffle(selected);
+  state.session.questions = selected;
+  state.session.answers = {};
+  selected.forEach(q => { state.session.answers[q.id] = { selected: null, correct: null, flagged: false, confidence: null }; });
+  state.session.currentIdx = 0;
+  state.session.startTime = Date.now();
+  if (mode === 'timed') {
+    const exam = EXAMS[state.exam];
+    const timePerQ = (exam.durationMinutes * 60) / exam.fullLength;
+    startTimer(Math.round(timePerQ * selected.length));
+  }
+  showScreen('exam');
+  renderQuestion();
+  renderNav();
+}
+
+function weightedSample(pool, count, examKey) {
+  const exam = EXAMS[examKey];
+  const domains = Object.keys(exam.domains);
+  const totalWeight = domains.reduce((sum, d) => sum + exam.domains[d].weight, 0);
+  const allocations = {};
+  let allocated = 0;
+  domains.forEach(d => { allocations[d] = Math.floor(count * exam.domains[d].weight / totalWeight); allocated += allocations[d]; });
+  const remainders = domains.map(d => ({ d, frac: (count * exam.domains[d].weight / totalWeight) - allocations[d] })).sort((a, b) => b.frac - a.frac);
+  let rem = count - allocated;
+  let i = 0;
+  while (rem > 0 && i < remainders.length * 3) { allocations[remainders[i % remainders.length].d]++; rem--; i++; }
+  const selected = [];
+  domains.forEach(d => {
+    const domainQs = pool.filter(q => q.domain === d);
+    shuffle(domainQs);
+    selected.push(...domainQs.slice(0, Math.min(allocations[d], domainQs.length)));
+  });
+  if (selected.length < count) {
+    const used = new Set(selected.map(q => q.id));
+    const remaining = pool.filter(q => !used.has(q.id));
+    shuffle(remaining);
+    selected.push(...remaining.slice(0, count - selected.length));
+  }
+  return selected;
+}
+
+function startTimer(seconds) {
+  let remaining = seconds;
+  const tick = () => {
+    const m = Math.floor(remaining / 60); const s = remaining % 60;
+    const timerEl = $('#timer');
+    if (timerEl) {
+      timerEl.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      timerEl.classList.remove('warn', 'danger');
+      if (remaining < 600) timerEl.classList.add('warn');
+      if (remaining < 120) timerEl.classList.add('danger');
+    }
+    if (remaining <= 0) { clearInterval(state.session.timerInterval); submitExam(); return; }
+    remaining--;
+  };
+  tick();
+  state.session.timerInterval = setInterval(tick, 1000);
+}
+
+function updateHeaderMeta() {
+  const el = $('#header-meta');
+  if (state.session.mode === 'timed') el.innerHTML = `<span>TIMED</span><span class="timer" id="timer">00:00</span>`;
+  else if (state.session.mode === 'drill') el.innerHTML = `<span>DRILL MODE</span>`;
+  else if (state.session.mode === 'review') el.innerHTML = `<span>REVIEW</span>`;
+  else if (state.exam) el.innerHTML = `<span>${EXAMS[state.exam].code}</span><span>READY</span>`;
+  else el.innerHTML = `<span>SELECT EXAM</span>`;
+}
+
+function showScreen(name) {
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  $(`#screen-${name}`).classList.add('active');
+  updateHeaderMeta();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderReferences(q, muted) {
+  if (!q.references || q.references.length === 0) return '';
+  const items = q.references.map(r => `
+    <div class="ref-item">
+      <span class="ref-type ${r.type || 'doc'}">${(r.type || 'doc').toUpperCase()}</span>
+      <a href="${r.url}" target="_blank" rel="noopener noreferrer">${r.title}</a>
+    </div>
+  `).join('');
+  return `
+    <div class="references ${muted ? 'muted' : ''}">
+      <h5>📚 Learn more ${muted ? '<span style="opacity:0.7">(hover to focus)</span>' : ''}</h5>
+      <div class="ref-list">${items}</div>
+    </div>
+  `;
+}
+
+function renderQuestion() {
+  const q = state.session.questions[state.session.currentIdx];
+  const answer = state.session.answers[q.id];
+  const exam = EXAMS[state.exam];
+
+  $('#q-current').textContent = state.session.currentIdx + 1;
+  $('#q-total').textContent = state.session.questions.length;
+  $('#q-domain').textContent = (exam.domains[q.domain] || { label: q.domain }).label;
+  $('#q-scenario').innerHTML = q.scenario.split('\n').map(p => `<p>${p}</p>`).join('');
+  $('#q-text').textContent = q.question;
+
+  const choicesEl = $('#q-choices');
+  choicesEl.innerHTML = '';
+  q.choices.forEach((choice, i) => {
+    const div = document.createElement('div');
+    div.className = 'choice';
+    if (answer.selected === i) div.classList.add('selected');
+    if (state.session.mode === 'drill' && answer.selected !== null) {
+      if (i === q.correct) div.classList.add('correct');
+      else if (answer.selected === i) div.classList.add('incorrect');
+    }
+    div.innerHTML = `<div class="choice-letter">${String.fromCharCode(65+i)}</div><div class="choice-text">${choice}</div>`;
+    div.addEventListener('click', () => selectChoice(i));
+    choicesEl.appendChild(div);
+  });
+
+  $$('.confidence-btn').forEach(btn => {
+    btn.classList.toggle('active', answer.confidence === parseInt(btn.dataset.conf));
+    btn.onclick = () => { answer.confidence = parseInt(btn.dataset.conf); renderQuestion(); };
+  });
+
+  const flagBtn = $('#btn-flag');
+  flagBtn.classList.toggle('flagged', answer.flagged);
+  flagBtn.textContent = answer.flagged ? '⚑ Flagged' : '⚑ Flag';
+
+  $('#progress-fill').style.width = `${((state.session.currentIdx+1) / state.session.questions.length) * 100}%`;
+  $('#btn-prev').disabled = state.session.currentIdx === 0;
+  $('#btn-next').disabled = state.session.currentIdx === state.session.questions.length - 1;
+
+  const expContainer = $('#explanation-container');
+  expContainer.innerHTML = '';
+  if (state.session.mode === 'drill' && answer.selected !== null) {
+    const exp = document.createElement('div');
+    exp.className = 'explanation';
+    const isCorrect = answer.selected === q.correct;
+    exp.innerHTML = `
+      <h4>${isCorrect ? '✓ Correct' : '✗ Incorrect'} — Correct answer: ${String.fromCharCode(65+q.correct)}</h4>
+      ${q.explanation.split('\n').map(p => `<p>${p}</p>`).join('')}
+      <div class="pattern">
+        <h5>Decision pattern</h5>
+        <p>${q.pattern}</p>
+      </div>
+      ${q.note ? `<p style="margin-top:12px; font-size:12px; color:var(--text-faint); font-style:italic;">${q.note}</p>` : ''}
+      ${renderReferences(q, isCorrect)}
+    `;
+    expContainer.appendChild(exp);
+  }
+  renderNav();
+}
+
+function selectChoice(idx) {
+  const q = state.session.questions[state.session.currentIdx];
+  const answer = state.session.answers[q.id];
+  answer.selected = idx;
+  answer.correct = idx === q.correct;
+  renderQuestion();
+}
+
+function toggleFlag() {
+  const q = state.session.questions[state.session.currentIdx];
+  state.session.answers[q.id].flagged = !state.session.answers[q.id].flagged;
+  renderQuestion();
+}
+
+function nextQuestion() { if (state.session.currentIdx < state.session.questions.length - 1) { state.session.currentIdx++; renderQuestion(); window.scrollTo({top:0, behavior:'smooth'}); } }
+function prevQuestion() { if (state.session.currentIdx > 0) { state.session.currentIdx--; renderQuestion(); window.scrollTo({top:0, behavior:'smooth'}); } }
+
+function renderNav() {
+  const grid = $('#nav-grid');
+  grid.innerHTML = '';
+  state.session.questions.forEach((q, i) => {
+    const a = state.session.answers[q.id];
+    const cell = document.createElement('div');
+    cell.className = 'nav-cell';
+    if (a.selected !== null) cell.classList.add('answered');
+    if (a.flagged) cell.classList.add('flagged');
+    if (i === state.session.currentIdx) cell.classList.add('current');
+    cell.textContent = i + 1;
+    cell.onclick = () => { state.session.currentIdx = i; renderQuestion(); window.scrollTo({top:0, behavior:'smooth'}); };
+    grid.appendChild(cell);
+  });
+}
+
+$('#btn-next').addEventListener('click', nextQuestion);
+$('#btn-prev').addEventListener('click', prevQuestion);
+$('#btn-flag').addEventListener('click', toggleFlag);
+$('#btn-submit').addEventListener('click', () => {
+  const unanswered = state.session.questions.filter(q => state.session.answers[q.id].selected === null).length;
+  if (unanswered > 0 && !confirm(`${unanswered} question(s) unanswered. Submit anyway?`)) return;
+  submitExam();
+});
+
+function submitExam() {
+  if (state.session.timerInterval) clearInterval(state.session.timerInterval);
+  const session = { exam: state.exam, mode: state.session.mode, timestamp: Date.now(), duration: Date.now() - state.session.startTime, answers: JSON.parse(JSON.stringify(state.session.answers)), questionIds: state.session.questions.map(q => q.id) };
+  if (!state.history[state.exam]) state.history[state.exam] = [];
+  state.history[state.exam].push(session);
+  if (state.history[state.exam].length > 20) state.history[state.exam] = state.history[state.exam].slice(-20);
+  if (useStorage) { try { localStorage.setItem('aws_cert_history', JSON.stringify(state.history)); } catch(e) {} }
+  renderResults(session);
+  showScreen('results');
+}
+
+function renderResults(session) {
+  const exam = EXAMS[state.exam];
+  const total = state.session.questions.length;
+  const correct = state.session.questions.filter(q => state.session.answers[q.id].correct).length;
+  const incorrect = total - correct;
+  const pct = correct / total;
+  const scaled = Math.round(100 + pct * 900);
+  const passing = scaled >= exam.passingScore;
+
+  $('#score-number').textContent = scaled;
+  $('#score-number').className = 'score ' + (passing ? 'pass' : 'fail');
+  $('#score-label').textContent = passing ? `SCALED SCORE · PASSING (≥${exam.passingScore})` : `SCALED SCORE · ${exam.passingScore-scaled} SHORT OF PASSING`;
+  $('#correct-count').textContent = correct;
+  $('#incorrect-count').textContent = incorrect;
+  const mins = Math.floor(session.duration / 60000);
+  const secs = Math.floor((session.duration % 60000) / 1000);
+  $('#time-taken').textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+
+  const domains = Object.keys(exam.domains);
+  const dEl = $('#domain-results');
+  dEl.innerHTML = '';
+  domains.forEach(d => {
+    const qs = state.session.questions.filter(q => q.domain === d);
+    if (qs.length === 0) return;
+    const c = qs.filter(q => state.session.answers[q.id].correct).length;
+    const p = c / qs.length;
+    const barClass = p >= 0.75 ? 'good' : p < 0.6 ? 'bad' : '';
+    dEl.innerHTML += `<div class="domain-row"><div class="domain-name">${exam.domains[d].label}<small>${c} / ${qs.length} correct · exam weight ${exam.domains[d].weight}%</small></div><div class="domain-bar"><div class="domain-bar-fill ${barClass}" style="width:${p*100}%"></div></div><div class="domain-score">${Math.round(p*100)}%</div></div>`;
+  });
+
+  const calEl = $('#calibration-results');
+  const miscalibrated = state.session.questions.filter(q => {
+    const a = state.session.answers[q.id];
+    if (a.confidence === null || a.selected === null) return false;
+    return (a.confidence >= 3 && !a.correct) || (a.confidence <= 2 && a.correct);
+  });
+  if (miscalibrated.length === 0) {
+    calEl.innerHTML = '<p style="color:var(--text-dim); font-size:13px;">No confidence data, or calibration aligned. Use the 1–4 buttons during questions.</p>';
+  } else {
+    calEl.innerHTML = miscalibrated.map(q => {
+      const a = state.session.answers[q.id];
+      const type = a.confidence >= 3 && !a.correct ? 'OVERCONFIDENT' : 'UNDERCONFIDENT';
+      const typeColor = type === 'OVERCONFIDENT' ? 'var(--danger)' : 'var(--warn)';
+      return `<div class="review-item ${a.correct ? 'right' : 'wrong'}" onclick="showReviewDetail('${q.id}')"><div class="review-meta"><span style="color:${typeColor}">${type}</span><span>Conf: ${a.confidence}/4</span><span>${exam.domains[q.domain].label}</span><span class="status ${a.correct ? 'right' : 'wrong'}">${a.correct ? '✓ Right' : '✗ Wrong'}</span></div><div class="review-preview">${q.question}</div></div>`;
+    }).join('');
+  }
+
+  const revEl = $('#review-list');
+  revEl.innerHTML = state.session.questions.map((q, i) => {
+    const a = state.session.answers[q.id];
+    const status = a.selected === null ? 'skipped' : (a.correct ? 'right' : 'wrong');
+    const flagged = a.flagged ? 'flagged' : '';
+    return `<div class="review-item ${status} ${flagged}" onclick="showReviewDetail('${q.id}')"><div class="review-meta"><span>Q${i+1}</span><span>${exam.domains[q.domain].label}</span><span class="status ${status}">${status === 'right' ? '✓ Correct' : status === 'wrong' ? '✗ Incorrect' : '○ Skipped'}</span>${a.flagged ? '<span style="color:var(--flag)">⚑ FLAGGED</span>' : ''}${a.confidence ? `<span>Conf: ${a.confidence}/4</span>` : ''}</div><div class="review-preview">${q.question}</div></div>`;
+  }).join('');
+}
+
+function showReviewDetail(qid) {
+  const q = state.questions.find(x => x.id === qid);
+  const a = state.session.answers[qid];
+  const exam = EXAMS[state.exam];
+  const isCorrect = a && a.correct;
+  const yourAnswer = a && a.selected !== null ? `${String.fromCharCode(65+a.selected)}) ${q.choices[a.selected]}` : '<em>Not answered</em>';
+  const choicesHtml = q.choices.map((c, i) => {
+    let cls = '';
+    if (i === q.correct) cls = 'correct';
+    else if (a && a.selected === i) cls = 'incorrect';
+    return `<div class="choice ${cls}"><div class="choice-letter">${String.fromCharCode(65+i)}</div><div class="choice-text">${c}</div></div>`;
+  }).join('');
+  $('#modal-content').innerHTML = `
+    <div class="domain-tag" style="display:inline-block; margin-bottom: 12px;">${exam.domains[q.domain].label}</div>
+    <h3>${q.question}</h3>
+    <div class="scenario" style="margin-top: 16px;">${q.scenario.split('\n').map(p => `<p>${p}</p>`).join('')}</div>
+    <div class="choices">${choicesHtml}</div>
+    <div class="explanation" style="margin-top: 0;">
+      <h4>${isCorrect === true ? '✓ You got this right' : isCorrect === false ? '✗ Incorrect' : 'Not answered'} — Correct: ${String.fromCharCode(65+q.correct)}</h4>
+      <p style="color:var(--text-dim); font-size:13px; margin-bottom:10px;"><strong>Your answer:</strong> ${yourAnswer}</p>
+      ${q.explanation.split('\n').map(p => `<p>${p}</p>`).join('')}
+      <div class="pattern"><h5>Decision pattern</h5><p>${q.pattern}</p></div>
+      ${q.note ? `<p style="margin-top:12px; font-size:12px; color:var(--text-faint); font-style:italic;">${q.note}</p>` : ''}
+      ${renderReferences(q, false)}
+    </div>
+  `;
+  $('#modal-backdrop').classList.add('active');
+}
+
+function closeModal(e) { if (e && e.target !== e.currentTarget) return; $('#modal-backdrop').classList.remove('active'); }
+
+function exitToHome() { if (state.session.timerInterval) clearInterval(state.session.timerInterval); state.session.mode = null; showScreen('home'); }
+
+function exportSession() {
+  const data = JSON.stringify({ exam: state.exam, history: state.history[state.exam] || [] }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${state.exam}-history-${Date.now()}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i+1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } }
+</script>
+
+</body>
+</html>
