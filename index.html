@@ -31,11 +31,13 @@
   }
   body[data-exam="mla"] { --accent: #00c4b4; --accent-dim: #008577; }
   body[data-exam="aif"] { --accent: #a855f7; --accent-dim: #7e22ce; }
+  body[data-exam="clf"] { --accent: #3b82f6; --accent-dim: #1d4ed8; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.55; min-height: 100vh; }
   body { background-image: radial-gradient(ellipse at top, rgba(255,153,0,0.04), transparent 60%); transition: background-image 0.4s; }
   body[data-exam="mla"] { background-image: radial-gradient(ellipse at top, rgba(0,196,180,0.04), transparent 60%); }
   body[data-exam="aif"] { background-image: radial-gradient(ellipse at top, rgba(168,85,247,0.04), transparent 60%); }
+  body[data-exam="clf"] { background-image: radial-gradient(ellipse at top, rgba(59,130,246,0.04), transparent 60%); }
 
   header { border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; background: var(--bg-elev); }
   .logo { font-family: var(--mono); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); cursor: pointer; user-select: none; }
@@ -62,12 +64,14 @@
   .exam-card[data-exam="sap"]::before { background: #ff9900; }
   .exam-card[data-exam="mla"]::before { background: #00c4b4; }
   .exam-card[data-exam="aif"]::before { background: #a855f7; }
+  .exam-card[data-exam="clf"]::before { background: #3b82f6; }
   .exam-card:hover { transform: translateY(-3px); border-color: var(--border-strong); }
   .exam-card:hover::before { transform: scaleX(1); }
   .exam-card .code { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 12px; }
   .exam-card[data-exam="sap"] .code { color: #ff9900; }
   .exam-card[data-exam="mla"] .code { color: #00c4b4; }
   .exam-card[data-exam="aif"] .code { color: #a855f7; }
+  .exam-card[data-exam="clf"] .code { color: #3b82f6; }
   .exam-card h2 { font-family: var(--serif); font-size: 26px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 8px; }
   .exam-card .tagline { color: var(--text-dim); font-size: 14px; margin-bottom: 20px; line-height: 1.5; min-height: 42px; }
   .exam-card .stats { display: flex; gap: 20px; font-family: var(--mono); font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; border-top: 1px solid var(--border); padding-top: 16px; flex-wrap: wrap; }
@@ -77,6 +81,7 @@
   .exam-card[data-exam="sap"] .weights div { background: #ff9900; }
   .exam-card[data-exam="mla"] .weights div { background: #00c4b4; }
   .exam-card[data-exam="aif"] .weights div { background: #a855f7; }
+  .exam-card[data-exam="clf"] .weights div { background: #3b82f6; }
   .exam-card .load-error { color: var(--danger); font-family: var(--mono); font-size: 11px; margin-top: 10px; }
 
   .hero { margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
@@ -131,6 +136,7 @@
   .choice.selected { border-color: var(--accent); background: rgba(255,153,0,0.06); }
   body[data-exam="mla"] .choice.selected { background: rgba(0,196,180,0.06); }
   body[data-exam="aif"] .choice.selected { background: rgba(168,85,247,0.06); }
+  body[data-exam="clf"] .choice.selected { background: rgba(59,130,246,0.06); }
   .choice.correct { border-color: var(--success); background: rgba(61,220,151,0.08); }
   .choice.incorrect { border-color: var(--danger); background: rgba(255,92,92,0.08); }
   .choice-letter { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--text-dim); min-width: 24px; padding-top: 2px; }
@@ -235,7 +241,7 @@
 <section class="screen active" id="screen-select">
   <div class="exam-hero">
     <h1>Practice <em>terminal.</em></h1>
-    <p>Select your exam. Original scenario-based questions for SAP-C02, MLA-C01, and AIF-C01 — weighted to match official domain distributions, with decision-pattern explanations and references to AWS documentation.</p>
+    <p>Select your exam. Original scenario-based questions for SAP-C02, MLA-C01, AIF-C01, and CLF-C02 — weighted to match official domain distributions, with decision-pattern explanations and references to AWS documentation.</p>
   </div>
 
   <div class="exam-grid" id="exam-grid">
@@ -285,6 +291,22 @@
         <span>BANK: <b id="aif-count">checking…</b></span>
       </div>
       <div class="load-error" id="aif-error" style="display:none"></div>
+    </div>
+
+    <div class="exam-card" data-exam="clf" data-file="clf-c02.json">
+      <div class="code">CLF-C02</div>
+      <h2>Cloud Practitioner — Foundational</h2>
+      <div class="tagline">Cloud concepts, AWS core services, security basics, billing and pricing, cloud economics.</div>
+      <div class="weights" title="Domain weightings">
+        <div style="flex:24"></div><div style="flex:30"></div><div style="flex:34"></div><div style="flex:12"></div>
+      </div>
+      <div class="stats">
+        <span>D1 <b>24%</b></span><span>D2 <b>30%</b></span><span>D3 <b>34%</b></span><span>D4 <b>12%</b></span>
+      </div>
+      <div class="stats" style="margin-top:8px; border: none; padding-top: 0;">
+        <span>BANK: <b id="clf-count">checking…</b></span>
+      </div>
+      <div class="load-error" id="clf-error" style="display:none"></div>
     </div>
   </div>
 
@@ -464,6 +486,16 @@ const EXAMS = {
       D4: { label: 'D4 · Responsible AI', weight: 14 },
       D5: { label: 'D5 · Security, Compliance, and Governance', weight: 14 }
     }
+  },
+  clf: {
+    code: 'CLF-C02', name: 'Cloud Practitioner — Foundational', file: 'clf-c02.json',
+    fullLength: 65, durationMinutes: 90, passingScore: 700,
+    domains: {
+      D1: { label: 'D1 · Cloud Concepts', weight: 24 },
+      D2: { label: 'D2 · Security and Compliance', weight: 30 },
+      D3: { label: 'D3 · Cloud Technology and Services', weight: 34 },
+      D4: { label: 'D4 · Billing, Pricing, and Support', weight: 12 }
+    }
   }
 };
 
@@ -538,7 +570,8 @@ async function selectExam(examKey) {
   const descriptions = {
     sap: 'Scenario-based questions on the decision patterns that bite experienced architects: multi-account governance, hybrid networking, DR tiering, migration strategy.',
     mla: 'Scenario-based questions on SageMaker deep-dives, data pipeline choices, model evaluation, MLOps sequencing, and ML security patterns.',
-    aif: 'Foundational questions on AI/ML concepts, generative AI, foundation models, prompt engineering, and responsible AI practices.'
+    aif: 'Foundational questions on AI/ML concepts, generative AI, foundation models, prompt engineering, and responsible AI practices.',
+    clf: 'Foundational questions on AWS core concepts, services, security model, billing, and cloud economics for cloud practitioners.'
   };
   $('#home-desc').textContent = descriptions[examKey] || descriptions.sap;
   $('#home-meta').innerHTML = `
