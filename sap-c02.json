@@ -2901,6 +2901,646 @@
           "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-mainframe-to-aws/welcome.html"
         }
       ]
+    },
+    {
+      "id": "sap091",
+      "domain": "D1",
+      "scenario": "Kerlund Insurance operates a multi-account AWS environment via AWS Organizations with 47 accounts across 4 OUs: Production, PreProd, Development, Sandbox. A central Platform account hosts shared infrastructure including VPCs, Transit Gateway, and recently an API Gateway-based 'customer lookup' service that 18 application accounts need to call.\n\nThe platform team wants application accounts to call the customer lookup API without crossing the public internet. They're evaluating two approaches: (A) expose the API Gateway as a Private API and share the execute-api VPC endpoint via RAM, letting each application VPC create its own interface endpoint, or (B) share the Platform VPC's subnets via RAM to the application accounts, and have application workloads run in the shared subnets where they can reach the Private API directly.\n\nThe network team also mentions that two of the 18 application accounts belong to a recently-acquired subsidiary that is NOT yet part of Kerlund's AWS Organization. Data residency is eu-west-1 only.",
+      "question": "Which approach BEST satisfies the requirements?",
+      "choices": [
+        "Share the Platform VPC's subnets via RAM to all 18 application accounts. Applications run in shared subnets and reach the Private API directly. This is simpler operationally than managing multiple VPC endpoints.",
+        "Use AWS PrivateLink: expose the API Gateway behind an NLB in the Platform VPC, and create Interface VPC Endpoints in each application VPC pointing to the NLB-based endpoint service. Share the endpoint service via resource-based policy, not RAM. This works both for organization members AND the subsidiary accounts outside the organization. Private API Gateway sharing via RAM is also possible within the Organization but doesn't cross org boundaries for the subsidiary.",
+        "Share the Private API via RAM to the 18 accounts including the subsidiary accounts.",
+        "Use VPC peering from the Platform VPC to each of the 18 application VPCs."
+      ],
+      "correct": 1,
+      "explanation": "Multiple gotchas compound in this scenario:\n\n**Gotcha 1 — RAM scope**: RAM can share resources to accounts in your Organization (with trusted access enabled) OR to individual accounts via invitation. But some resources have RESTRICTIONS on external (non-org) sharing. The subsidiary accounts being outside the Organization changes what's possible.\n\n**Gotcha 2 — Subnet sharing mechanics**: sharing subnets via RAM (A) puts workloads IN the Platform VPC's subnets. This creates tight coupling: participants can't modify the subnet, route tables, NACLs. For 18 accounts, this is operationally fragile — any network change impacts all consumers. Also, the subsidiary accounts outside the Org cannot receive subnet shares at all (subnet sharing via RAM requires Organizations).\n\n**Gotcha 3 — Private API sharing**: API Gateway Private APIs are accessed via interface VPC endpoints for the execute-api service. You don't 'share' the API via RAM directly — you control access via resource policies on the API and endpoint policies.\n\n**The right architecture**: use AWS PrivateLink (NLB + endpoint service + interface endpoints in consumer VPCs). This works across organization boundaries (subsidiary accounts can consume), scales to many consumers, and keeps network isolation clean. You can use a Private API Gateway behind the NLB OR expose the API via the NLB directly. This pattern is standard for multi-account API sharing at scale.\n\nOption A is operationally problematic (and breaks for the subsidiary). Option C misunderstands what RAM shares. Option D (peering) creates a mesh that doesn't scale and still doesn't cross the org boundary cleanly.",
+      "pattern": "Cross-account/cross-org API sharing: PrivateLink (endpoint service + interface endpoints) for scale and cross-org support. RAM for within-org sharing of specific resource types (TGW, subnets, Route 53 resolver rules, etc.). Don't conflate 'share an API' with 'share a VPC resource' — different AWS mechanisms. Subsidiary/external accounts force PrivateLink or cross-account IAM patterns.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "API Gateway private APIs",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-private-apis.html"
+        },
+        {
+          "type": "doc",
+          "title": "Shareable resources in RAM",
+          "url": "https://docs.aws.amazon.com/ram/latest/userguide/shareable.html"
+        },
+        {
+          "type": "doc",
+          "title": "AWS PrivateLink for cross-account services",
+          "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/concepts.html"
+        }
+      ]
+    },
+    {
+      "id": "sap092",
+      "domain": "D1",
+      "scenario": "Pacifica Bank operates AWS Organizations with trusted access enabled for AWS RAM. Their network team established a shared-services VPC in a 'Network' account, with Transit Gateway sharing via RAM at the OU level. A new compliance mandate requires that any resource shared from the Network account must be shared ONLY with specific accounts in the Production OU — not entire OUs, not the Development OU, not the Sandbox OU, even by accident.\n\nThe Organization administrator proposes using an SCP attached to the Network account that denies 'ram:CreateResourceShare' and 'ram:AssociateResourceShare' unless the target principals match a specific list of Production account IDs. The security lead asks whether this will actually work given that RAM share targets include OUs, accounts, and IAM principals.",
+      "question": "Which statement about controlling RAM sharing targets via SCPs is CORRECT?",
+      "choices": [
+        "SCPs cannot restrict RAM sharing targets at all because RAM is a cross-account service.",
+        "SCPs can restrict RAM actions, but 'principal' in RAM is identified differently depending on share target type (account ID, OU ID, organization ID, IAM role/user ARN). An SCP using condition keys like 'ram:Principal' can restrict allowed principals, but careful policy design is needed — and you also need to consider that ram:AssociateResourceShare is distinct from ram:CreateResourceShare, and that accepting shares is handled by the consumer account (not the sharer's SCP).",
+        "RAM sharing is controlled exclusively by IAM, not SCPs.",
+        "Use resource-based policies on each RAM share instead of SCPs."
+      ],
+      "correct": 1,
+      "explanation": "RAM + SCP governance has multiple subtleties:\n\n**Gotcha 1**: SCPs set maximum permissions for accounts. They CAN restrict RAM actions — but you need to target the right actions. 'CreateResourceShare' creates a share; 'AssociateResourceShare' adds principals/resources to an existing share. If you only block Create, an existing share can still be modified to add new principals.\n\n**Gotcha 2 — principal types in RAM**: targets can be AWS account IDs, OU IDs, the root of the organization, or IAM role/user ARNs. Your SCP conditions must handle the principal formats you want to restrict. The 'ram:Principal' condition key operates on the principal ARNs added to a share.\n\n**Gotcha 3 — acceptance boundary**: the consumer account has to ACCEPT many types of shares (unless auto-accept is enabled for within-Org shares). Your SCP on the sharing account doesn't control what the consumer does.\n\n**Gotcha 4 — RAM vs shared resource**: RAM shares a resource handle, but the underlying resource behavior (e.g., TGW attachment, subnet usage) may have its own access controls. An SCP restricting RAM share targets doesn't inherently restrict what consumers do WITH shared resources.\n\nOption B is the honest answer: yes SCPs work, but careful design is needed across all these dimensions.",
+      "pattern": "RAM governance via SCPs: target ram:CreateResourceShare AND ram:AssociateResourceShare (both). Use ram:Principal condition key with appropriate principal format matching. Consider auto-accept settings for within-Org shares. Layer with Service Control Policies at OU level to catch the sharing account's operations. Don't forget that shared resources have their own permission models.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS RAM condition keys",
+          "url": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsresourceaccessmanager.html"
+        },
+        {
+          "type": "doc",
+          "title": "RAM with Organizations",
+          "url": "https://docs.aws.amazon.com/ram/latest/userguide/getting-started-sharing.html"
+        },
+        {
+          "type": "doc",
+          "title": "Service Control Policies",
+          "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html"
+        }
+      ]
+    },
+    {
+      "id": "sap093",
+      "domain": "D1",
+      "scenario": "Vancor Aerospace has 120 AWS accounts across 8 OUs. Central IT manages a shared-services account with Route 53 Resolver rules for forwarding DNS queries to on-premises resolvers (for legacy internal domain lookups like 'corp.vancor.internal'). These rules are currently shared via RAM to all application accounts.\n\nA new request comes in: a specific set of 12 accounts (part of a new classified-projects OU) must NOT receive these shared resolver rules — they should use different on-premises resolvers for security isolation. The network architect proposes two options:\n\n**Option A**: Exclude the classified-projects OU from the existing resource share and create a separate resource share for those 12 accounts with different resolver rules.\n\n**Option B**: Keep the existing share scoped to the root of the Organization, but apply an SCP to the classified-projects OU that denies access to Route 53 Resolver APIs entirely, forcing those accounts to set up their own resolvers from scratch.\n\nThe security lead adds that the classified accounts should still be able to use AWS-provided DNS (AmazonProvidedDNS) for general AWS service resolution, just not for the corp.vancor.internal domain.",
+      "question": "Which approach BEST meets the requirement with manageable operations?",
+      "choices": [
+        "Option B — deny all Route 53 Resolver APIs via SCP for classified accounts; they'll build their own from scratch.",
+        "Option A — scope existing shares to EXCLUDE the classified OU and create a targeted share with appropriate resolver rules for those accounts. RAM resource shares can be associated with specific OUs or accounts, so you can restructure which principals receive which shares. Existing application code and DNS resolution continue to work; only the backing resolver rules differ per OU.",
+        "Share both sets of resolver rules to all accounts and let each account pick which to use.",
+        "Use Route 53 Private Hosted Zones exclusively instead of Resolver rules."
+      ],
+      "correct": 1,
+      "explanation": "**Gotcha 1 — scoping shares**: RAM resource shares have an 'associated principals' list that can include OUs, accounts, the Org root, or specific IAM principals. You can SCOPE a share by creating multiple shares with different principal sets. Re-scope the existing share to Org root EXCEPT the classified OU (by associating individual OUs other than classified), then create a new share for classified with different rules.\n\n**Gotcha 2 — Option B's problem**: denying all Route 53 Resolver APIs means classified accounts can't even query AWS-provided DNS for AWS service resolution (S3, DynamoDB, etc. endpoints rely on DNS). That breaks virtually everything. SCPs at this granularity need careful condition design to allow AWS service DNS while blocking shared-rule usage.\n\n**Gotcha 3 — Option A detail**: resolver rules are shared as RAM resources. When a rule is shared to an account, it's associated with VPCs in that account. Removing a share disassociates the rule — traffic for that domain falls back to default resolution. Creating a NEW share with different rules for the classified accounts routes 'corp.vancor.internal' to their alternate on-prem resolvers.\n\n**Gotcha 4 — RAM and OUs**: resource shares can be associated with OUs. Trusted access with Organizations must be enabled. Auto-acceptance applies within the Organization.\n\nOption A is operationally clean and achieves the security isolation. Option B causes collateral damage to AWS service resolution.",
+      "pattern": "RAM share scoping at OU granularity: multiple shares with different principal associations. Route 53 Resolver rules shared via RAM = per-domain routing control that can be scoped. For security isolation between OUs, don't reach for SCPs that deny broad APIs — scope the underlying resource shares instead. SCPs are blunt; RAM targeting is precise.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Sharing Route 53 Resolver rules",
+          "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-rules-managing.html"
+        },
+        {
+          "type": "doc",
+          "title": "RAM share principals",
+          "url": "https://docs.aws.amazon.com/ram/latest/userguide/working-with-sharing-create.html"
+        },
+        {
+          "type": "doc",
+          "title": "Route 53 Resolver with Organizations",
+          "url": "https://docs.aws.amazon.com/ram/latest/userguide/shareable.html"
+        }
+      ]
+    },
+    {
+      "id": "sap094",
+      "domain": "D1",
+      "scenario": "Astora Media operates 60 AWS accounts for various media production workloads. A shared-services account hosts a subnet-sharing architecture via RAM: 4 subnets (2 public, 2 private, across 2 AZs) are shared with 38 'content production' accounts. Workloads in participant accounts launch EC2 instances, ECS tasks, and Lambda functions (VPC-enabled) into the shared subnets.\n\nDuring a compliance review, the FinOps team raises cost concerns: participants are running unlimited NAT Gateway traffic (charged to the shared-services account), and there's no way to attribute costs back to individual participants. The security team separately raises that each participant can see all other participants' ENIs in the shared subnets via DescribeNetworkInterfaces, which leaks information about other tenants.\n\nThe architecture team is considering three changes: (1) deploy per-account NAT Gateways in each participant VPC (requires moving away from shared subnets), (2) implement VPC endpoint policies to control who can use which NAT, (3) use Cost Allocation Tags on ENIs and have participants tag their resources for chargeback.",
+      "question": "Which statement about the shared-subnet architecture is CORRECT?",
+      "choices": [
+        "Shared subnets mean shared cost and blast radius by design. Participants can describe ENIs in shared subnets (this is documented behavior, not a security bug). NAT Gateway data transfer charges accrue to the OWNER account (shared-services), and there's no native AWS mechanism to attribute them per-participant. The architecture team must choose: accept these properties, or migrate to per-account VPCs with Transit Gateway-based connectivity (using RAM to share the TGW) for isolation and per-account attribution.",
+        "Enable VPC endpoint policies to prevent participants from seeing other ENIs.",
+        "Cost Allocation Tags automatically attribute shared NAT Gateway traffic by source ENI owner.",
+        "Shared subnets provide complete isolation between participants."
+      ],
+      "correct": 0,
+      "explanation": "Shared subnets via RAM have specific documented properties that this scenario surfaces:\n\n**Gotcha 1 — cost attribution**: NAT Gateway data processing charges accrue to the account that OWNS the NAT Gateway (the shared-services account). There's no mechanism to attribute this per-source-ENI. Cost Allocation Tags don't help here — they apply to resources, not to the traffic through shared infrastructure.\n\n**Gotcha 2 — ENI visibility**: participants can describe ENIs in shared subnets. They CAN'T modify ENIs they don't own, but they can see that ENIs exist, their IP addresses, and some metadata. This is documented behavior. VPC endpoint policies don't affect this — it's an EC2 API level concern.\n\n**Gotcha 3 — blast radius**: a misbehaving participant can exhaust IP addresses in shared subnets, affecting other participants. Subnet CIDR changes require careful coordination. Route table changes aren't allowed by participants.\n\n**Gotcha 4 — the real trade-off**: shared subnets are GREAT for a small number of trusted workloads in one team. They're problematic at 38 accounts with mixed trust levels and cost concerns. The pattern that scales: per-account VPCs + Transit Gateway (sharable via RAM) for network interconnection. Each account owns its VPC (isolation, per-account NAT costs, no ENI leakage), while TGW provides connectivity.\n\nOption A is the honest technical answer. The architecture has hit the limits of the shared-subnet model.",
+      "pattern": "Shared subnet anti-patterns: (1) large number of participants, (2) mixed trust levels, (3) per-participant cost attribution needed, (4) participant-level network autonomy needed. When these emerge, migrate to per-account VPC + RAM-shared Transit Gateway model. Shared subnets work best for small teams / small account counts with same trust boundary.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "VPC sharing concepts and limitations",
+          "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing.html"
+        },
+        {
+          "type": "doc",
+          "title": "Transit Gateway with RAM",
+          "url": "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-multi-account.html"
+        },
+        {
+          "type": "doc",
+          "title": "VPC sharing cost considerations",
+          "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing.html#vpc-sharing-limitations"
+        }
+      ]
+    },
+    {
+      "id": "sap095",
+      "domain": "D1",
+      "scenario": "Stratheim Pharmaceuticals operates a dedicated 'Security' account in their AWS Organization for centralized GuardDuty, Security Hub, CloudTrail organization trail, and now a new requirement: a centralized API Gateway-based 'policy evaluation' service that all 240 application accounts must call during deployments to check compliance. The API must be callable from CI/CD pipelines running in any application account.\n\nThe platform team implements a Regional API Gateway with IAM authorization (AWS_IAM method). They configure the API's resource policy to allow invocation from specific IAM roles in application accounts — but listing 240 account IDs in the policy is hitting resource policy size limits, and each new account requires a policy update.\n\nThe team is evaluating scalable alternatives:\n- **Option A**: Use 'aws:PrincipalOrgID' condition in the API resource policy to allow any role in the Organization\n- **Option B**: Switch to a Lambda authorizer that looks up allowed accounts in a DynamoDB table\n- **Option C**: Move to Cognito User Pool with SAML federation\n- **Option D**: Share the API via RAM to application accounts",
+      "question": "Which option scales BEST while keeping governance manageable?",
+      "choices": [
+        "Option B — Lambda authorizer with DynamoDB lookup, most flexible.",
+        "Option A — use aws:PrincipalOrgID condition in the resource policy. The policy grants invocation to any IAM principal in the Organization, eliminating the need to enumerate accounts. New accounts work automatically. IAM authorization + SigV4 signing still provides the auth flow. Combine with additional conditions (aws:PrincipalTag, source VPC, etc.) for finer control.",
+        "Option C — Cognito for machine-to-machine auth.",
+        "Option D — RAM share the API Gateway."
+      ],
+      "correct": 1,
+      "explanation": "**Gotcha 1 — RAM doesn't share API Gateway**: API Gateway isn't in the list of RAM-shareable resources. You can't 'share' an API via RAM. Authentication to API Gateway uses its own mechanisms (IAM, Cognito, Lambda authorizers, API keys). Option D is incorrect at the premise level.\n\n**Gotcha 2 — aws:PrincipalOrgID**: this IAM global condition key matches the AWS Organization ID of the calling principal. Using it in the API's resource policy means 'any IAM role in my Organization can invoke.' Scales to any account count; self-maintaining as accounts are added/removed. The standard idiomatic pattern for organization-wide API access with IAM auth.\n\n**Gotcha 3 — resource policy size**: API Gateway resource policies have size limits (currently 8192 bytes). Enumerating hundreds of account IDs hits this quickly. PrincipalOrgID collapses all of them to one condition.\n\n**Gotcha 4 — Lambda authorizer cost/latency**: Option B works but adds per-request Lambda invocation cost and latency. For 240 accounts × deploy frequency, this scales in cost. IAM auth is free at the authorization layer (you only pay for API Gateway request count).\n\n**Gotcha 5 — Cognito for machine-to-machine**: Cognito User Pools are designed for user authentication. For service-to-service, IAM or Cognito Identity Pools with IAM-backed roles is idiomatic. Option C introduces unnecessary user-management machinery.\n\nOption A is the clean, scalable, idiomatic answer.",
+      "pattern": "Cross-account API access patterns: for within-Org machine-to-machine with IAM, use aws:PrincipalOrgID in the resource policy. For external parties, use Cognito or API keys. For mixed trust, use Lambda authorizer (accepts cost for flexibility). API Gateway is NOT shareable via RAM — don't confuse API access patterns with resource sharing patterns.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "API Gateway resource policies",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-resource-policies.html"
+        },
+        {
+          "type": "doc",
+          "title": "aws:PrincipalOrgID condition",
+          "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html"
+        },
+        {
+          "type": "doc",
+          "title": "RAM shareable resources list",
+          "url": "https://docs.aws.amazon.com/ram/latest/userguide/shareable.html"
+        }
+      ]
+    },
+    {
+      "id": "sap096",
+      "domain": "D2",
+      "scenario": "Halverson Broadcasting is building a new mobile app backend. Authentication requirements: users sign in via Sign in with Apple, Google, or email/password; issued tokens are JWTs; the backend API must validate tokens on every request and extract the user's sub (unique ID) and custom attributes like subscription_tier for authorization decisions.\n\nThe team is choosing between three API Gateway REST API authorization mechanisms:\n\n1. **Cognito User Pool authorizer**: Cognito handles Apple/Google/password flows; API Gateway validates tokens natively.\n2. **Lambda authorizer TOKEN type**: Custom Lambda validates any JWT using a JWKS URL; returns IAM policy.\n3. **Lambda authorizer REQUEST type**: Lambda receives the full request (headers, query, path, stage variables) and returns policy.\n\nAdditionally, the team wants to use the user's sub in downstream Lambda integration for database queries. They also want authorization to be cached (the same user making many requests shouldn't re-authorize each time).",
+      "question": "Which authorizer choice BEST fits, and what's the critical distinction to know?",
+      "choices": [
+        "Cognito User Pool authorizer is simplest for Apple/Google/email if you use Cognito as the identity provider. User's sub and custom attributes come through as $context.authorizer.claims.* in integrations. Token caching is built-in. BUT if the team wants to use an EXTERNAL identity provider (not Cognito-hosted), use Lambda authorizer TOKEN type: Lambda validates JWT against JWKS URL, caches decisions by token (configurable TTL), and returns the principalId and context (including sub) accessible as $context.authorizer.*. TOKEN type is the right fit when only the Authorization header matters. REQUEST type is for when you need headers/query/stage variables beyond the token.",
+        "Always use Lambda authorizer REQUEST type for maximum flexibility.",
+        "Cognito can't handle Apple Sign-In at all.",
+        "API Gateway doesn't support JWT validation natively."
+      ],
+      "correct": 0,
+      "explanation": "Three nested gotchas in this scenario:\n\n**Gotcha 1 — Cognito vs external IdP**: Cognito User Pools CAN federate Apple, Google, Facebook, SAML, and OIDC providers. If you're building a greenfield app and don't need a specific external IdP, Cognito is simplest. BUT if the team wants a non-Cognito IdP (Auth0, Okta, custom), they need Lambda authorizer.\n\n**Gotcha 2 — Lambda authorizer TOKEN vs REQUEST**: TOKEN type receives ONLY the token from the configured token source (typically Authorization header); cache key is the token; efficient. REQUEST type receives the full request (headers, query string, path, stage variables, source IP); cache key can be a combination; more flexible but slower and more expensive. For pure JWT validation, TOKEN is correct. REQUEST is for scenarios needing non-token data (custom header-based auth, path-dependent authorization, etc.).\n\n**Gotcha 3 — context variable access in integrations**: Cognito authorizer → $context.authorizer.claims.sub, $context.authorizer.claims.custom:subscription_tier. Lambda authorizer → $context.authorizer.principalId, $context.authorizer.* (where * is any key the Lambda returned in its context map). Different path, different syntax. Teams confuse these.\n\n**Gotcha 4 — caching**: both authorizer types cache by default (Cognito: token validation; Lambda: configurable cache TTL up to 1 hour, keyed appropriately).\n\nOption A captures the nuance correctly. The decision hinges on whether Cognito is the IdP. If yes: Cognito authorizer. If no: Lambda TOKEN authorizer (reserve REQUEST for when non-token data matters).",
+      "pattern": "API Gateway auth decision tree: Using Cognito? → Cognito User Pool authorizer. External IdP with JWT? → Lambda TOKEN authorizer. Need headers/path/query beyond token? → Lambda REQUEST authorizer. Simple API-key clients? → API keys + usage plans. Machine-to-machine within Org? → IAM + aws:PrincipalOrgID. Context variable access patterns differ between Cognito (.claims.*) and Lambda (.authorizer.*).",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Lambda authorizer input types (TOKEN vs REQUEST)",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-use-lambda-authorizer.html"
+        },
+        {
+          "type": "doc",
+          "title": "Cognito User Pool authorizer",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-integrate-with-cognito.html"
+        },
+        {
+          "type": "doc",
+          "title": "API Gateway authorizer context variables",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html"
+        }
+      ]
+    },
+    {
+      "id": "sap097",
+      "domain": "D2",
+      "scenario": "Ellesmere Defense has a strict zero-trust mandate. All API traffic must use mutual TLS (mTLS) — clients present certificates issued by Ellesmere's internal CA; the API verifies the client certificate. The team wants to expose a new REST API for partner integrations (each partner has a unique client certificate). Additional requirements: the API must have a custom domain (api.partners.ellesmere.mil), and certificate revocation must be supported (if a partner's cert is compromised, revocation takes effect within 24 hours).\n\nThe platform team's initial design: Edge-optimized API Gateway with custom domain + ACM-imported cert + mTLS enabled + truststore in S3 containing the CA bundle + CRL published to an S3 bucket.",
+      "question": "Which statement about this design is CORRECT?",
+      "choices": [
+        "The design is fully correct as described — Edge-optimized + mTLS + custom domain + CRL works end-to-end.",
+        "mTLS is NOT supported on Edge-optimized API Gateway custom domains. mTLS is only supported on Regional and Private APIs. The team must use a Regional custom domain (or Private if VPC-only access is acceptable). Additionally, API Gateway mTLS uses a truststore (CA bundle in S3) but does NOT natively consume CRLs — revocation is handled by rotating the truststore (updating the S3 object with the revoked cert removed or a CRL-aware custom process).",
+        "API Gateway doesn't support mTLS at all.",
+        "mTLS only works with HTTP APIs, not REST APIs."
+      ],
+      "correct": 1,
+      "explanation": "Stack of gotchas around mTLS on API Gateway:\n\n**Gotcha 1 — endpoint type restriction**: mTLS is supported on Regional and Private custom domain names. It is NOT supported on Edge-optimized. This is documented but often missed. For Edge-optimized with client-cert requirements, you'd need CloudFront-level mTLS (which has its own support story) or a different architecture.\n\n**Gotcha 2 — truststore mechanics**: API Gateway mTLS uses a truststore, which is a PEM bundle of CA certificates stored in S3. To revoke a specific client cert, you update the truststore or rely on the CA's revocation. API Gateway doesn't natively download and honor CRL files or OCSP responses for you — revocation is operational: update the truststore, redeploy the custom domain configuration.\n\n**Gotcha 3 — HTTP API vs REST API**: mTLS is supported on both HTTP API and REST API custom domains. The support isn't API-type restricted, it's endpoint-type restricted.\n\n**Gotcha 4 — CloudFront path**: if you REALLY need edge distribution with mTLS, put your OWN CloudFront distribution in front of a Regional API Gateway. CloudFront supports mTLS separately. API Gateway Edge-optimized uses an AWS-managed CloudFront distribution that doesn't expose mTLS configuration.\n\nOption B captures both the endpoint restriction and the revocation operational reality. Option A is simply wrong (Edge + mTLS doesn't work). Option D is wrong (both API types support mTLS).",
+      "pattern": "API Gateway mTLS: Regional or Private custom domains only (not Edge-optimized). Truststore in S3 holds CA bundle; revocation = update truststore. For edge + mTLS, deploy your own CloudFront in front of Regional API Gateway. mTLS works on both REST and HTTP API. Design decision: need global edge distribution → self-managed CloudFront + Regional API. Regional clients → simple Regional API + mTLS.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Mutual TLS authentication for API Gateway",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/rest-api-mutual-tls.html"
+        },
+        {
+          "type": "doc",
+          "title": "mTLS on HTTP APIs",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-mutual-tls.html"
+        },
+        {
+          "type": "doc",
+          "title": "API Gateway custom domain names",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-custom-domains.html"
+        }
+      ]
+    },
+    {
+      "id": "sap098",
+      "domain": "D2",
+      "scenario": "Novaria Genomics builds a new bioinformatics platform. Scientists upload datasets (up to 12 GB each) and initiate analysis jobs via an API. The team designs an API Gateway REST API with POST endpoints for uploads, backed by Lambda proxy integration. During testing, large uploads fail with 'payload too large' errors around 10 MB. The Lambda is configured with 15-minute timeout and 10 GB memory.",
+      "question": "What is the correct fix?",
+      "choices": [
+        "Increase Lambda memory and timeout.",
+        "API Gateway has a hard 10 MB payload size limit for integrations (both REST and HTTP APIs). This cannot be changed. The correct pattern: generate a presigned S3 URL via API Gateway → Lambda, return the URL to the client, client uploads directly to S3. Initiate analysis asynchronously via S3 event → Lambda/Step Functions, OR have the client call a second API to trigger analysis after upload completes. This is the standard 'upload-via-presigned-URL' pattern.",
+        "Split the upload into chunks client-side and use multiple POST calls.",
+        "Switch to Lambda direct invocation via AWS SDK to bypass API Gateway."
+      ],
+      "correct": 1,
+      "explanation": "**Gotcha 1 — hard payload limit**: API Gateway has a 10 MB maximum payload size for both request and response. This is a HARD limit, not adjustable via quotas. Applies to REST, HTTP, and WebSocket APIs.\n\n**Gotcha 2 — Lambda limit is separate**: Lambda's synchronous invocation response payload is 6 MB (for sync), 256 KB (for async). These are different numbers from API Gateway's 10 MB but reinforce that passing large payloads through the API → Lambda chain is not the right architecture.\n\n**Gotcha 3 — the presigned URL pattern**: the canonical answer for large file uploads on AWS. API generates a time-limited S3 presigned URL; client uploads directly to S3 (which supports objects up to 5 TB); optional S3 event triggers downstream processing. Scales infinitely, doesn't charge Lambda for the upload traffic, and doesn't hit API Gateway limits.\n\n**Gotcha 4 — why chunking (C) is wrong**: chunking and reassembling 12 GB via API Gateway would be extremely slow, expensive, and fragile. It's a workaround that ignores the architectural issue.\n\n**Gotcha 5 — AWS SDK direct (D) misunderstanding**: the AWS SDK doesn't 'bypass' API Gateway — it would invoke Lambda directly or call S3 directly. Lambda direct sync invocation has the 6 MB payload limit anyway. And this requires credentials on the client, which isn't how API-mediated uploads work.\n\nOption B is the textbook answer for large file uploads.",
+      "pattern": "Large file uploads on AWS: NEVER through API Gateway or synchronous Lambda. Always: presigned S3 URLs (or multipart upload initiation via API, then client-direct multipart uploads). Process via S3 events → Lambda, Step Functions, or SQS. API Gateway payload limit = 10 MB hard. Lambda sync response = 6 MB. These limits drive architecture — if you're approaching them, you've chosen the wrong pattern.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "API Gateway quotas and important notes",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/limits.html"
+        },
+        {
+          "type": "doc",
+          "title": "S3 presigned URLs",
+          "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/ShareObjectPreSignedURL.html"
+        },
+        {
+          "type": "doc",
+          "title": "S3 multipart upload",
+          "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html"
+        }
+      ]
+    },
+    {
+      "id": "sap099",
+      "domain": "D2",
+      "scenario": "Catonia Insurance migrates a legacy SOAP-based insurance quote service to AWS. The SOAP service accepts XML requests, processes quote calculations, and returns XML responses. Partner insurance platforms already integrate with this SOAP interface and cannot change their integration (contractual). The team wants to modernize the backend to Lambda (Python) while preserving the SOAP interface externally. Partners call: POST /quote with Content-Type: text/xml and a SOAP envelope body; response must be SOAP-formatted XML.",
+      "question": "Which API Gateway design BEST handles this?",
+      "choices": [
+        "Use HTTP API (faster, cheaper than REST API). Point to Lambda. Lambda parses SOAP envelope and returns SOAP response.",
+        "Use REST API with Lambda proxy integration. Lambda receives the request as-is (headers, body), parses the SOAP XML manually using a Python XML library, processes, and returns a SOAP response with Content-Type: text/xml. Mapping templates are not needed in proxy mode. REST API is preferred here because HTTP API has more limited content type handling and mapping capabilities for legacy XML/SOAP scenarios, and mapping templates (if needed for non-proxy integrations) are a REST API feature.",
+        "API Gateway can't handle SOAP requests at all — use an ALB instead.",
+        "Use REST API with a Lambda non-proxy integration and VTL mapping templates to convert SOAP to JSON before Lambda, then convert JSON back to SOAP after."
+      ],
+      "correct": 1,
+      "explanation": "**Gotcha 1 — REST API vs HTTP API for legacy content types**: HTTP API is simpler and cheaper but has more limited mapping and transformation capabilities. For SOAP/XML scenarios where you might need precise header and content-type handling (and potentially mapping templates for a non-proxy approach), REST API is the pragmatic choice. HTTP API works for Lambda proxy with SOAP too, but REST API's feature set is broader for legacy integrations.\n\n**Gotcha 2 — Lambda proxy vs non-proxy**: In PROXY integration, Lambda receives the raw event including body, headers, query params, etc. The Lambda is responsible for parsing whatever content type (SOAP XML) and returning a proper HTTP response object with statusCode, headers (Content-Type: text/xml), and body. No VTL mapping templates needed. This is simpler for most cases.\n\n**Gotcha 3 — mapping templates (option D)**: VTL mapping templates CAN transform SOAP XML to JSON before Lambda and back — using $input.xpath() or $input.path() with VTL. But this adds complexity, fragility, and debugging difficulty. If Lambda can parse XML directly (and Python has excellent XML libraries), skip mapping templates.\n\n**Gotcha 4 — C is wrong**: API Gateway handles any content type; it's just bytes. SOAP works fine.\n\n**Gotcha 5 — HTTP API limitation**: HTTP API does NOT support mapping templates. If your migration might need transformation (even as a fallback), REST API gives you the option; HTTP API doesn't.\n\nOption B is correct: REST API + Lambda proxy, Lambda does the XML parsing. Simple and works.",
+      "pattern": "Legacy SOAP migration: REST API + Lambda proxy + Lambda parses XML directly. REST API > HTTP API when mapping templates might be needed. Avoid complex VTL transforms if Lambda can handle the format natively. SOAP is just XML with specific structure — Python/Java/etc. parse it fine. API Gateway is content-type agnostic at the infrastructure layer.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "REST API vs HTTP API feature comparison",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html"
+        },
+        {
+          "type": "doc",
+          "title": "Lambda proxy integration",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html"
+        },
+        {
+          "type": "doc",
+          "title": "API Gateway mapping templates",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/models-mappings.html"
+        }
+      ]
+    },
+    {
+      "id": "sap100",
+      "domain": "D2",
+      "scenario": "Voltura Energy operates a smart-meter telemetry ingestion system. Meters across 11 countries send readings every 30 seconds via HTTPS POST to api.voltura.energy/telemetry. Current architecture: CloudFront → API Gateway (Edge-optimized, REST) → Lambda → Kinesis Data Streams. Steady-state is 45,000 RPS, with occasional surges to 120,000 RPS during grid events.\n\nThe team is hitting API Gateway throttling limits (default account-level rate limit is 10,000 RPS for REST API). They've opened a support request to increase limits but also want to understand what they can do architecturally. Options being discussed:\n\n1. Migrate to HTTP API (higher limits, cheaper per request).\n2. Implement per-region API Gateways in multiple Regions to spread load via Route 53 latency routing.\n3. Replace API Gateway with ALB + Fargate as a custom ingestion tier.\n4. Use API Gateway's stage-level and method-level throttling to shape traffic patterns.",
+      "question": "Which approach BEST addresses the sustained 45k-120k RPS traffic reality?",
+      "choices": [
+        "Option 1 — HTTP API supports higher default limits and is cheaper per request. Migration from REST API requires reviewing feature dependencies (some REST features aren't in HTTP API: request validators, WAF integration on HTTP API is more limited, etc.). For high-volume telemetry ingestion where advanced REST features aren't needed, HTTP API is the right choice. Combined with sharding across regions (Option 2) if needed.",
+        "Option 3 — custom ingestion tier on ALB + Fargate is the only way.",
+        "Option 4 — stage-level throttling alone solves the problem.",
+        "Just wait for the support ticket to raise limits."
+      ],
+      "correct": 0,
+      "explanation": "**Gotcha 1 — REST vs HTTP API limits**: HTTP API has higher default account-level limits than REST API. For telemetry ingestion with straightforward request handling, HTTP API is designed for this. Up to 10x the request throughput at ~70% lower cost per request.\n\n**Gotcha 2 — feature trade-offs in HTTP API**: HTTP API doesn't support: API keys and usage plans (there's a workaround via authorizer), request validators, X-Ray tracing (partially — check current state), some specific mapping template features. For telemetry ingestion, none of these matter.\n\n**Gotcha 3 — throttling hierarchy**: API Gateway has four throttling levels that stack: (1) account-level, (2) per-API-per-stage, (3) per-method, (4) per-usage-plan. Increasing limits requires raising account-level first; stage/method throttling can SHAPE traffic but not exceed account limit. Option 4 alone can't solve sustained excess traffic.\n\n**Gotcha 4 — ALB + Fargate is overkill**: option 3 replaces a managed service with a self-managed ingestion tier. Works but adds operational burden for a problem with simpler solutions.\n\n**Gotcha 5 — multi-region sharding**: valid long-term approach and should be paired with HTTP API migration for full scale. But the single biggest change is moving to HTTP API.\n\n**Gotcha 6 — WAF on HTTP API**: WAF support on HTTP API is more limited than REST API. If the team needs detailed WAF rules, this may push them back to REST API. For pure telemetry ingestion with trusted authenticated clients, WAF isn't typically in scope.\n\nOption A captures the migration reality with honest trade-offs.",
+      "pattern": "API Gateway at scale: HTTP API for high-volume, simple APIs (cheaper, higher limits). REST API when you need advanced features (request validators, API keys, usage plans, full WAF, SDK generation). Throttling layers stack but don't exceed account limit — raise limits via support for sustained need. Combine with multi-region sharding for extreme scale. Custom ingestion tiers (ALB + Fargate/EC2) are last resort after managed options are exhausted.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "REST API vs HTTP API comparison",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html"
+        },
+        {
+          "type": "doc",
+          "title": "API Gateway throttling",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-request-throttling.html"
+        },
+        {
+          "type": "doc",
+          "title": "API Gateway quotas",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/limits.html"
+        }
+      ]
+    },
+    {
+      "id": "sap101",
+      "domain": "D3",
+      "scenario": "Tarringa Travel operates a flight-search REST API on API Gateway with Lambda integration and DynamoDB. The API has a cache enabled at the stage level (TTL 300s, 1.6 GB cache). Customers report stale search results: prices shown don't match the checkout page. Investigation reveals the cache is serving old responses even after underlying prices changed.\n\nThe platform team confirms: (1) TTL is working correctly, (2) cache-keys are configured based on query parameters 'origin', 'destination', 'date'. The issue: customers search for 'NYC to LAX on 2026-06-01', get a cached price from 5 minutes ago. In the meantime, an airline partner API updated prices. Checkout fetches fresh prices, revealing the mismatch.\n\nThe team considers: (a) lower TTL to 30s, (b) remove caching entirely, (c) add cache invalidation via API, (d) change cache keys to include a 'freshness' marker.",
+      "question": "Which approach BEST addresses the price staleness while preserving caching benefits?",
+      "choices": [
+        "Option (a) — lower TTL to 30s. A bit better but doesn't solve the fundamental issue.",
+        "Option (c) — API Gateway supports cache invalidation: authorized clients can send the 'Cache-Control: max-age=0' header with a specific IAM permission (execute-api:InvalidateCache) to bypass cache for a specific request. Combine with event-driven invalidation: when prices update in the source system, trigger a Lambda that calls API Gateway's cache-flush API for affected cache keys. Preserves cache benefit for high-traffic unchanged queries while providing freshness guarantees.",
+        "Option (b) — remove caching entirely, accept the latency.",
+        "Option (d) — changing cache keys won't help since the underlying data changes invalidate any key-based strategy."
+      ],
+      "correct": 1,
+      "explanation": "**Gotcha 1 — Cache-Control header invalidation**: API Gateway supports cache invalidation through the 'Cache-Control: max-age=0' header when the caller has IAM permission 'execute-api:InvalidateCache'. This forces a cache miss for that specific request, fetches fresh data, and caches the new response. Per-request granularity.\n\n**Gotcha 2 — full cache flush**: the AWS console or AWS CLI can flush the entire stage cache (via 'flush-stage-cache' API). Coarse-grained — loses all cached entries. Useful for emergencies or when upstream data changes broadly.\n\n**Gotcha 3 — event-driven invalidation pattern**: the elegant architecture is: price-update event → invalidate affected cache entries. API Gateway doesn't support per-key invalidation of specific entries — you either send Cache-Control: max-age=0 on subsequent requests, or flush the whole stage cache. The workaround: the upstream 'get fresh price' endpoint can send Cache-Control: max-age=0 to warm the cache post-update.\n\n**Gotcha 4 — TTL tuning**: option A reduces staleness window but doesn't eliminate it. For a 30s TTL, users can still see 30s-old prices. This trades some latency benefit for better freshness.\n\n**Gotcha 5 — removing cache (b)**: gives up 45,000 RPS's worth of latency and cost benefit. For high-volume search APIs, caching has massive value.\n\n**Gotcha 6 — cache key strategy (d)**: changing keys doesn't help if the underlying data can change for the SAME key. Cache keys partition the cache; they don't detect data changes.\n\nOption B combines API Gateway's native invalidation feature with event-driven updates — best-of-both-worlds.",
+      "pattern": "API Gateway cache invalidation: Cache-Control: max-age=0 header per-request (with execute-api:InvalidateCache IAM permission). Stage cache flush via API for bulk invalidation. No native per-key invalidation — work around with selective re-fetch. TTL tuning trades freshness for hit rate. For dynamic data like prices, combine low TTL + event-driven re-fetch + permission-gated invalidation.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "API Gateway caching",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html"
+        },
+        {
+          "type": "doc",
+          "title": "Invalidating API Gateway cache",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html#invalidate-method-caching"
+        },
+        {
+          "type": "doc",
+          "title": "IAM permission for cache invalidation",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html"
+        }
+      ]
+    },
+    {
+      "id": "sap102",
+      "domain": "D3",
+      "scenario": "Menshire Utilities runs a customer-facing billing API on REST API Gateway. Recent observability data shows: p50 latency 180ms, p99 latency 4.2 seconds. Investigation traces the p99 tail to a specific 'get historical usage' endpoint that queries DynamoDB with multiple sequential table lookups in the Lambda integration.\n\nThe team identifies three optimizations they could stack:\n\n1. **Provisioned Concurrency** on the Lambda to eliminate cold starts.\n2. **Caching** at API Gateway for this specific endpoint (TTL 60s).\n3. **DynamoDB batch operations** (BatchGetItem) instead of sequential GetItem calls.\n\nThey want to apply changes sequentially and measure impact.",
+      "question": "Which change is MOST LIKELY to produce the largest p99 latency improvement for this specific endpoint?",
+      "choices": [
+        "Provisioned Concurrency — cold starts often cause p99 spikes.",
+        "DynamoDB batch operations — sequential GetItem calls in Lambda compound latency (each call has its own RTT + DynamoDB processing). Replacing N sequential calls with 1 BatchGetItem reduces total I/O time dramatically. At p99, this is typically the biggest win for DynamoDB-heavy Lambdas. Caching (option 2) also helps but only for repeated identical queries; historical usage varies per customer, so cache hit rate may be low. Provisioned concurrency helps if cold starts are the cause, but the 4.2s tail suggests data access latency, not cold start (which is typically <1s for modest Lambdas).",
+        "API Gateway caching — assumes high hit rate.",
+        "All three applied simultaneously — but then you can't measure impact per change."
+      ],
+      "correct": 1,
+      "explanation": "**Gotcha 1 — diagnosing 4.2s p99**: cold starts for modest Lambda are typically 200ms-1.5s. Sequential DynamoDB calls are often 10-50ms each — but N of them adds up. If the Lambda does 30 sequential GetItem calls, that's potentially 300ms-1.5s just in sequential I/O. Network blips on any one of them can add more. This pattern ('many sequential items for a single customer') screams 'batch ops'.\n\n**Gotcha 2 — BatchGetItem benefits**: one API call, up to 100 items, single round-trip. DynamoDB parallelizes internally. For 30 items: sequential = ~30×20ms = 600ms; batch = ~30-50ms. Order of magnitude difference.\n\n**Gotcha 3 — Provisioned Concurrency trade-off**: eliminates cold start spikes. If the tail is cold-start-driven, you'll see big improvement. If the tail is data-access-driven (as here), Provisioned Concurrency doesn't help (warm containers also wait for DynamoDB). Check CloudWatch Lambda Init Duration metrics and cold-start indicators before committing.\n\n**Gotcha 4 — Caching's limited benefit for per-customer data**: cache hit rate depends on query diversity. Historical usage per customer is typically unique per (customer_id, date_range) — low hit rate if every customer queries their own data with varying windows. Great for 'top products' kind of queries; poor for 'customer-specific' queries.\n\n**Gotcha 5 — applying all at once (D)**: loses attribution, makes debugging future issues harder, and does unnecessary work if the first change solves the problem.\n\nOption B diagnoses correctly (sequential DynamoDB) and prescribes accordingly.",
+      "pattern": "Latency diagnosis: (1) where is the time spent? Cold start, Lambda code, downstream I/O? Use X-Ray, CloudWatch Lambda Insights. (2) What's the narrowest fix? Fix the dominant contributor first. (3) Measure before and after. Sequential I/O in Lambda = common pattern bug → batch ops. Cold starts → Provisioned Concurrency. Duplicate queries → caching. Match fix to actual cause.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "DynamoDB BatchGetItem",
+          "url": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html"
+        },
+        {
+          "type": "doc",
+          "title": "Lambda performance optimization",
+          "url": "https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html"
+        },
+        {
+          "type": "doc",
+          "title": "X-Ray for API Gateway + Lambda",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-xray.html"
+        }
+      ]
+    },
+    {
+      "id": "sap103",
+      "domain": "D3",
+      "scenario": "Kerselby Media runs internal services that share data via RAM-shared Aurora Serverless v2 clusters. The central 'data-platform' account owns 3 Aurora clusters (customer-data, content-metadata, analytics-warehouse), shared via RAM to 22 application accounts. Application teams create read-only database connections from their accounts to the shared clusters using cross-account database authentication.\n\nRecently, a performance issue: one application account's misbehaving query consumes all connection-pool capacity on 'customer-data', causing cascading degradation for other accounts. The platform team wants per-account query isolation / throttling.\n\nThey're evaluating: (a) RDS Proxy with per-account connection limits, (b) separate Aurora clusters per account (abandon sharing), (c) move to DynamoDB with per-table capacity limits, (d) Application-side query throttling in each account.",
+      "question": "Which approach BEST provides per-account isolation while keeping the shared-cluster benefits?",
+      "choices": [
+        "Option (a) — RDS Proxy with IAM auth lets you set per-principal connection limits. RDS Proxy sits between applications and the cluster, manages connection pooling, and can apply connection caps per IAM principal (i.e., per application account's role). Multiplex Aurora Serverless v2 reduces connection overhead anyway, but hard per-account caps require RDS Proxy. Keeps RAM-shared Aurora model intact.",
+        "Option (b) — separate clusters per account completely.",
+        "Option (c) — migrate to DynamoDB.",
+        "Option (d) — each application throttles itself."
+      ],
+      "correct": 0,
+      "explanation": "**Gotcha 1 — RAM-shared Aurora setup**: RAM supports sharing certain Aurora DB clusters across accounts. Consumers access via IAM-authenticated database connections or standard credentials. No per-consumer database-level isolation exists on the cluster itself.\n\n**Gotcha 2 — RDS Proxy capabilities**: sits between clients and Aurora/RDS. Pools connections (reduces Aurora connection count), supports IAM auth, and crucially supports per-role connection limits and idle connection cleanup. You can give each application account its own IAM role with a cap on connections.\n\n**Gotcha 3 — Aurora Serverless v2 connection handling**: Aurora Serverless v2 handles connections better than v1 and regular RDS, but still benefits from RDS Proxy for bursty/multi-tenant scenarios. Doesn't have native per-consumer throttling.\n\n**Gotcha 4 — why (b) is excessive**: separate clusters per account defeats the purpose of sharing. Cost, operational burden, data duplication.\n\n**Gotcha 5 — why (d) is unreliable**: application-side throttling is best-effort. Misbehaving code bypasses it. You need enforcement at the infrastructure layer.\n\n**Gotcha 6 — RDS Proxy and RAM**: RDS Proxy itself can be deployed in the data-platform account and accessed cross-account. Consumer accounts connect to the Proxy endpoint (potentially via PrivateLink). The Proxy enforces caps; Aurora is protected.\n\nOption A adds an isolation layer without abandoning the sharing architecture.",
+      "pattern": "Multi-tenant RAM-shared database access: RDS Proxy with IAM auth + per-role connection caps = per-consumer isolation. Aurora Serverless v2 scales capacity well but doesn't do per-consumer quotas natively. For true multi-tenant databases, the Proxy is the enforcement layer. Alternative: account-per-database-tenant (not shared) when isolation requirements are strict.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Amazon RDS Proxy",
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.html"
+        },
+        {
+          "type": "doc",
+          "title": "RDS Proxy IAM authentication",
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-setup.html"
+        },
+        {
+          "type": "doc",
+          "title": "Aurora cluster sharing via RAM",
+          "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.DBClusters.html"
+        }
+      ]
+    },
+    {
+      "id": "sap104",
+      "domain": "D3",
+      "scenario": "Grevin Logistics built an API Gateway + Lambda backend 18 months ago. The team now wants to add canary deployments for safer rollouts. They use REST API and Lambda alias-based routing (alias 'prod' pointing to a specific version). Currently, deploying = update alias to new version; 100% traffic shifts immediately.\n\nThe team is deciding between: (a) API Gateway canary deployments (stage-level traffic split), (b) Lambda weighted aliases (Lambda routing split), (c) both.",
+      "question": "Which approach provides safer canary testing?",
+      "choices": [
+        "Option (a) — API Gateway canary deployments split traffic at the stage level between the current deployment and a canary deployment. You can set a percentage (e.g., 10%) to the canary. Separate CloudWatch metrics track canary vs production performance. Promote if good; revert if bad. This works for API Gateway configuration changes AND Lambda alias changes. Lambda weighted aliases (b) also work but are Lambda-specific and don't capture API-level changes (like mapping templates, authorizer updates). For comprehensive canary, API Gateway stage canary is broader.",
+        "Option (b) — Lambda weighted aliases only.",
+        "Option (c) — use both for 'layered canary' effect.",
+        "Canary deployments aren't supported in API Gateway."
+      ],
+      "correct": 0,
+      "explanation": "**Gotcha 1 — API Gateway stage canary**: API Gateway supports canary at the stage level. The stage has a 'deployment' (current) and optionally a 'canaryDeployment' with percentage traffic split. Stage variables and method settings can differ between the two. Requests are routed based on the percent split; headers can force canary or production.\n\n**Gotcha 2 — Lambda weighted aliases**: similar concept at the Lambda layer. Alias 'prod' can point to v1 at 90% and v2 at 10%. Works for Lambda-only changes.\n\n**Gotcha 3 — coverage difference**: API Gateway stage canary catches changes to API config (authorizers, mapping templates, WAF rules, integration settings) AND Lambda alias changes. Lambda weighted aliases only catch Lambda changes. For full-stack safety, API Gateway canary is more comprehensive.\n\n**Gotcha 4 — combined approach**: using both layers can lead to compounding and confusing routing (10% canary × 10% weighted = 1%). Better to pick one layer for canary.\n\n**Gotcha 5 — CloudWatch metric separation**: API Gateway canary emits separate CloudWatch metrics so you can compare latency, 4xx, 5xx for canary vs production. Critical for gate decisions.\n\nOption A captures the best practice.",
+      "pattern": "API Gateway canary: stage-level percentage split with separate metrics, supports API-config + integration changes. Lambda weighted aliases: Lambda-layer only. Pick one canary layer for clean attribution. CodeDeploy Lambda canary (10% then 90%) is a third pattern for Lambda with automated rollback triggers. Always measure with separate metrics.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "API Gateway canary release deployments",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/canary-release.html"
+        },
+        {
+          "type": "doc",
+          "title": "Lambda weighted alias routing",
+          "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-aliases.html"
+        },
+        {
+          "type": "doc",
+          "title": "CodeDeploy with Lambda",
+          "url": "https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configurations.html"
+        }
+      ]
+    },
+    {
+      "id": "sap105",
+      "domain": "D3",
+      "scenario": "Hallmark Automotive runs a nationwide dealership portal. The central account hosts Transit Gateway shared via RAM to 180 dealership AWS accounts. Recently added: an AWS Network Firewall in the central account inspecting all TGW inter-VPC traffic. The firewall applies rules like 'block dealership-to-dealership direct traffic' and 'allow dealership-to-central-services'.\n\nSix weeks in, dealership teams report that CI/CD pipelines intermittently fail during deployments — some operations succeed, some timeout. Investigation shows the failures correlate with Network Firewall rule evaluation load during peak deployment windows (hundreds of concurrent pipelines).",
+      "question": "Which architectural adjustment BEST addresses this without compromising the firewall policy?",
+      "choices": [
+        "Remove Network Firewall entirely; rely on security groups and NACLs.",
+        "Scale Network Firewall horizontally: Network Firewall supports multi-AZ deployments that scale with traffic. If current deployment uses insufficient firewall endpoints, add endpoints in more AZs. Additionally, review CloudWatch metrics for firewall-specific capacity issues (packet drops, state exhaustion). The underlying Transit Gateway and RAM-shared setup are fine — the firewall sizing is the bottleneck. For some traffic types, consider AWS Gateway Load Balancer with third-party NGFW for different performance characteristics.",
+        "Remove the RAM share and give each dealership its own TGW.",
+        "Switch from Network Firewall to WAF."
+      ],
+      "correct": 1,
+      "explanation": "**Gotcha 1 — Network Firewall scaling**: AWS Network Firewall is a managed service but has capacity units per firewall endpoint. Per-AZ endpoints scale based on traffic. If the peak deployment traffic overwhelms the endpoints, packets get dropped — not as 'blocked' but as failed connections.\n\n**Gotcha 2 — CloudWatch metrics**: Network Firewall exposes metrics like Packets (processed, dropped), OperationalState, and capacity signals. Monitor these to identify capacity issues before they become user-facing failures.\n\n**Gotcha 3 — WAF is a different layer (D)**: WAF operates at Layer 7 on HTTP/HTTPS traffic for specific services (CloudFront, ALB, API Gateway). It's not a replacement for network-layer firewall between VPCs.\n\n**Gotcha 4 — Gateway Load Balancer alternative**: for very high-throughput or specific feature needs, Gateway Load Balancer + third-party NGFW appliances offer different scaling characteristics. Not usually first choice but worth knowing.\n\n**Gotcha 5 — RAM isn't the issue**: removing the RAM share (C) or TGW model doesn't fix a firewall capacity issue — it just fragments the architecture.\n\n**Gotcha 6 — security groups can't replace (A)**: security groups are instance-level; they don't implement 'block dealership-to-dealership direct traffic' rules that need central visibility. NACLs are subnet-level but stateless and limited in rule count.\n\nOption B diagnoses correctly and prescribes the right scaling fix.",
+      "pattern": "Network Firewall at scale: per-AZ endpoints must be sized for peak traffic. Monitor via CloudWatch capacity and dropped packet metrics. For higher throughput, deploy more endpoints or move to Gateway Load Balancer + NGFW. Don't blame RAM/TGW when firewall is the bottleneck. Layer 3/4 (Network Firewall, security groups, NACLs) vs Layer 7 (WAF) — different tools for different problems.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS Network Firewall",
+          "url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/what-is-aws-network-firewall.html"
+        },
+        {
+          "type": "doc",
+          "title": "Network Firewall deployment models",
+          "url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/architectures.html"
+        },
+        {
+          "type": "doc",
+          "title": "Gateway Load Balancer",
+          "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/introduction.html"
+        }
+      ]
+    },
+    {
+      "id": "sap106",
+      "domain": "D4",
+      "scenario": "Clermont Retail migrates from a legacy monolithic Java application (Spring-based) with 40+ REST endpoints exposed via an on-prem NGINX reverse proxy. The modernization plan: decompose into Lambda functions behind API Gateway. Several endpoints have strict latency SLAs (<200ms p99) and authenticate via OAuth 2.0 with a third-party IdP (Okta), validating JWT tokens with a public JWKS endpoint. The app also has several endpoints that proxy directly to SAP backend systems on-premises — those can't be refactored to Lambda in this phase.\n\nThe team chooses HTTP API for new Lambda-backed endpoints (cheaper, faster). For the SAP proxy endpoints, they need to route requests through the on-prem connection (Direct Connect + VPN). They configure VPC Link to connect API Gateway to a Network Load Balancer fronting the on-prem tunnel. They're also setting up JWT authorization — HTTP API has native JWT authorizer support.",
+      "question": "Which statement about this migration design is CORRECT?",
+      "choices": [
+        "HTTP API's native JWT authorizer validates tokens against a JWKS issuer URL + audience, perfect for Okta-issued tokens. VPC Link for HTTP API requires private resources exposed via Network Load Balancer or Application Load Balancer (different from REST API VPC Link which uses NLB only). For on-prem-backed endpoints, NLB → Direct Connect / VPN routes to on-prem SAP. Mixed usage (Lambda for new endpoints + VPC Link for legacy backend) on one HTTP API works. One gotcha: HTTP API doesn't support API keys / usage plans if you want to migrate from REST API's per-consumer quota logic.",
+        "HTTP API doesn't support JWT authorizers natively — you always need Lambda.",
+        "VPC Link isn't available in HTTP API.",
+        "HTTP API can't mix Lambda and non-Lambda integrations."
+      ],
+      "correct": 0,
+      "explanation": "**Gotcha 1 — HTTP API JWT authorizer**: HTTP API has native JWT authorizer (unlike REST API which requires Lambda authorizer for JWT). Configure with issuer URL (JWKS endpoint) and audience. Validates tokens per request without invoking Lambda. Huge cost and latency savings for JWT-heavy APIs.\n\n**Gotcha 2 — VPC Link differences**: REST API VPC Link connects to NLB only. HTTP API VPC Link connects to NLB, ALB, or AWS Cloud Map services. More flexible.\n\n**Gotcha 3 — mixed integrations**: one API can have multiple routes with different integration types — Lambda proxy, HTTP proxy (for external URLs), VPC Link (for private resources). HTTP API supports all these.\n\n**Gotcha 4 — feature gap from REST**: HTTP API lacks: API keys and usage plans (work around with Lambda authorizers or external throttling), request validators, AWS WAF (partial support), some specific integrations. Consider these before committing to HTTP API.\n\n**Gotcha 5 — the Okta pattern**: native JWT authorizer configured with Okta's JWKS URL (https://[tenant].okta.com/oauth2/default/v1/keys) and client audience. JWT auth happens in microseconds, no Lambda cost.\n\nOption A accurately describes the architecture with honest trade-off callouts.",
+      "pattern": "HTTP API modernization: native JWT authorizer for OAuth 2.0 / OIDC providers — cheaper than Lambda authorizer. VPC Link (HTTP API variant) for private backends: NLB, ALB, or Cloud Map. Mix integration types in one API for hybrid migrations. Confirm REST API features you don't need (API keys, request validators, full WAF) before switching.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "HTTP API JWT authorizers",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html"
+        },
+        {
+          "type": "doc",
+          "title": "HTTP API VPC Link",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-private.html"
+        },
+        {
+          "type": "doc",
+          "title": "HTTP API vs REST API",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html"
+        }
+      ]
+    },
+    {
+      "id": "sap107",
+      "domain": "D4",
+      "scenario": "Pellion Shipping's cloud transformation includes migrating from a single AWS account to a multi-account Organization. The legacy account hosts a critical REST API on API Gateway (Edge-optimized, custom domain api.pellion.com via ACM-managed cert, Lambda integration). After the migration, the API should live in a new 'Api-Platform' account, not the legacy account.\n\nMigration constraints: (1) api.pellion.com DNS must not have downtime, (2) clients (400+ integrated systems) use the custom domain and hardcoded expectations about the endpoint, (3) the legacy account will be decommissioned 6 months after migration.\n\nThe team considers: (A) Deploy the new API Gateway in Api-Platform account with a new custom domain (api-v2.pellion.com), migrate clients over time, retire old API. (B) Use API Gateway private API and share to Api-Platform account via RAM. (C) Deploy new API in Api-Platform account, disassociate api.pellion.com from old API Gateway, associate with new API Gateway — atomic DNS switchover.",
+      "question": "Which migration approach BEST satisfies 'no downtime' and 'clients don't change'?",
+      "choices": [
+        "Option A — accept that 400+ clients need to update their integration URL.",
+        "Option C — but ACM certificate and API Gateway custom domain behavior has specific caveats: ACM certificates for Edge-optimized API Gateway custom domains are created in us-east-1 (CloudFront constraint). Disassociate from old API → association state changes; associate with new API Gateway in the new account. The DNS record (CNAME to the API Gateway distribution) may need updating. Process: (1) request/validate ACM cert in us-east-1 in new account, (2) create custom domain in new API Gateway, (3) update Route 53 CNAME to new API Gateway's regional/distribution domain name, (4) traffic shifts atomically via DNS TTL. Plan the TTL shortening in advance.",
+        "Option B — RAM doesn't share API Gateway resources.",
+        "All three are equivalent."
+      ],
+      "correct": 1,
+      "explanation": "**Gotcha 1 — ACM certificate location for Edge-optimized**: ACM certs for Edge-optimized API Gateway custom domains MUST be in us-east-1 (because the underlying CloudFront distribution operates globally from us-east-1). For Regional custom domains, the cert lives in the API's Region.\n\n**Gotcha 2 — custom domain is not transferable directly**: a custom domain belongs to the API Gateway deployment in a specific account. You can't 'move' it — you create a new custom domain in the target account, then switch DNS. The name 'api.pellion.com' in DNS is controlled by Route 53 (or whoever owns the zone), separate from API Gateway.\n\n**Gotcha 3 — DNS cutover technique**: lower TTL on the Route 53 record days before migration (e.g., from 300s to 30s). At cutover, update the record to point to the new API Gateway. Clients experience at most the new TTL delay before reaching new endpoint. Truly atomic at the DNS layer.\n\n**Gotcha 4 — RAM and API Gateway (option C option)**: as noted in earlier questions, API Gateway resources are NOT shareable via RAM. Option B's premise is wrong.\n\n**Gotcha 5 — Option A's cost**: 400+ client integrations changing URLs is a coordination nightmare. Possible but expensive. Not required when DNS switchover works.\n\n**Gotcha 6 — state of the old API**: keep it running during transition, monitoring for any residual traffic (clients ignoring new DNS due to cached lookups). Retire after TTL expiry + monitoring window.\n\nOption B as worded is correct: DNS cutover with ACM-in-us-east-1 and custom domain in new account.",
+      "pattern": "API migration between accounts: custom domain + DNS cutover. ACM cert for Edge-optimized in us-east-1 (CloudFront constraint). Lower TTL before cutover; switch DNS; monitor residual old-API traffic. API Gateway resources are not RAM-shareable — don't confuse with network resource sharing. Plan the Route 53 work as carefully as the AWS resource work.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "API Gateway custom domain names",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-custom-domains.html"
+        },
+        {
+          "type": "doc",
+          "title": "ACM certificates for Edge-optimized",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-custom-domains-prereqs.html"
+        },
+        {
+          "type": "doc",
+          "title": "DNS failover with Route 53",
+          "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover.html"
+        }
+      ]
+    },
+    {
+      "id": "sap108",
+      "domain": "D4",
+      "scenario": "Mareston Hospital migrates from on-premises hospital information systems to AWS. As part of the modernization, they consolidate workloads into AWS Organizations (5 OUs: ClinicalApps, BackOffice, Research, DataPlatform, Sandbox). Each OU has 3-8 accounts. The Research OU accounts need access to de-identified patient data stored in a shared S3 data lake owned by the DataPlatform OU.\n\nCurrent state: DataPlatform account owns the S3 buckets and the AWS Glue Data Catalog. Research accounts currently get S3 bucket-policy-based access, but queries via Athena from Research accounts fail because Glue Data Catalog isn't shared.\n\nThe architecture team is evaluating:\n- (A) Copy data from DataPlatform to each Research account (expensive, data duplication)\n- (B) Share Glue Data Catalog via RAM to Research OU accounts; use Lake Formation for fine-grained access control\n- (C) Grant cross-account IAM roles on Glue tables individually (many roles)\n- (D) Make the S3 bucket and Glue Catalog publicly readable within the Organization",
+      "question": "Which approach BEST supports research workflows with security and manageability?",
+      "choices": [
+        "Option A — data duplication keeps things simple.",
+        "Option B — share Glue Data Catalog (databases, tables) via RAM to the Research OU. Use Lake Formation for row/column/cell-level permissions per researcher role. This keeps data in one place, provides fine-grained access for HIPAA-appropriate isolation, and automatically applies to new accounts added to the Research OU. Athena queries in Research accounts use the shared catalog and Lake Formation permissions. Lake Formation integrates with RAM for cross-account catalog sharing.",
+        "Option C — IAM roles for each table.",
+        "Option D — public within org."
+      ],
+      "correct": 1,
+      "explanation": "**Gotcha 1 — Glue Data Catalog sharing**: Glue Data Catalog databases and tables are RAM-shareable resources. You can share specific databases or tables, or entire catalogs.\n\n**Gotcha 2 — Lake Formation for fine-grained control**: Lake Formation manages permissions at database, table, column, row, and cell level. Critical for de-identified patient data where some researchers see some columns but not others, or row-level filters apply based on research protocols. IAM-only permissions are coarser-grained (bucket/prefix level).\n\n**Gotcha 3 — OU-level sharing with RAM**: sharing to an OU auto-applies to new accounts added to that OU. Operational simplicity for a growing Research OU.\n\n**Gotcha 4 — Athena cross-account**: Athena queries use the Glue Catalog where the tables are registered. If the catalog is shared to your account via RAM + Lake Formation, Athena can query those tables (data residing in S3 in DataPlatform account, accessible via Lake Formation-managed permissions).\n\n**Gotcha 5 — 'public within org' is a terrible pattern**: granting bucket-level permissions to the whole Org loses per-researcher and per-table control. Compliance issue for HIPAA.\n\n**Gotcha 6 — data duplication cost**: copying data to each Research account multiplies storage cost, creates data consistency issues, and violates 'single source of truth'.\n\nOption B is the modern data-lake multi-account pattern: Lake Formation + RAM + Glue Catalog.",
+      "pattern": "Multi-account data lake: Lake Formation for fine-grained permissions + RAM for cross-account Glue Catalog sharing + S3 bucket policies that trust Lake Formation. Athena / EMR / Redshift Spectrum in consumer accounts use the shared catalog. Scales to many consumers, supports per-column and per-row controls, works with HIPAA/PCI requirements when configured correctly. Data stays put; permissions flow.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "Cross-account data sharing with Lake Formation",
+          "url": "https://docs.aws.amazon.com/lake-formation/latest/dg/cross-account-permissions.html"
+        },
+        {
+          "type": "doc",
+          "title": "Sharing Glue Data Catalog via RAM",
+          "url": "https://docs.aws.amazon.com/lake-formation/latest/dg/sharing-catalog-resources.html"
+        },
+        {
+          "type": "doc",
+          "title": "Lake Formation fine-grained permissions",
+          "url": "https://docs.aws.amazon.com/lake-formation/latest/dg/access-control-overview.html"
+        }
+      ]
+    },
+    {
+      "id": "sap109",
+      "domain": "D4",
+      "scenario": "Belrothan Manufacturing runs on-premises ERP integrations and wants to modernize the integration layer. Current state: an on-prem MuleSoft integration platform exposes 120 SOAP and REST APIs to partners. The modernization plan: replace MuleSoft with AWS-native services — API Gateway for REST, EventBridge + Step Functions for orchestration, Lambda for logic.\n\nThe team estimates API Gateway costs will be significant: 12 million requests/month across all APIs at current usage, with projected 3x growth over 18 months. They compare pricing: REST API ($3.50/million) vs HTTP API ($1.00/million). They also consider API caching (adds cost) and Provisioned Throughput for high-volume endpoints.\n\nAdditionally, 22 of the 120 APIs use WAF protections (OWASP top 10, rate limiting, geo-blocking). Another 18 use API keys for partner rate limiting. The remaining 80 use OAuth 2.0 JWT validation.",
+      "question": "Which migration strategy BEST balances cost and feature requirements?",
+      "choices": [
+        "Migrate all 120 APIs to HTTP API for cost savings.",
+        "Analyze per-API needs: (1) 22 APIs requiring WAF → REST API (HTTP API has limited WAF support); (2) 18 APIs needing API keys / usage plans → REST API (HTTP API doesn't natively support); (3) 80 APIs with JWT-only auth and no WAF/usage-plan needs → HTTP API (cheaper, native JWT authorizer). Mixed-API-type deployment is supported: different APIs can be different types within the same account. This optimizes cost while honoring feature constraints. Projected savings: 80 APIs × cost delta, while keeping REST features where needed.",
+        "Migrate all 120 APIs to REST API for feature consistency.",
+        "Keep MuleSoft on-premises since migration is too complex."
+      ],
+      "correct": 1,
+      "explanation": "**Gotcha 1 — HTTP API feature gaps**: HTTP API doesn't support: API keys and usage plans (natively), request validators, full WAF integration (limited), X-Ray with SDK integration. For APIs needing these, REST API is required.\n\n**Gotcha 2 — cost differential**: HTTP API ~$1.00 per million vs REST API ~$3.50 per million — for 80 APIs migrating, real savings at 12M+ requests/month growing 3x.\n\n**Gotcha 3 — WAF on HTTP API**: HTTP API has web ACLs support (improved over original launch), but REST API has fuller WAF integration. If your 22 APIs have existing WAF rules like custom rate-based rules, OWASP managed rules with specific configurations, verify compatibility before assuming HTTP API works.\n\n**Gotcha 4 — API keys workaround**: for HTTP API, you can implement API-key-like behavior via Lambda authorizer that validates keys from DynamoDB + enforces rate limits. But it's extra work and cost. If your 18 APIs need simple usage plans + API keys, REST API is the right tool.\n\n**Gotcha 5 — mixed deployment**: different APIs within the same account can be different types. No 'all or nothing' requirement. Analyze per-API needs.\n\n**Gotcha 6 — Custom domains and stages**: both types support custom domains, so DNS strategy doesn't force one choice.\n\nOption B is the right architectural answer: match tool to requirement, don't over-buy (all REST) or under-buy (all HTTP) features.",
+      "pattern": "API Gateway type selection per API: HTTP API for simple, high-volume, JWT-authenticated APIs. REST API for APIs needing API keys / usage plans, request validators, full WAF, or specific AWS integrations. Mixed deployment is the norm for large migrations. Estimate cost per API considering request volume × type-specific pricing. Don't default to 'all REST for safety' or 'all HTTP for cost' — analyze.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "REST API vs HTTP API feature comparison",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html"
+        },
+        {
+          "type": "doc",
+          "title": "API Gateway pricing",
+          "url": "https://aws.amazon.com/api-gateway/pricing/"
+        },
+        {
+          "type": "doc",
+          "title": "WAF on HTTP API",
+          "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-control-access-aws-waf.html"
+        }
+      ]
+    },
+    {
+      "id": "sap110",
+      "domain": "D4",
+      "scenario": "Quesnel Utilities migrates from their own data centers to AWS. The migration plan includes a gradual transition where some workloads remain on-premises during the 18-month migration window, and on-prem workloads need reliable access to AWS services like S3, DynamoDB, and a custom API Gateway REST API (internal-only) hosted in AWS.\n\nCurrent network design: Direct Connect to a Transit Gateway (in the shared-services AWS account), shared via RAM to 23 workload accounts. On-prem → DX → TGW → workload VPCs works for direct VPC access.\n\nFor AWS service access from on-premises (S3, DynamoDB), the team is debating:\n- (A) Use Interface VPC Endpoints in each workload VPC, accessed via TGW routing from on-prem.\n- (B) Use a single set of Interface VPC Endpoints in the shared-services VPC, shared via PrivateLink endpoint service to other accounts.\n- (C) Route on-prem traffic to AWS public endpoints over Direct Connect public VIF.\n- (D) Use Interface VPC Endpoints in shared-services VPC, shared via RAM, accessed from on-prem via TGW.\n\nThe Private API Gateway (internal-only) adds complexity: it requires an Interface VPC Endpoint for execute-api.",
+      "question": "Which approach BEST provides efficient, cost-effective on-prem access to AWS services?",
+      "choices": [
+        "Option A — per-workload-VPC endpoints. Lots of duplication.",
+        "Option C — public VIF direct access.",
+        "Option D — centralize Interface VPC Endpoints in shared-services VPC, share them via RAM to workload accounts. Workload VPCs and on-prem traffic route through TGW and use the centralized endpoints. For S3 specifically, S3 now has Interface VPC Endpoints (newer option) OR use Gateway Endpoints in each VPC (free, but Gateway endpoints are per-VPC and not shareable — trade-off). For the Private API Gateway's execute-api endpoint, centralizing via RAM-shared endpoint works similarly. Reduces endpoint sprawl and cost. On-prem reaches endpoints via DX → TGW → shared-services VPC → endpoint.",
+        "Option B — PrivateLink endpoint service (only useful for custom services, not AWS service endpoints themselves)."
+      ],
+      "correct": 2,
+      "explanation": "**Gotcha 1 — Interface VPC Endpoint sharing via RAM**: Interface VPC Endpoints ARE shareable via RAM. Centralize endpoints in shared-services VPC; share to workload accounts. Workload VPCs use the shared endpoints via TGW routing. On-prem traffic routes the same way through DX → TGW → shared-services VPC → endpoint.\n\n**Gotcha 2 — Gateway Endpoints aren't shareable**: S3 and DynamoDB traditionally use Gateway Endpoints (free, VPC-prefix-list-based). These are per-VPC and NOT shareable. For shared access, use Interface Endpoints (newer option for S3 and DynamoDB) at per-hour cost.\n\n**Gotcha 3 — Public VIF**: option C routes public AWS endpoints via Direct Connect. Works but uses the public AWS endpoints (not private), which may not meet internal-only requirements and bypasses endpoint-level access control.\n\n**Gotcha 4 — PrivateLink Endpoint Service is different**: Option B's phrasing confuses 'PrivateLink endpoint service' (the thing you create to EXPOSE a custom service via PrivateLink) with 'VPC endpoint' (the consumer side). You don't expose AWS services via PrivateLink endpoint service — AWS already does that. The concept of 'sharing' applies to the interface endpoint you've created to CONSUME a service.\n\n**Gotcha 5 — duplication cost**: each Interface Endpoint has an hourly cost per AZ. In 23 workload accounts with 4+ endpoints each = ~$10-15/month × 92+ endpoints. Centralizing to one set shared via RAM saves significantly.\n\n**Gotcha 6 — Private API Gateway access from on-prem**: Private API Gateway is accessed via the execute-api Interface Endpoint. Centralizing this endpoint in shared-services VPC + sharing via RAM + TGW routing from on-prem = on-prem clients can reach the Private API.\n\nOption C is correct with the caveat honestly called out about Gateway vs Interface endpoints for S3/DynamoDB.",
+      "pattern": "Multi-account + on-prem endpoint strategy: centralize Interface VPC Endpoints in shared-services VPC, share via RAM to workload accounts, route on-prem traffic via TGW to the shared endpoints. Reduces endpoint count and cost. Trade-off: S3/DynamoDB Gateway Endpoints are free but per-VPC; Interface Endpoints are shareable but cost per-AZ-per-hour. For Private API Gateway access from on-prem or across accounts, share the execute-api Interface Endpoint.",
+      "references": [
+        {
+          "type": "doc",
+          "title": "AWS PrivateLink and VPC endpoints",
+          "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html"
+        },
+        {
+          "type": "doc",
+          "title": "Sharing Interface VPC Endpoints via RAM",
+          "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/endpoint-services-overview.html"
+        },
+        {
+          "type": "doc",
+          "title": "S3 Gateway vs Interface endpoints",
+          "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html"
+        }
+      ]
     }
   ]
 }
