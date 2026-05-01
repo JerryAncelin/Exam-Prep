@@ -1,0 +1,583 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Amazon Connect Lab Environment — Formation TD SYNNEX
+  Déploie une instance Amazon Connect dans eu-central-1 (Frankfurt) avec
+  l'infrastructure supporting nécessaire pour les labs Jour 1 à 4.
+  
+  Ressources créées :
+    - Amazon Connect instance
+    - S3 buckets (recordings, reports, assets) avec chiffrement KMS
+    - KMS Customer Managed Key
+    - Hours of Operation (FR business hours)
+    - Queues (Support FR, Support EN, Premium)
+    - Routing Profile
+    - Security Profile custom
+    - Contact Flow (welcome + routing)
+    - Kinesis Data Streams (agent events + contact records)
+    - Lambda de démo (customer lookup)
+    - IAM role pour Lambda
+    - DynamoDB table (customers)
+  
+  Non inclus (à faire manuellement après le déploiement) :
+    - Claim du numéro de téléphone (dépend de la disponibilité régionale)
+    - Association du numéro au contact flow
+    - Création des utilisateurs agents
+# This is the parameters section
+Parameters:
+
+  InstanceAlias:
+    Type: String
+    Default: td-synnex-lab
+    Description: Alias unique de l'instance Connect (sera le sous-domaine .my.connect.aws)
+    AllowedPattern: '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'
+    MinLength: 3
+    MaxLength: 45
+    ConstraintDescription: 3-45 caractères, alphanumériques minuscules et tirets uniquement
+
+  EnvironmentTag:
+    Type: String
+    Default: lab
+    AllowedValues: [lab, dev, staging]
+    Description: Tag d'environnement appliqué à toutes les ressources
+
+  StudentName:
+    Type: String
+    Default: student01
+    Description: Identifiant étudiant (pour isoler les ressources multi-participants)
+    AllowedPattern: '^[a-z0-9]+$'
+    MinLength: 3
+    MaxLength: 20
+
+  VPCDefaultRegion:
+    Type: String
+    Default: eu-central-1
+
+Mappings:
+  # Région Connect disponibles (documentation AWS Q1 2026)
+  # eu-west-3 (Paris) NE SUPPORTE PAS Amazon Connect
+  RegionConfig:
+    eu-central-1:
+      Supported: 'true'
+      Description: 'Frankfurt — RGPD natif, recommandé pour la France'
+    eu-west-2:
+      Supported: 'true'
+      Description: 'London — alternative post-Brexit'
+
+Conditions:
+  IsSupportedRegion: !Or
+    - !Equals [!Ref AWS::Region, eu-central-1]
+    - !Equals [!Ref AWS::Region, eu-west-2]
+
+Resources:
+
+  # ============================================================================
+  # KMS — clé de chiffrement pour recordings, reports, streams
+  # ============================================================================
+  ConnectKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "CMK pour instance Connect ${InstanceAlias} — recordings + streams"
+      EnableKeyRotation: true
+      PendingWindowInDays: 7
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowRootAccount
+            Effect: Allow
+            Principal: { AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root" }
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: AllowConnectServiceUsage
+            Effect: Allow
+            Principal: { Service: connect.amazonaws.com }
+            Action:
+              - 'kms:Decrypt'
+              - 'kms:GenerateDataKey*'
+              - 'kms:DescribeKey'
+            Resource: '*'
+          - Sid: AllowKinesisServiceUsage
+            Effect: Allow
+            Principal: { Service: kinesis.amazonaws.com }
+            Action:
+              - 'kms:Decrypt'
+              - 'kms:GenerateDataKey*'
+            Resource: '*'
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Student
+          Value: !Ref StudentName
+
+  ConnectKMSKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/connect-${InstanceAlias}-${StudentName}"
+      TargetKeyId: !Ref ConnectKMSKey
+
+  # ============================================================================
+  # S3 — recordings + reports + assets
+  # ============================================================================
+  RecordingsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "connect-recordings-${InstanceAlias}-${StudentName}-${AWS::AccountId}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !GetAtt ConnectKMSKey.Arn
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: ArchiveOldRecordings
+            Status: Enabled
+            Transitions:
+              - TransitionInDays: 90
+                StorageClass: GLACIER
+            ExpirationInDays: 2555
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Student
+          Value: !Ref StudentName
+
+  ReportsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "connect-reports-${InstanceAlias}-${StudentName}-${AWS::AccountId}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !GetAtt ConnectKMSKey.Arn
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Student
+          Value: !Ref StudentName
+
+  AssetsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "connect-assets-${InstanceAlias}-${StudentName}-${AWS::AccountId}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !GetAtt ConnectKMSKey.Arn
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Student
+          Value: !Ref StudentName
+
+  # ============================================================================
+  # AMAZON CONNECT — instance
+  # ============================================================================
+  ConnectInstance:
+    Type: AWS::Connect::Instance
+    Condition: IsSupportedRegion
+    Properties:
+      InstanceAlias: !Sub "${InstanceAlias}-${StudentName}"
+      IdentityManagementType: CONNECT_MANAGED
+      Attributes:
+        InboundCalls: true
+        OutboundCalls: true
+        ContactflowLogs: true
+        ContactLens: true
+        AutoResolveBestVoices: true
+        EarlyMedia: true
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+        - Key: Student
+          Value: !Ref StudentName
+        - Key: Formation
+          Value: TD-SYNNEX-Amazon-Connect
+
+  # ============================================================================
+  # HOURS OF OPERATION — heures ouvrables France
+  # ============================================================================
+  BusinessHours:
+    Type: AWS::Connect::HoursOfOperation
+    Condition: IsSupportedRegion
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: !Sub "Business-Hours-FR-${StudentName}"
+      Description: "Heures ouvrables France — Lun-Ven 8h-19h, Sam 9h-13h"
+      TimeZone: Europe/Paris
+      Config:
+        - Day: MONDAY
+          StartTime: { Hours: 8,  Minutes: 0 }
+          EndTime:   { Hours: 19, Minutes: 0 }
+        - Day: TUESDAY
+          StartTime: { Hours: 8,  Minutes: 0 }
+          EndTime:   { Hours: 19, Minutes: 0 }
+        - Day: WEDNESDAY
+          StartTime: { Hours: 8,  Minutes: 0 }
+          EndTime:   { Hours: 19, Minutes: 0 }
+        - Day: THURSDAY
+          StartTime: { Hours: 8,  Minutes: 0 }
+          EndTime:   { Hours: 19, Minutes: 0 }
+        - Day: FRIDAY
+          StartTime: { Hours: 8,  Minutes: 0 }
+          EndTime:   { Hours: 18, Minutes: 0 }
+        - Day: SATURDAY
+          StartTime: { Hours: 9,  Minutes: 0 }
+          EndTime:   { Hours: 13, Minutes: 0 }
+
+  # ============================================================================
+  # QUEUES — support FR, support EN, premium
+  # ============================================================================
+  QueueSupportFR:
+    Type: AWS::Connect::Queue
+    Condition: IsSupportedRegion
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: !Sub "Support-FR-${StudentName}"
+      Description: "Queue support standard en français"
+      HoursOfOperationArn: !GetAtt BusinessHours.HoursOfOperationArn
+      MaxContacts: 100
+      Status: ENABLED
+
+  QueueSupportEN:
+    Type: AWS::Connect::Queue
+    Condition: IsSupportedRegion
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: !Sub "Support-EN-${StudentName}"
+      Description: "Queue support standard en anglais"
+      HoursOfOperationArn: !GetAtt BusinessHours.HoursOfOperationArn
+      MaxContacts: 100
+      Status: ENABLED
+
+  QueuePremium:
+    Type: AWS::Connect::Queue
+    Condition: IsSupportedRegion
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: !Sub "Premium-${StudentName}"
+      Description: "Queue clients premium — SLA prioritaire"
+      HoursOfOperationArn: !GetAtt BusinessHours.HoursOfOperationArn
+      MaxContacts: 50
+      Status: ENABLED
+
+  # ============================================================================
+  # ROUTING PROFILE
+  # ============================================================================
+  AgentRoutingProfile:
+    Type: AWS::Connect::RoutingProfile
+    Condition: IsSupportedRegion
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: !Sub "Agent-Routing-Profile-${StudentName}"
+      Description: "Routing profile par défaut — voix + chat + tasks"
+      DefaultOutboundQueueArn: !GetAtt QueueSupportFR.QueueArn
+      MediaConcurrencies:
+        - Channel: VOICE
+          Concurrency: 1
+        - Channel: CHAT
+          Concurrency: 3
+        - Channel: TASK
+          Concurrency: 5
+      QueueConfigs:
+        - QueueReference:
+            QueueArn: !GetAtt QueuePremium.QueueArn
+            Channel: VOICE
+          Priority: 1
+          Delay: 0
+        - QueueReference:
+            QueueArn: !GetAtt QueueSupportFR.QueueArn
+            Channel: VOICE
+          Priority: 2
+          Delay: 5
+        - QueueReference:
+            QueueArn: !GetAtt QueueSupportEN.QueueArn
+            Channel: VOICE
+          Priority: 3
+          Delay: 10
+
+  # ============================================================================
+  # CONTACT FLOW — welcome + routing simple
+  # ============================================================================
+  WelcomeContactFlow:
+    Type: AWS::Connect::ContactFlow
+    Condition: IsSupportedRegion
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: !Sub "Welcome-Flow-${StudentName}"
+      Description: "Flow d'accueil avec routage par langue"
+      Type: CONTACT_FLOW
+      Content: !Sub |
+        {
+          "Version": "2019-10-30",
+          "StartAction": "welcome-msg",
+          "Metadata": {
+            "entryPointPosition": { "x": 40, "y": 40 },
+            "ActionMetadata": {
+              "welcome-msg": { "position": { "x": 200, "y": 40 } },
+              "set-queue": { "position": { "x": 400, "y": 40 } },
+              "transfer": { "position": { "x": 600, "y": 40 } },
+              "disconnect": { "position": { "x": 800, "y": 40 } }
+            }
+          },
+          "Actions": [
+            {
+              "Identifier": "welcome-msg",
+              "Type": "MessageParticipant",
+              "Parameters": {
+                "Text": "Bonjour et bienvenue chez TD SYNNEX. Veuillez patienter, un conseiller va vous répondre."
+              },
+              "Transitions": {
+                "NextAction": "set-queue",
+                "Errors": [],
+                "Conditions": []
+              }
+            },
+            {
+              "Identifier": "set-queue",
+              "Type": "UpdateContactTargetQueue",
+              "Parameters": {
+                "QueueId": "${QueueSupportFR.QueueArn}"
+              },
+              "Transitions": {
+                "NextAction": "transfer",
+                "Errors": [{"NextAction": "disconnect", "ErrorType": "NoMatchingError"}],
+                "Conditions": []
+              }
+            },
+            {
+              "Identifier": "transfer",
+              "Type": "TransferContactToQueue",
+              "Parameters": {},
+              "Transitions": {
+                "NextAction": "disconnect",
+                "Errors": [{"NextAction": "disconnect", "ErrorType": "NoMatchingError"}],
+                "Conditions": []
+              }
+            },
+            {
+              "Identifier": "disconnect",
+              "Type": "DisconnectParticipant",
+              "Parameters": {},
+              "Transitions": {}
+            }
+          ]
+        }
+
+  # ============================================================================
+  # KINESIS — agent events + contact records (pour lab Jour 3)
+  # ============================================================================
+  AgentEventsStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: !Sub "connect-agent-events-${StudentName}"
+      ShardCount: 1
+      RetentionPeriodHours: 24
+      StreamEncryption:
+        EncryptionType: KMS
+        KeyId: !Ref ConnectKMSKey
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+
+  ContactRecordsStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: !Sub "connect-contact-records-${StudentName}"
+      ShardCount: 1
+      RetentionPeriodHours: 24
+      StreamEncryption:
+        EncryptionType: KMS
+        KeyId: !Ref ConnectKMSKey
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+
+  # ============================================================================
+  # DYNAMODB — table customers (pour Lambda customer lookup)
+  # ============================================================================
+  CustomersTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    Properties:
+      TableName: !Sub "Customers-${StudentName}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: phoneNumber
+          AttributeType: S
+      KeySchema:
+        - AttributeName: phoneNumber
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: false
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentTag
+
+  # ============================================================================
+  # LAMBDA — customer lookup (pour lab Jour 3)
+  # ============================================================================
+  CustomerLookupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "CustomerLookupRole-${StudentName}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBReadAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                Resource: !GetAtt CustomersTable.Arn
+
+  CustomerLookupFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "ConnectCustomerLookup-${StudentName}"
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt CustomerLookupRole.Arn
+      Timeout: 8
+      MemorySize: 256
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref CustomersTable
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import boto3
+          
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table(os.environ['TABLE_NAME'])
+          
+          def handler(event, context):
+              """Lookup customer by phone number from Connect contact flow.
+              
+              Input payload (from Connect Invoke Lambda block):
+                event['Details']['ContactData']['CustomerEndpoint']['Address'] = "+336..."
+              
+              Output: flat key/value dict (Connect requirement — no nested objects).
+              """
+              try:
+                  phone = event['Details']['ContactData']['CustomerEndpoint']['Address']
+                  resp = table.get_item(Key={'phoneNumber': phone})
+                  item = resp.get('Item', {})
+                  
+                  if not item:
+                      return {
+                          'found': 'false',
+                          'tier': 'standard',
+                          'language': 'fr',
+                          'firstName': ''
+                      }
+                  
+                  return {
+                      'found': 'true',
+                      'tier': item.get('tier', 'standard'),
+                      'language': item.get('language', 'fr'),
+                      'firstName': item.get('firstName', ''),
+                      'lastOrderId': item.get('lastOrderId', '')
+                  }
+              except Exception as e:
+                  print(f"Error: {e}")
+                  return {'found': 'false', 'tier': 'standard', 'language': 'fr', 'firstName': ''}
+
+  ConnectLambdaAssociation:
+    Type: AWS::Connect::IntegrationAssociation
+    Condition: IsSupportedRegion
+    Properties:
+      InstanceId: !GetAtt ConnectInstance.Arn
+      IntegrationType: LAMBDA_FUNCTION
+      IntegrationArn: !GetAtt CustomerLookupFunction.Arn
+
+Outputs:
+
+  InstanceArn:
+    Description: ARN de l'instance Connect (à utiliser dans les APIs)
+    Value: !If [IsSupportedRegion, !GetAtt ConnectInstance.Arn, 'N/A — région non supportée']
+    Export:
+      Name: !Sub "${AWS::StackName}-InstanceArn"
+
+  InstanceId:
+    Description: ID unique de l'instance Connect
+    Value: !If [IsSupportedRegion, !GetAtt ConnectInstance.Id, 'N/A']
+    Export:
+      Name: !Sub "${AWS::StackName}-InstanceId"
+
+  ConnectConsoleUrl:
+    Description: URL directe de la console Connect pour cette instance
+    Value: !If
+      - IsSupportedRegion
+      - !Sub "https://${InstanceAlias}-${StudentName}.my.connect.aws/"
+      - 'N/A'
+
+  RecordingsBucketName:
+    Description: Nom du bucket S3 pour les enregistrements
+    Value: !Ref RecordingsBucket
+
+  AssetsBucketName:
+    Description: Nom du bucket S3 pour les assets
+    Value: !Ref AssetsBucket
+
+  KMSKeyAlias:
+    Description: Alias KMS pour le chiffrement
+    Value: !Ref ConnectKMSKeyAlias
+
+  AgentEventsStreamArn:
+    Description: ARN du stream Kinesis pour les agent events
+    Value: !GetAtt AgentEventsStream.Arn
+
+  ContactRecordsStreamArn:
+    Description: ARN du stream Kinesis pour les contact records
+    Value: !GetAtt ContactRecordsStream.Arn
+
+  CustomerLookupLambdaArn:
+    Description: ARN de la Lambda customer lookup (à utiliser dans le bloc Invoke Lambda)
+    Value: !GetAtt CustomerLookupFunction.Arn
+
+  CustomersTableName:
+    Description: Nom de la table DynamoDB customers
+    Value: !Ref CustomersTable
+
+  PostDeploymentActions:
+    Description: Actions manuelles à effectuer après déploiement de la stack
+    Value: >-
+      (1) Claim un numéro de téléphone DID dans la console Connect
+      (2) Associer ce numéro au Welcome-Flow
+      (3) Créer les agents (Users) via la console ou l'API
+      (4) Activer Data streaming dans l'instance et pointer vers les streams Kinesis
+      (5) Peupler la table DynamoDB Customers avec des données de test

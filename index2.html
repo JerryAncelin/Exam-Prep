@@ -298,104 +298,6 @@
   .gauntlet-banner .pool-stats { font-family: var(--mono); font-size: 11px; color: #a39a94; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 16px; display: flex; gap: 22px; flex-wrap: wrap; text-shadow: 0 1px 2px rgba(0,0,0,0.9); }
   .gauntlet-banner .pool-stats b { color: #ff6b6b; font-weight: 700; }
 
-  /* Service Expert banner — sits below Gauntlet, calmer/cooler aesthetic */
-  .service-expert-banner {
-    margin: 16px auto 0;
-    max-width: 820px;
-    background: linear-gradient(135deg, #0a1d2e 0%, #122a3f 60%, #0a1d2e 100%);
-    border: 1px solid rgba(80, 180, 255, 0.18);
-    border-radius: var(--radius);
-    padding: 30px 32px;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .service-expert-banner::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #50b4ff, transparent);
-    transform: scaleX(0); transform-origin: left;
-    transition: transform 0.4s;
-  }
-  .service-expert-banner:hover { border-color: rgba(80, 180, 255, 0.45); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(80,180,255,0.15); }
-  .service-expert-banner:hover::before { transform: scaleX(1); }
-  .service-expert-banner .tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #50b4ff; margin-bottom: 10px; font-weight: 700; }
-  .service-expert-banner h2 { font-family: var(--serif); font-size: 30px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; color: #e6f0fa; }
-  .service-expert-banner h2 em { font-style: italic; color: #50b4ff; font-weight: 600; }
-  .service-expert-banner p { color: #b8c8d8; font-size: 14px; max-width: 580px; line-height: 1.5; }
-  .service-expert-banner .pool-stats { font-family: var(--mono); font-size: 11px; color: #7d96b0; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 16px; display: flex; gap: 22px; flex-wrap: wrap; }
-  .service-expert-banner .pool-stats b { color: #50b4ff; font-weight: 700; }
-
-  /* Service Expert hero on cluster-select screen */
-  .se-hero { text-align: center; padding: 40px 0 24px; }
-  .se-hero h1 { font-family: var(--serif); font-size: 48px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin-bottom: 14px; }
-  .se-hero h1 em { font-style: italic; color: #50b4ff; font-weight: 600; }
-  .se-hero .subtitle { color: var(--text-dim); font-size: 15px; max-width: 580px; margin: 0 auto; }
-
-  /* Cluster grid — 20 clusters laid out as cards */
-  .cluster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin: 28px 0; }
-  .cluster-card {
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px 20px;
-    cursor: pointer;
-    transition: all 0.15s;
-    position: relative;
-    overflow: hidden;
-  }
-  .cluster-card:hover { border-color: rgba(80, 180, 255, 0.45); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(80,180,255,0.1); }
-  .cluster-card.unavailable { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
-  .cluster-card .cnum { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: #7d96b0; text-transform: uppercase; margin-bottom: 6px; font-weight: 700; }
-  .cluster-card .ctitle { font-family: var(--serif); font-size: 18px; font-weight: 700; line-height: 1.2; margin-bottom: 8px; }
-  .cluster-card .cservices { font-family: var(--mono); font-size: 10px; color: var(--text-faint); line-height: 1.6; margin-bottom: 12px; min-height: 32px; }
-  .cluster-card .cstats { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--text-faint); text-transform: uppercase; }
-  .cluster-card .cstats b { color: #50b4ff; font-weight: 700; }
-  .cluster-card .cstats .last-score { color: var(--text); }
-  .cluster-card .cstats .last-score.good { color: var(--success); }
-  .cluster-card .cstats .last-score.bad { color: #ff6b6b; }
-
-  /* Drill HUD */
-  .se-hud { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
-  .se-hud .hud-group { display: flex; align-items: center; gap: 12px; }
-  .se-hud .hud-label { font-family: var(--mono); font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.14em; }
-  .se-hud .hud-value { font-family: var(--serif); font-size: 22px; font-weight: 700; line-height: 1; }
-  .se-hud .hud-value.right { color: var(--success); }
-  .se-hud .hud-value.wrong { color: #ff6b6b; }
-  .se-hud .progress-bar { flex: 1 1 200px; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; min-width: 120px; max-width: 280px; }
-  .se-hud .progress-bar .fill { height: 100%; background: #50b4ff; transition: width 0.3s; }
-  .se-pill { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; padding: 3px 9px; border-radius: 3px; font-weight: 700; border: 1px solid #50b4ff; color: #50b4ff; background: rgba(80,180,255,0.08); white-space: nowrap; }
-
-  /* Multi-select choices visual marker */
-  .choice.multi-selectable { position: relative; }
-  .choice.multi-selectable .choice-letter::after {
-    content: '';
-    position: absolute;
-    width: 10px; height: 10px;
-    border: 2px solid var(--border-strong);
-    border-radius: 2px;
-    right: -22px; top: 50%; transform: translateY(-50%);
-    background: transparent;
-    transition: all 0.15s;
-  }
-  .choice.multi-selectable.picked .choice-letter::after { background: #50b4ff; border-color: #50b4ff; }
-  .choice.multi-selectable.picked { border-color: #50b4ff; background: rgba(80,180,255,0.06); }
-  .multi-instruction { font-family: var(--mono); font-size: 11px; color: #50b4ff; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; font-weight: 700; }
-  .multi-submit-row { margin-top: 16px; display: flex; justify-content: flex-end; }
-
-  /* Drill complete summary */
-  .se-summary-hero { text-align: center; padding: 48px 20px 28px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
-  .se-summary-hero .verdict { font-family: var(--mono); font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase; color: #50b4ff; margin-bottom: 16px; font-weight: 700; }
-  .se-summary-hero .verdict.gold { color: #ffc857; }
-  .se-summary-hero .score { font-family: var(--serif); font-size: 120px; font-weight: 800; line-height: 0.9; letter-spacing: -0.04em; color: var(--text); }
-  .se-summary-hero .score.good { color: var(--success); }
-  .se-summary-hero .score.bad { color: #ff6b6b; }
-  .se-summary-hero .score-suffix { font-family: var(--mono); font-size: 14px; color: var(--text-dim); letter-spacing: 0.1em; margin-top: 6px; }
-  .se-summary-hero .score-label { font-family: var(--mono); font-size: 11px; color: var(--text-dim); letter-spacing: 0.16em; text-transform: uppercase; margin-top: 14px; }
-
   /* Config screen */
   .gauntlet-hero { text-align: center; padding: 40px 0 24px; }
   .gauntlet-hero h1 { font-family: var(--serif); font-size: 56px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin-bottom: 14px; }
@@ -592,18 +494,6 @@
     </div>
   </div>
 
-  <div class="service-expert-banner" id="service-expert-banner-btn" onclick="goToServiceExpert()">
-    <div class="tag">⚙ DRILL MODE · DEEP DIVES</div>
-    <h2>Service <em>Expert.</em></h2>
-    <p>Twenty concept clusters covering the AWS surface area exam-takers actually need. Twenty brutal expert-tier questions per cluster — a mix of 4-choice and SAP-style "select 2 of 5". No lives, no streaks. Just review every miss against AWS docs.</p>
-    <div class="pool-stats">
-      <span>CLUSTERS: <b id="se-cluster-count">—</b></span>
-      <span>QUESTIONS: <b id="se-question-count">—</b></span>
-      <span>COMPLETED: <b id="se-completed-count">—</b></span>
-    </div>
-  </div>
-
-
   <div style="max-width: 820px; margin: 40px auto 0; font-family: var(--mono); font-size: 11px; color: var(--text-faint); text-align: center; line-height: 1.8;">
     QUESTION BANKS LOAD FROM EXTERNAL JSON FILES<br>
     IF YOU OPENED THIS FILE DIRECTLY AND SEE LOAD ERRORS, RUN <code style="background:var(--bg-elev);padding:2px 6px;border-radius:3px;color:var(--text)">python3 -m http.server 8000</code> IN THIS FOLDER AND OPEN <code style="background:var(--bg-elev);padding:2px 6px;border-radius:3px;color:var(--text)">http://localhost:8000</code>
@@ -799,104 +689,6 @@
   <div style="display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap;">
     <button class="primary" onclick="goToGauntletConfig()">⚔ Run again</button>
     <button class="ghost" onclick="goToExamSelect()">← Exam select</button>
-  </div>
-</section>
-
-<!-- SERVICE EXPERT — CLUSTER SELECT -->
-<section class="screen" id="screen-se-select">
-  <div class="se-hero">
-    <span class="back-link" onclick="goToExamSelect()">← Back</span>
-    <h1>Service <em>Expert</em> · Concept clusters</h1>
-    <p class="subtitle">Twenty deep-dive drills covering the AWS service surface area exam-takers actually need. Pick a cluster and burn through twenty expert-tier questions. Review every answer against AWS docs.</p>
-  </div>
-  <div class="cluster-grid" id="se-cluster-grid"></div>
-</section>
-
-<!-- SERVICE EXPERT — DRILL RUN -->
-<section class="screen" id="screen-se-run">
-  <div class="se-hud" id="se-hud">
-    <div class="hud-group">
-      <span class="se-pill" id="se-cluster-pill">CLUSTER</span>
-    </div>
-    <div class="hud-group">
-      <span class="hud-label">Q</span>
-      <span class="hud-value" id="se-qnum">1</span>
-      <span class="hud-label" style="color: var(--text-dim);">/ <span id="se-qtotal">20</span></span>
-    </div>
-    <div class="hud-group">
-      <span class="hud-label">Right</span>
-      <span class="hud-value right" id="se-correct-count">0</span>
-    </div>
-    <div class="hud-group">
-      <span class="hud-label">Wrong</span>
-      <span class="hud-value wrong" id="se-wrong-count">0</span>
-    </div>
-    <div class="progress-bar"><div class="fill" id="se-progress-fill" style="width: 0%;"></div></div>
-  </div>
-
-  <div class="gauntlet-question-wrap" id="se-q-wrap">
-    <div class="exam-header">
-      <div class="q-counter">SERVICE EXPERT · <b id="se-cluster-label">—</b></div>
-    </div>
-    <div class="multi-instruction" id="se-multi-instruction" style="display:none;">⊟ MULTI-SELECT — PICK 2 OF 5</div>
-    <div class="scenario" id="se-scenario"></div>
-    <div class="question-text" id="se-qtext"></div>
-    <div class="choices" id="se-choices"></div>
-    <div class="multi-submit-row" id="se-multi-submit-row" style="display:none;">
-      <button class="primary" id="se-multi-submit-btn" onclick="seSubmitMulti()" disabled>Submit answer</button>
-    </div>
-  </div>
-
-  <div id="se-explanation-container"></div>
-
-  <div style="display: flex; justify-content: space-between; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 12px;">
-    <button class="ghost" onclick="seAbandon()">✕ Abandon drill</button>
-    <button class="primary" id="se-continue-btn" style="display: none;" onclick="seNext()">Continue →</button>
-  </div>
-</section>
-
-<!-- SERVICE EXPERT — DRILL COMPLETE -->
-<section class="screen" id="screen-se-summary">
-  <div class="se-summary-hero">
-    <div class="verdict" id="se-verdict">DRILL COMPLETE</div>
-    <div class="score" id="se-final-score">—</div>
-    <div class="score-suffix" id="se-final-fraction">—</div>
-    <div class="score-label">% correct</div>
-  </div>
-
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 32px;">
-    <div class="stat-block">
-      <div class="stat-label">Cluster</div>
-      <div class="stat-value" id="se-stat-cluster" style="font-size:18px;">—</div>
-    </div>
-    <div class="stat-block">
-      <div class="stat-label">Questions</div>
-      <div class="stat-value" id="se-stat-total">0</div>
-    </div>
-    <div class="stat-block">
-      <div class="stat-label">Right</div>
-      <div class="stat-value" id="se-stat-correct">0</div>
-    </div>
-    <div class="stat-block">
-      <div class="stat-label">Wrong</div>
-      <div class="stat-value" id="se-stat-wrong">0</div>
-    </div>
-    <div class="stat-block">
-      <div class="stat-label">Time</div>
-      <div class="stat-value" id="se-stat-time">—</div>
-    </div>
-  </div>
-
-  <div style="margin-top: 24px;">
-    <h3 style="font-family: var(--serif); font-size: 22px; margin-bottom: 12px;">Review</h3>
-    <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 16px;">Every question. Click any item to see the explanation and AWS doc reference.</p>
-    <div class="review-list" id="se-review-list"></div>
-  </div>
-
-  <div style="display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap;">
-    <button class="primary" onclick="seRunAgain()">⚙ Run again</button>
-    <button class="ghost" onclick="goToServiceExpert()">← Cluster select</button>
-    <button class="ghost" onclick="goToExamSelect()">Exam select</button>
   </div>
 </section>
 
@@ -1481,19 +1273,16 @@ const GAUNTLET_FILES = {
   clf: 'clf-c02-gauntlet.json'
 };
 
-// Difficulty tiers — picker shown on config screen
-// crossExam: true means questions come from ALL exam banks merged
-// timerSec: optional countdown timer; when it hits 0, run ends
+// Three difficulty tiers — picker shown on config screen
 const GAUNTLET_MODES = {
-  sprint:     { label: 'Sprint',     questions: 25, hearts: 3, description: 'Quick bite' },
-  marathon:   { label: 'Marathon',   questions: 50, hearts: 4, description: 'Mid-length grind' },
-  ironman:    { label: 'Ironman',    questions: 90, hearts: 5, description: 'The full gauntlet' },
-  armageddon: { label: 'Armageddon', questions: 30, hearts: 3, description: 'All exams · 40-min timer', crossExam: true, timerSec: 2400 }
+  sprint:   { label: 'Sprint',   questions: 25, hearts: 3, description: 'Quick bite' },
+  marathon: { label: 'Marathon', questions: 50, hearts: 4, description: 'Mid-length grind' },
+  ironman:  { label: 'Ironman',  questions: 90, hearts: 5, description: 'The full gauntlet' }
 };
 
 const gState = {
   exam: null,
-  mode: null,          // 'sprint' | 'marathon' | 'ironman' | 'armageddon'
+  mode: null,          // 'sprint' | 'marathon' | 'ironman'
   maxHearts: 3,        // set from chosen mode at start
   pool: [],
   idx: 0,
@@ -1507,11 +1296,7 @@ const gState = {
   answered: false,
   available: {},
   audioCtx: null,
-  bipInterval: null,
-  // Armageddon-specific
-  timerEnd: null,      // epoch ms when timer expires
-  timerInterval: null, // setInterval handle for HUD updates
-  questionExam: null   // exam key of CURRENT question (set per-question for cross-exam runs)
+  bipInterval: null
 };
 
 // Persisted best-streak per (exam, mode) tuple — key = "exam_mode"
@@ -1561,6 +1346,7 @@ async function probeGauntletBanks() {
 }
 
 function goToGauntletConfig() {
+  playGuitarRiff();
   gState.exam = null;
   gState.mode = null;
   renderGauntletPicker();
@@ -1572,14 +1358,12 @@ function goToGauntletConfig() {
 function renderGauntletPicker() {
   const picker = $('#gauntlet-exam-picker');
   picker.innerHTML = '';
-  // When armageddon mode is selected, the exam-picker isn't applicable — it's all exams
-  const isArmageddon = gState.mode === 'armageddon';
   Object.entries(EXAMS).forEach(([key, exam]) => {
     const info = gState.available[key] || { count: 0, available: false };
     // Show best across all modes for this exam in the picker card
     const bestAny = ['sprint','marathon','ironman'].reduce((m, mode) => Math.max(m, getGauntletPB(key, mode)), 0);
     const card = document.createElement('div');
-    card.className = 'exam-picker-card' + (info.available ? '' : ' unavailable') + (isArmageddon ? ' disabled-by-mode' : '');
+    card.className = 'exam-picker-card' + (info.available ? '' : ' unavailable');
     card.dataset.exam = key;
     card.innerHTML = `
       <div class="pcode">${exam.code}</div>
@@ -1587,27 +1371,9 @@ function renderGauntletPicker() {
       <div class="pcount">${info.available ? `<b>${info.count}</b> questions` : 'coming soon'}</div>
       ${bestAny > 0 ? `<div class="pcount" style="margin-top:4px;">BEST: <b style="color:#ff3b3b">${bestAny}</b></div>` : ''}
     `;
-    if (info.available && !isArmageddon) card.onclick = () => selectGauntletExam(key);
+    if (info.available) card.onclick = () => selectGauntletExam(key);
     picker.appendChild(card);
   });
-  // Show armageddon banner when armageddon is selected
-  let banner = $('#gauntlet-armageddon-banner');
-  if (isArmageddon) {
-    if (!banner) {
-      banner = document.createElement('div');
-      banner.id = 'gauntlet-armageddon-banner';
-      banner.className = 'armageddon-banner';
-      picker.parentElement.insertBefore(banner, picker);
-    }
-    const totalPool = Object.values(gState.available).reduce((s, v) => s + (v?.count || 0), 0);
-    banner.innerHTML = `
-      <div class="ab-tag">⚠ ARMAGEDDON SELECTED</div>
-      <div class="ab-text">Questions drawn from <b>all four exam banks</b> (~${totalPool} questions). No single-exam selection.</div>
-    `;
-    banner.style.display = 'block';
-  } else if (banner) {
-    banner.style.display = 'none';
-  }
   updateStartButton();
 }
 
@@ -1616,34 +1382,21 @@ function renderGauntletModePicker() {
   picker.innerHTML = '';
   Object.entries(GAUNTLET_MODES).forEach(([key, mode]) => {
     const card = document.createElement('div');
-    let enough;
-    if (mode.crossExam) {
-      // Armageddon: needs the COMBINED pool to have at least mode.questions across all available exams
-      const totalAvailable = Object.values(gState.available).reduce((s, v) => s + (v?.available ? v.count : 0), 0);
-      enough = totalAvailable >= mode.questions;
-    } else {
-      // Single-exam modes: needs the selected exam's bank (or any exam if none selected yet) to be large enough
-      const available = gState.available[gState.exam];
-      enough = !available || available.count >= mode.questions;
-    }
+    // Disable modes whose question count exceeds the selected exam's available bank
+    const available = gState.available[gState.exam];
+    const enough = !available || available.count >= mode.questions; // allow if no exam selected yet (visual)
     card.className = 'mode-picker-card' + (enough ? '' : ' unavailable');
     card.dataset.mode = key;
-    // Best streak: per (exam, mode) for normal; armageddon stores under exam='all'
-    const pb = mode.crossExam
-      ? getGauntletPB('all', key)
-      : (gState.exam ? getGauntletPB(gState.exam, key) : 0);
+    // Best streak for this exam+mode, shown if exam is selected
+    const pb = gState.exam ? getGauntletPB(gState.exam, key) : 0;
     // Render mini-hearts preview
     let heartsHtml = '<div class="mhearts">';
     for (let i = 0; i < mode.hearts; i++) heartsHtml += '<span class="heart full"></span>';
     heartsHtml += '</div>';
-    // Build stats line — armageddon shows the timer
-    const statsLine = mode.timerSec
-      ? `<b>${mode.questions}</b> Q · <b>${mode.hearts}</b> ♥ · <b>${Math.round(mode.timerSec/60)}</b> min`
-      : `<b>${mode.questions}</b> questions · <b>${mode.hearts}</b> hearts`;
     card.innerHTML = `
       <div class="mlabel">${mode.label}</div>
       <div class="mtitle">${mode.description}</div>
-      <div class="mstats">${statsLine}</div>
+      <div class="mstats"><b>${mode.questions}</b> questions · <b>${mode.hearts}</b> hearts</div>
       ${heartsHtml}
       ${pb > 0 ? `<div class="mpb">BEST: <b>${pb}</b></div>` : ''}
     `;
@@ -2010,6 +1763,14 @@ function playLowHpBip() { playBeep(880, 110, 'square', 0.13); }
 function playCorrectBlip() { playBeep(1200, 60, 'square', 0.1); setTimeout(() => playBeep(1600, 70, 'square', 0.1), 65); }
 function playWrongBlip()   { playBeep(220, 140, 'square', 0.14); setTimeout(() => playBeep(160, 180, 'square', 0.14), 120); }
 
+function playGuitarRiff() {
+  const ctx = ensureAudioCtx();
+  if (!ctx) return;
+  const audio = new Audio('gauntlet-riff.mp3');
+  audio.volume = 0.5;
+  audio.play().catch(() => {});
+}
+
 function startBipBip() {
   if (gState.bipInterval) return;
   ensureAudioCtx();
@@ -2029,393 +1790,7 @@ goToExamSelect = function() {
   stopBipBip();
   _origGoToExamSelect();
   probeGauntletBanks();
-  probeServiceExpertBanks();
 };
-
-/* ============================================================
- * SERVICE EXPERT MODE
- * Twenty concept clusters — twenty expert questions each.
- * Drill-only (no lives), supports 4-choice + select-2-of-5,
- * AWS doc reference shown on every question in review.
- * ============================================================ */
-const SE_CLUSTERS = [
-  { id: 'org-complexity',         num: '01', title: 'Organizational Complexity',     services: 'Organizations · Control Tower · SCPs/RCPs · CloudTrail Org · Service Catalog · RAM',     file: 'se-org-complexity.json' },
-  { id: 'security-posture',       num: '02', title: 'Centralized Security Posture',  services: 'Security Hub · GuardDuty · Macie · Detective · Inspector · Config aggregator',          file: 'se-security-posture.json' },
-  { id: 'identity-access',        num: '03', title: 'Identity & Access at Scale',    services: 'IAM Identity Center · IAM · permission boundaries · Cognito · Directory Service',       file: 'se-identity-access.json' },
-  { id: 'hybrid-network',         num: '04', title: 'Hybrid Networking',             services: 'Transit Gateway · Cloud WAN · Direct Connect · Site-to-Site VPN · Resolver',            file: 'se-hybrid-network.json' },
-  { id: 'service-connectivity',   num: '05', title: 'Service-to-Service Connectivity', services: 'VPC Lattice · PrivateLink · App Mesh · App Runner · internal ALB',                    file: 'se-service-connectivity.json' },
-  { id: 'edge-security',          num: '06', title: 'Edge Security',                 services: 'CloudFront · WAF · Shield · Firewall Manager · Network Firewall',                      file: 'se-edge-security.json' },
-  { id: 'encryption-keys',        num: '07', title: 'Encryption & Key Management',   services: 'KMS · CloudHSM · ACM · Secrets Manager · Parameter Store',                            file: 'se-encryption-keys.json' },
-  { id: 'data-lake',              num: '08', title: 'Data Lake & Analytics Stack',   services: 'S3 · Glue · Lake Formation · Athena · EMR · DataZone',                                 file: 'se-data-lake.json' },
-  { id: 'warehouse-streaming',    num: '09', title: 'Data Warehousing & Streaming',  services: 'Redshift · Kinesis · MSK · OpenSearch',                                                file: 'se-warehouse-streaming.json' },
-  { id: 'relational-db',          num: '10', title: 'Relational Databases',          services: 'RDS · Aurora · Babelfish · RDS Proxy · DMS+SCT',                                       file: 'se-relational-db.json' },
-  { id: 'nosql-cache',             num: '11', title: 'NoSQL & Caching',               services: 'DynamoDB · ElastiCache · MemoryDB · DAX',                                              file: 'se-nosql-cache.json' },
-  { id: 'compute-modern',         num: '12', title: 'Compute Modernization',         services: 'EC2 · ECS/Fargate · EKS · Lambda · App Runner · Batch',                                file: 'se-compute-modern.json' },
-  { id: 'serverless-orch',        num: '13', title: 'Serverless Orchestration',      services: 'Step Functions · EventBridge · SQS/SNS · Lambda destinations · AppFlow',               file: 'se-serverless-orch.json' },
-  { id: 'resilience-dr',          num: '14', title: 'Resilience & DR',               services: 'Multi-AZ · Multi-Region · Backup · Resilience Hub · FIS · Route 53 health',            file: 'se-resilience-dr.json' },
-  { id: 'observability',          num: '15', title: 'Observability',                 services: 'CloudWatch · X-Ray · ADOT/OTel · Application Signals · Container Insights',           file: 'se-observability.json' },
-  { id: 'migration',              num: '16', title: 'Migration & Modernization',     services: 'MGN · DMS+SCT · DataSync · Snow · App2Container · Migration Hub',                     file: 'se-migration.json' },
-  { id: 'cost-governance',        num: '17', title: 'Cost Governance',               services: 'Cost Explorer · Budgets · Anomaly Detection · CUR · Compute Optimizer · Savings Plans', file: 'se-cost-governance.json' },
-  { id: 'ml-foundations',         num: '18', title: 'ML/AI Foundations',             services: 'SageMaker Studio · Pipelines · Feature Store · JumpStart · Model Registry',           file: 'se-ml-foundations.json' },
-  { id: 'genai-production',       num: '19', title: 'GenAI in Production',           services: 'Bedrock Knowledge Bases · Agents · Guardrails · Provisioned Throughput · RAG',         file: 'se-genai-production.json' },
-  { id: 'compliance',             num: '20', title: 'Compliance & Governance',       services: 'Audit Manager · Config conformance · Artifact · Macie · Model Cards',                 file: 'se-compliance.json' }
-];
-
-const seState = {
-  cluster: null,        // current cluster object
-  pool: [],
-  idx: 0,
-  totalCorrect: 0,
-  totalAnswered: 0,
-  startTime: null,
-  answers: [],          // [{q, selected, correct}]
-  answered: false,
-  multiPicked: new Set(), // for multi-select questions
-  available: {}         // per-cluster {count, available}
-};
-
-// ---------- LocalStorage for last-score per cluster ----------
-function loadSEScores() {
-  if (!useStorage) return {};
-  try { return JSON.parse(localStorage.getItem('aws_cert_se_scores') || '{}'); } catch(e) { return {}; }
-}
-function getSELastScore(clusterId) {
-  return loadSEScores()[clusterId];
-}
-function saveSEScore(clusterId, percent) {
-  if (!useStorage) return;
-  try {
-    const all = loadSEScores();
-    all[clusterId] = { percent, ts: Date.now() };
-    localStorage.setItem('aws_cert_se_scores', JSON.stringify(all));
-  } catch(e) {}
-}
-
-// ---------- Detect multi-select format ----------
-// A question is multi-select if EITHER:
-//   - q.correctMulti is an array of indices (preferred schema), OR
-//   - q.format === 'multi' AND q.correct is an array
-function isMultiSelect(q) {
-  return Array.isArray(q.correctMulti) || (q.format === 'multi' && Array.isArray(q.correct));
-}
-function getCorrectIndices(q) {
-  if (Array.isArray(q.correctMulti)) return [...q.correctMulti].sort();
-  if (q.format === 'multi' && Array.isArray(q.correct)) return [...q.correct].sort();
-  return [q.correct];
-}
-
-// ---------- Probe banks ----------
-async function probeServiceExpertBanks() {
-  let totalCount = 0;
-  let availableCount = 0;
-  for (const cluster of SE_CLUSTERS) {
-    try {
-      const res = await fetch(cluster.file);
-      if (!res.ok) { seState.available[cluster.id] = { count: 0, available: false }; continue; }
-      const data = await res.json();
-      const qs = Array.isArray(data) ? data : (data.questions || []);
-      seState.available[cluster.id] = { count: qs.length, available: qs.length > 0 };
-      totalCount += qs.length;
-      if (qs.length > 0) availableCount++;
-    } catch(e) {
-      seState.available[cluster.id] = { count: 0, available: false };
-    }
-  }
-  const cEl = $('#se-cluster-count');
-  const qEl = $('#se-question-count');
-  const compEl = $('#se-completed-count');
-  if (cEl) cEl.textContent = `${availableCount} / ${SE_CLUSTERS.length}`;
-  if (qEl) qEl.textContent = totalCount > 0 ? `${totalCount}` : '—';
-  if (compEl) {
-    const scores = loadSEScores();
-    const completed = Object.keys(scores).length;
-    compEl.textContent = completed > 0 ? `${completed} drilled` : '—';
-  }
-}
-
-// ---------- Cluster grid ----------
-function goToServiceExpert() {
-  renderClusterGrid();
-  showScreen('se-select');
-}
-
-function renderClusterGrid() {
-  const grid = $('#se-cluster-grid');
-  grid.innerHTML = '';
-  SE_CLUSTERS.forEach(cluster => {
-    const info = seState.available[cluster.id] || { count: 0, available: false };
-    const last = getSELastScore(cluster.id);
-    const lastClass = last ? (last.percent >= 80 ? 'good' : last.percent < 60 ? 'bad' : '') : '';
-    const card = document.createElement('div');
-    card.className = 'cluster-card' + (info.available ? '' : ' unavailable');
-    card.innerHTML = `
-      <div class="cnum">Cluster ${cluster.num}</div>
-      <div class="ctitle">${cluster.title}</div>
-      <div class="cservices">${cluster.services}</div>
-      <div class="cstats">
-        <span>${info.available ? `<b>${info.count}</b> Q` : 'Coming soon'}</span>
-        ${last ? `<span class="last-score ${lastClass}">Last: <b>${last.percent}%</b></span>` : '<span style="opacity:0.5">Not yet drilled</span>'}
-      </div>
-    `;
-    if (info.available) card.onclick = () => startServiceExpert(cluster);
-    grid.appendChild(card);
-  });
-}
-
-// ---------- Start a drill ----------
-async function startServiceExpert(cluster) {
-  let questions = [];
-  try {
-    const res = await fetch(cluster.file);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    questions = Array.isArray(data) ? data : (data.questions || []);
-  } catch(e) {
-    alert(`Could not load ${cluster.file}.\n\n${e.message}\n\nMake sure the file exists and you're running via a local HTTP server.`);
-    return;
-  }
-  if (questions.length === 0) { alert('No questions in this cluster bank.'); return; }
-
-  shuffle(questions);
-  seState.cluster = cluster;
-  seState.pool = questions.slice(0, Math.min(20, questions.length));
-  seState.idx = 0;
-  seState.totalCorrect = 0;
-  seState.totalAnswered = 0;
-  seState.startTime = Date.now();
-  seState.answers = [];
-  seState.answered = false;
-  seState.multiPicked = new Set();
-
-  $('#se-cluster-pill').textContent = `${cluster.num} · ${cluster.title}`;
-  $('#se-cluster-label').textContent = cluster.title;
-  $('#se-qtotal').textContent = seState.pool.length;
-  $('#se-correct-count').textContent = '0';
-  $('#se-wrong-count').textContent = '0';
-  $('#se-progress-fill').style.width = '0%';
-
-  $('#logo-text').textContent = `SERVICE EXPERT · ${cluster.title.toUpperCase()}`;
-  showScreen('se-run');
-  renderSEQuestion();
-}
-
-// ---------- Render question ----------
-function renderSEQuestion() {
-  const q = seState.pool[seState.idx];
-  if (!q) { endServiceExpert(); return; }
-  seState.answered = false;
-  seState.multiPicked = new Set();
-
-  const multi = isMultiSelect(q);
-  $('#se-qnum').textContent = seState.idx + 1;
-  $('#se-multi-instruction').style.display = multi ? 'block' : 'none';
-  $('#se-multi-submit-row').style.display = multi ? 'flex' : 'none';
-  $('#se-multi-submit-btn').disabled = true;
-
-  $('#se-scenario').innerHTML = (q.scenario || '').split('\n').map(p => `<p>${p}</p>`).join('');
-  $('#se-qtext').textContent = q.question;
-
-  const choicesEl = $('#se-choices');
-  choicesEl.innerHTML = '';
-  q.choices.forEach((c, i) => {
-    const div = document.createElement('div');
-    div.className = 'choice' + (multi ? ' multi-selectable' : '');
-    div.innerHTML = `<div class="choice-letter">${String.fromCharCode(65+i)}</div><div class="choice-text">${c}</div>`;
-    if (multi) {
-      div.onclick = () => seToggleMulti(i, div);
-    } else {
-      div.onclick = () => seAnswerSingle(i);
-    }
-    choicesEl.appendChild(div);
-  });
-
-  $('#se-explanation-container').innerHTML = '';
-  $('#se-continue-btn').style.display = 'none';
-
-  const wrap = $('#se-q-wrap');
-  wrap.classList.remove('correct-flash', 'wrong-flash');
-  void wrap.offsetWidth;
-}
-
-// ---------- Multi-select interaction ----------
-function seToggleMulti(idx, div) {
-  if (seState.answered) return;
-  if (seState.multiPicked.has(idx)) {
-    seState.multiPicked.delete(idx);
-    div.classList.remove('picked');
-  } else {
-    seState.multiPicked.add(idx);
-    div.classList.add('picked');
-  }
-  // Enable submit only when exactly 2 selected
-  $('#se-multi-submit-btn').disabled = seState.multiPicked.size !== 2;
-}
-
-function seSubmitMulti() {
-  if (seState.answered) return;
-  if (seState.multiPicked.size !== 2) return;
-  const q = seState.pool[seState.idx];
-  const picked = [...seState.multiPicked].sort();
-  const correct = getCorrectIndices(q);
-  const isCorrect = picked.length === correct.length && picked.every((p, i) => p === correct[i]);
-  seFinalizeAnswer(picked, isCorrect, true);
-}
-
-function seAnswerSingle(idx) {
-  if (seState.answered) return;
-  const q = seState.pool[seState.idx];
-  const isCorrect = idx === q.correct;
-  seFinalizeAnswer([idx], isCorrect, false);
-}
-
-// ---------- Score & feedback common path ----------
-function seFinalizeAnswer(selected, isCorrect, isMulti) {
-  seState.answered = true;
-  const q = seState.pool[seState.idx];
-  seState.totalAnswered++;
-  seState.answers.push({ q, selected, correct: isCorrect, multi: isMulti });
-
-  const correctIdxs = getCorrectIndices(q);
-  // Mark choices
-  $$('#se-choices .choice').forEach((el, i) => {
-    el.style.pointerEvents = 'none';
-    el.classList.remove('picked');
-    if (correctIdxs.includes(i)) el.classList.add('correct');
-    else if (selected.includes(i)) el.classList.add('incorrect');
-  });
-
-  const wrap = $('#se-q-wrap');
-  if (isCorrect) {
-    seState.totalCorrect++;
-    wrap.classList.add('correct-flash');
-    playCorrectBlip();
-  } else {
-    wrap.classList.add('wrong-flash');
-    playWrongBlip();
-  }
-
-  // Build correct-answer letter string (handles multi)
-  const correctLetters = correctIdxs.map(i => String.fromCharCode(65+i)).join(', ');
-  const expHtml = `
-    <div class="explanation" style="margin-top: 20px;">
-      <h4>${isCorrect ? '✓ Correct' : '✗ Wrong — Answer: ' + correctLetters}</h4>
-      ${(q.explanation || '').split('\n').map(p => `<p>${p}</p>`).join('')}
-      ${q.pattern ? `<div class="pattern"><h5>Decision pattern</h5><p>${q.pattern}</p></div>` : ''}
-      ${renderReferences(q, isCorrect)}
-    </div>
-  `;
-  $('#se-explanation-container').innerHTML = expHtml;
-
-  // Update HUD
-  $('#se-correct-count').textContent = seState.totalCorrect;
-  $('#se-wrong-count').textContent = (seState.totalAnswered - seState.totalCorrect);
-  $('#se-progress-fill').style.width = `${100 * (seState.idx + 1) / seState.pool.length}%`;
-
-  $('#se-multi-submit-row').style.display = 'none';
-  $('#se-continue-btn').style.display = 'inline-block';
-  $('#se-continue-btn').focus();
-}
-
-function seNext() {
-  seState.idx++;
-  if (seState.idx >= seState.pool.length) { endServiceExpert(); return; }
-  renderSEQuestion();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function seAbandon() {
-  if (!confirm('Abandon this drill? Progress will not be saved.')) return;
-  goToServiceExpert();
-}
-
-function seRunAgain() {
-  if (seState.cluster) startServiceExpert(seState.cluster);
-}
-
-// ---------- End drill: summary screen ----------
-function endServiceExpert() {
-  const duration = Date.now() - seState.startTime;
-  const percent = seState.totalAnswered > 0
-    ? Math.round(100 * seState.totalCorrect / seState.totalAnswered) : 0;
-  saveSEScore(seState.cluster.id, percent);
-
-  // Verdict
-  const v = $('#se-verdict');
-  if (percent >= 90) { v.textContent = '★ EXPERT'; v.className = 'verdict gold'; }
-  else if (percent >= 80) { v.textContent = '✓ STRONG'; v.className = 'verdict'; }
-  else if (percent >= 60) { v.textContent = 'DRILL COMPLETE'; v.className = 'verdict'; }
-  else { v.textContent = '✗ NEEDS REVIEW'; v.className = 'verdict'; }
-
-  const score = $('#se-final-score');
-  score.textContent = percent;
-  score.className = 'score' + (percent >= 80 ? ' good' : percent < 60 ? ' bad' : '');
-  $('#se-final-fraction').textContent = `${seState.totalCorrect} / ${seState.totalAnswered}`;
-
-  $('#se-stat-cluster').textContent = seState.cluster.title;
-  $('#se-stat-total').textContent = seState.totalAnswered;
-  $('#se-stat-correct').textContent = seState.totalCorrect;
-  $('#se-stat-wrong').textContent = seState.totalAnswered - seState.totalCorrect;
-  const mins = Math.floor(duration / 60000);
-  const secs = Math.floor((duration % 60000) / 1000);
-  $('#se-stat-time').textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-
-  // Review list
-  const reviewEl = $('#se-review-list');
-  reviewEl.innerHTML = seState.answers.map((a, i) => {
-    const q = a.q;
-    const status = a.correct ? '✓ Correct' : '✗ Wrong';
-    const cls = a.correct ? 'right' : 'wrong';
-    const fmtTag = isMultiSelect(q) ? '<span style="color:#50b4ff;font-family:var(--mono);font-size:10px;">MULTI</span>' : '';
-    return `
-      <div class="review-item ${cls}" onclick="showSEReview(${i})">
-        <div class="review-meta">
-          <span>#${i+1}</span>
-          ${fmtTag}
-          <span class="status ${cls}">${status}</span>
-        </div>
-        <div class="review-preview">${q.question}</div>
-      </div>`;
-  }).join('');
-
-  showScreen('se-summary');
-}
-
-// ---------- Review modal ----------
-function showSEReview(idx) {
-  const a = seState.answers[idx];
-  if (!a) return;
-  const q = a.q;
-  const correctIdxs = getCorrectIndices(q);
-  const selectedSet = new Set(a.selected);
-
-  const choicesHtml = q.choices.map((c, i) => {
-    let cls = '';
-    if (correctIdxs.includes(i)) cls = 'correct';
-    else if (selectedSet.has(i)) cls = 'incorrect';
-    return `<div class="choice ${cls}"><div class="choice-letter">${String.fromCharCode(65+i)}</div><div class="choice-text">${c}</div></div>`;
-  }).join('');
-
-  const correctLetters = correctIdxs.map(i => String.fromCharCode(65+i)).join(', ');
-  const yourLetters = a.selected.map(i => String.fromCharCode(65+i)).join(', ') || '—';
-
-  $('#modal-content').innerHTML = `
-    <div class="domain-tag" style="display:inline-block; margin-bottom: 12px;">${seState.cluster.title}${isMultiSelect(q) ? ' · Multi-select' : ''}</div>
-    <h3>${q.question}</h3>
-    <div class="scenario" style="margin-top: 16px;">${(q.scenario||'').split('\n').map(p => `<p>${p}</p>`).join('')}</div>
-    <div class="choices">${choicesHtml}</div>
-    <div class="explanation" style="margin-top: 0;">
-      <h4>${a.correct ? '✓ Correct' : `✗ Wrong — Your: ${yourLetters} · Answer: ${correctLetters}`}</h4>
-      ${(q.explanation||'').split('\n').map(p => `<p>${p}</p>`).join('')}
-      ${q.pattern ? `<div class="pattern"><h5>Decision pattern</h5><p>${q.pattern}</p></div>` : ''}
-      ${renderReferences(q, false)}
-    </div>
-  `;
-  $('#modal-backdrop').classList.add('active');
-}
-
-// Probe Service Expert banks on initial load
-document.addEventListener('DOMContentLoaded', () => { probeServiceExpertBanks(); });
-
 </script>
 
 </body>
