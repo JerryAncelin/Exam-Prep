@@ -1508,6 +1508,7 @@ const gState = {
   available: {},
   audioCtx: null,
   bipInterval: null,
+  endAudio: null,
   // Armageddon-specific
   timerEnd: null,      // epoch ms when timer expires
   timerInterval: null, // setInterval handle for HUD updates
@@ -1561,6 +1562,7 @@ async function probeGauntletBanks() {
 }
 
 function goToGauntletConfig() {
+  stopEndMusic();
   gState.exam = null;
   gState.mode = null;
   renderGauntletPicker();
@@ -1867,11 +1869,14 @@ function gauntletNext() {
 function abandonGauntlet() {
   if (!confirm('Abandon this gauntlet run? Your progress will be lost and no personal best will be saved.')) return;
   stopBipBip();
+  stopEndMusic();
   goToExamSelect();
 }
 
 function endGauntlet(victory) {
   stopBipBip();
+  // Play victory music when the run is cleared, defeat music when hearts run out.
+  playEndMusic(victory ? 'victory' : 'defeat');
   const duration = Date.now() - gState.startTime;
   const isNewPB = saveGauntletPB(gState.exam, gState.mode, gState.bestStreak);
   const mode = GAUNTLET_MODES[gState.mode];
@@ -2020,6 +2025,34 @@ function stopBipBip() {
   if (gState.bipInterval) { clearInterval(gState.bipInterval); gState.bipInterval = null; }
 }
 
+/* ---------- End-of-run music (Game Over on death, Level Cleared on victory) ---------- */
+const END_MUSIC = {
+  defeat:  { src: '15_Game_Over.wav',           volume: 0.55 },
+  victory: { src: '08__Level_Cleared_Dance.wav', volume: 0.55 }
+};
+function playEndMusic(kind) {
+  // Always stop any previous instance — defeat and victory must never overlap
+  stopEndMusic();
+  const cfg = END_MUSIC[kind];
+  if (!cfg) return;
+  try {
+    const a = new Audio(cfg.src);
+    a.loop = false;
+    a.volume = cfg.volume;
+    // Browsers may reject playback if there was no prior user gesture; we silently swallow that.
+    const p = a.play();
+    if (p && typeof p.catch === 'function') p.catch(() => {});
+    gState.endAudio = a;
+  } catch(e) { /* no-op */ }
+}
+function stopEndMusic() {
+  const a = gState.endAudio;
+  if (a) {
+    try { a.pause(); a.currentTime = 0; } catch(e) { /* no-op */ }
+    gState.endAudio = null;
+  }
+}
+
 // Probe gauntlet banks whenever we're back on the select screen
 document.addEventListener('DOMContentLoaded', () => { probeGauntletBanks(); });
 
@@ -2027,6 +2060,7 @@ document.addEventListener('DOMContentLoaded', () => { probeGauntletBanks(); });
 const _origGoToExamSelect = goToExamSelect;
 goToExamSelect = function() {
   stopBipBip();
+  stopEndMusic();
   _origGoToExamSelect();
   probeGauntletBanks();
   probeServiceExpertBanks();
